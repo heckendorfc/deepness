@@ -1,0 +1,69 @@
+#include <stdlib.h>
+#include "ability.h"
+#include "battle.h"
+
+static void charge_generic(uint8_t mod, struct battle_char *origin, struct battle_char **targets, int num){
+}
+
+static void charge20(struct battle_char *origin, struct battle_char **targets, int num){
+	charge_generic(20,origin,targets,num);
+}
+
+static void charge10(struct battle_char *origin, struct battle_char **targets, int num){
+	charge_generic(10,origin,targets,num);
+}
+
+static void charge7(struct battle_char *origin, struct battle_char **targets, int num){
+	charge_generic(7,origin,targets,num);
+}
+
+static void charge5(struct battle_char *origin, struct battle_char **targets, int num){
+	charge_generic(5,origin,targets,num);
+}
+
+static void charge4(struct battle_char *origin, struct battle_char **targets, int num){
+	charge_generic(4,origin,targets,num);
+}
+
+static void charge3(struct battle_char *origin, struct battle_char **targets, int num){
+	charge_generic(3,origin,targets,num);
+}
+
+static void charge2(struct battle_char *origin, struct battle_char **targets, int num){
+	charge_generic(2,origin,targets,num);
+}
+
+static void charge1(struct battle_char *origin, struct battle_char **targets, int num){
+	charge_generic(1,origin,targets,num);
+}
+
+static void speed_save(struct battle_char *owner, struct battle_char *attacker){
+}
+
+static void arrow_guard(struct battle_char *owner, struct battle_char *attacker){
+}
+
+static void equip_crossbow(struct battle_char *owner){
+}
+
+static void concentrate(struct battle_char *owner){
+}
+
+static void jump1(struct battle_char *owner){
+}
+
+const struct ability claction[NUM_CLASS][NUM_ACTION_PER_ABILITY]={
+	{{.f.af=charge1,100,AFLAG_COUNTER},{.f.af=charge2,150,AFLAG_COUNTER},{.f.af=charge3,200,AFLAG_COUNTER},{.f.af=charge4,250,AFLAG_COUNTER},{.f.af=charge5,300,AFLAG_COUNTER},{.f.af=charge7,400,AFLAG_COUNTER},{.f.af=charge10,600,AFLAG_COUNTER},{.f.af=charge20,1000,AFLAG_COUNTER},{.f.af=NULL,0,0}},
+};
+
+const struct ability clreaction[NUM_CLASS][NUM_ACTION_PER_ABILITY]={
+	{{.f.rf=speed_save,800,0},{.f.rf=arrow_guard,450,0}},
+};
+
+const struct ability clsupport[NUM_CLASS][NUM_ACTION_PER_ABILITY]={
+	{{.f.sf=equip_crossbow,350,0},{.f.sf=concentrate,400,0}},
+};
+
+const struct ability clmovement[NUM_CLASS][NUM_ACTION_PER_ABILITY]={
+	{{.f.mf=jump1,200,0},{.f.mf=NULL,0,0}},
+};
