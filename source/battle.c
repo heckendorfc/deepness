@@ -2,6 +2,7 @@
 #include "battle.h"
 #include "ability.h"
 #include "map.h"
+#include "equipment.h"
 
 int get_dist(struct battle_char *bc, int x, int y, int w, int v, int d){
 	int xd,yd;
@@ -32,17 +33,18 @@ struct battle_char** get_targets(struct battle_char *blist, int num, int x, int 
 	return ret;
 }
 
-/*
-void attack(struct battle_char *s, struct battle_char **d){
-}
+void attack(struct battle_char *s, struct battle_char *d){
+	int pri=s->ch->eq[EQ_WEAPON];
+	int sec=s->ch->eq[EQ_OFFHAND];
 
-void action(struct battle_char *s, struct battle_char **d, int class, int skill){
-	//claction[class][skill].f.af(s,d);
+	if(EQ_TYPE(pri)<EQO_SHIELD)
+		weapon_damage[pri](&weapons[EQ_TYPE(pri)][pri>>6],s,d);
+
+
 }
 
 void defend(struct battle_char *c){
 }
-*/
 
 void status_check(struct battle_char *blist, int num){
 	int bi;

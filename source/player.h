@@ -1,9 +1,10 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include "equipment.h"
 #include "battle.h"
 #include "classes.h"
+
+#define NUM_ITEMS 100
 
 #define NUM_EQ_SLOTS 5
 #define NUM_CHAR_SLOTS 10
@@ -46,6 +47,9 @@ struct battle_char{
 	uint8_t speed;
 	uint8_t wp;
 
+	uint16_t faith;
+	uint16_t brave;
+
 	uint8_t ct;
 
 	struct stored_action *slow_act;
@@ -53,10 +57,22 @@ struct battle_char{
 	uint8_t status[NUM_STATUS];
 };
 
+struct eq_item{
+	uint8_t wp;
+	uint8_t evade;
+	uint8_t elvl;
+	uint8_t	flags;
+	uint8_t elem;
+	uint16_t add;
+	uint16_t price;
+};
+
 typedef void (*actionf)(struct battle_char*,struct battle_char**,int);
 typedef void (*reactionf)(struct battle_char*,struct battle_char*);
 typedef void (*supportf)(struct battle_char*);
 typedef void (*movementf)(struct battle_char*);
+typedef int (*weapon_damagef)(const struct eq_item*,struct battle_char*,struct battle_char*);
+
 
 struct character{
 	char gender;
@@ -65,7 +81,7 @@ struct character{
 	char primary;
 	char secondary;
 	int eq[NUM_EQ_SLOTS];
-	supportf support;
+	uint8_t support;
 	reactionf reaction;
 	movementf movement;
 	uint8_t reaction_trigger;

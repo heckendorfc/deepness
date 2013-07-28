@@ -1085,3 +1085,27 @@ const struct ability claction[NUM_CLASS][NUM_ACTION_PER_ABILITY]={
 {{.f.af=destroy,0,0,0,0,7,0,{1,2,1,0,0}},{.f.af=compress,0,0,0,0,7,0,{1,2,1,0,0}},{.f.af=dispose,0,0,0,0,7,0,{8,0,1,0,0}},{.f.af=crush,0,0,0,0,7,0,{1,0,1,0,0}}}, //WORK 
 {{.f.af=energy,0,0,0,0,0,0,{4,0,1,0,0}},{.f.af=parasite,0,0,0,0,0,0,{4,0,1,0,0}}}, // BYBLOS 
 */
+
+const uint8_t num_support[]={2,0,1,3,0,1,3,1,3,0,1,1,1,1,2,4,1,1,1,1};
+const struct support_ability clsupport[NUM_CLASS][NUM_SUPPORT_PER_ABILITY]={
+	{{SFLAG_EQUIP_CROSSBOW,350},{SFLAG_CONCENTRATE,400}}, // Archer
+	{}, // Bard
+	{{SFLAG_EXPUP,350}}, // Calculator
+	{{SFLAG_THROW_ITEM,350},{SFLAG_MAINTENANCE,250},{SFLAG_EQUIP_CHANGE,0}}, // Chemist
+	{}, // Dancer
+	{{SFLAG_ATTACKUP,400}}, // Geomancer
+	{{SFLAG_EQUIP_ARMOR,500},{SFLAG_EQUIP_SHIELD,250},{SFLAG_EQUIP_SWORD,400}}, // Knight
+	{{SFLAG_EQUIP_SPEAR,400}}, // Lancer
+	{{SFLAG_EQUIP_GUN,750},{SFLAG_TRAIN,450},{SFLAG_MONSTER_TALK,100}}, // Mediator
+	{}, // Mime
+	{{SFLAG_MARTIAL_ARTS,200}}, // Monk
+	{{SFLAG_TWO_SWORDS,900}}, // Ninja
+	{{SFLAG_DEFENSEUP,400}}, // Oracle
+	{{SFLAG_MAGIC_DEFENDUP,400}}, // Priest
+	{{SFLAG_EQUIP_KNIFE,400},{SFLAG_TWO_HANDS,900}}, // Samurai
+	{{SFLAG_EQUIP_AXE,170},{SFLAG_MONSTER_SKILL,200},{SFLAG_DEFEND,50},{SFLAG_JPUP,200}}, // Squire
+	{{SFLAG_HALFMP,900}}, // Summoner
+	{{SFLAG_SECRET_HUNT,200}}, // Thief
+	{{SFLAG_SHORTCHARGE,800}}, // Time Mage
+	{{SFLAG_MAGIC_ATTACKUP,400}}, // Wizard
+};

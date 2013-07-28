@@ -24,6 +24,35 @@
 #define RFLAG_REACT_COUNTER BIT(1)
 #define RFLAG_REACT_CRITICAL BIT(2)
 
+#define SFLAG_EQUIP_AXE 1
+#define SFLAG_DEFEND 2
+#define SFLAG_JPUP 3
+#define SFLAG_MONSTER_SKILL 4
+#define SFLAG_EQUIP_ARMOR 5
+#define SFLAG_EQUIP_SHIELD 6
+#define SFLAG_EQUIP_SWORD 7
+#define SFLAG_EQUIP_CROSSBOW 8
+#define SFLAG_CONCENTRATE 9
+#define SFLAG_MARTIAL_ARTS 10
+#define SFLAG_ATTACKUP 11
+#define SFLAG_EQUIP_SPEAR 12
+#define SFLAG_MAGIC_DEFENDUP 13
+#define SFLAG_MAGIC_ATTACKUP 14
+#define SFLAG_THROW_ITEM 15
+#define SFLAG_MAINTENANCE 16
+#define SFLAG_EQUIP_CHANGE 17
+#define SFLAG_SECRET_HUNT 18
+#define SFLAG_DEFENSEUP 19
+#define SFLAG_SHORTCHARGE 20
+#define SFLAG_HALFMP 21
+#define SFLAG_EQUIP_KNIFE 22
+#define SFLAG_TWO_HANDS 23
+#define SFLAG_TWO_SWORDS 24
+#define SFLAG_EXPUP 25
+#define SFLAG_EQUIP_GUN 26
+#define SFLAG_MONSTER_TALK 27
+#define SFLAG_TRAIN 28
+
 #define ELEM_FIRE 1
 #define ELEM_ICE 2
 #define ELEM_LIGHTNING 3
@@ -53,7 +82,7 @@ struct ability{
 	union{
 		actionf af;
 		reactionf rf;
-		supportf sf;
+		//supportf sf;
 		movementf mf;
 	}f;
 	uint16_t jp; // should we use char and divide jp by 10 for storage?
@@ -65,6 +94,13 @@ struct ability{
 	struct range_aoe ra;
 };
 
+struct support_ability{
+	uint16_t jp;
+	uint16_t flags;
+};
+
 extern const struct ability claction[NUM_CLASS][NUM_ACTION_PER_ABILITY];
+extern const uint8_t num_support[];
+extern const struct support_ability clsupport[NUM_CLASS][NUM_SUPPORT_PER_ABILITY];
 
 #endif

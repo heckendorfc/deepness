@@ -17,7 +17,7 @@ void battle_orders(struct battle_char blist, int bi, int num, uint8_t *flags){
 	switch(buf[0]){
 		case 1:
 			tl=get_targets(blist,num,x,y,1,1);
-			attack(blist+bi,tl);
+			attack(blist+bi,tl[0]);
 			free(tl);
 			break;
 	}

@@ -1,7 +1,9 @@
 #ifndef EQUIPMENT_H
 #define EQUIPMENT_H
 
-#define NUM_ITEMS 100
+#include "player.h"
+
+#define EQ_TYPE(x) (x&0x2F)
 
 #define EQ_WEAPON 0
 #define EQ_OFFHAND 1
@@ -9,7 +11,10 @@
 #define EQ_BODY 3
 #define EQ_MISC 4
 
+#define NUM_EQW_TYPES 20
+#define MAX_EQW_PER_TYPE 16
 /* Weapons */
+#define EQW_HANDS 0
 #define EQW_AXE 1
 #define EQW_BAG 2
 #define EQW_BOW 3
@@ -31,7 +36,7 @@
 #define EQW_SWORD 19
 
 /* Offhand */
-#define EQO_SHIELD 1
+#define EQO_SHIELD 20
 
 /* Head */
 #define EQH_HAT 1
@@ -48,8 +53,12 @@
 #define EQM_ARMWEAR 2
 #define EQM_FOOT 3
 
-struct eq_item{
-	
-};
+#define EQWFLAG_TWO_SWORDS BIT(0)
+#define EQWFLAG_TWO_HAND BIT(1)
+#define EQWFLAG_TWO_HAND_ONLY BIT(2)
+
+
+extern const weapon_damagef weapon_damage[];
+extern const struct eq_item weapons[NUM_EQW_TYPES][MAX_EQW_PER_TYPE];
 
 #endif
