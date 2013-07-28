@@ -1,4 +1,4 @@
 debug:
 	clang -Wall -Wno-unused-function -o deepness source/*.c
 release:
-	cc -Wall -o deepness source/*.c
+	cc -Wall -DRELEASE_MODE -o deepness source/*.c

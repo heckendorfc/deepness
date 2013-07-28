@@ -3,6 +3,6 @@
 
 #include "player.h"
 
-void battle_orders(struct battle_char blist, int bi, int num, uint8_t *flags);
+void battle_orders(struct battle_char *blist, int bi, int num, uint8_t *flags);
 
 #endif

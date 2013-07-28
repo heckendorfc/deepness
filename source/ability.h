@@ -4,7 +4,10 @@
 #include <stdint.h>
 #include "player.h"
 
-#define BIT(x) (1<<x)
+#define MASTERY_ACTION(x) (x&0xFFFF)
+#define MASTERY_REACTION(x) ((x>>16)&0x4)
+#define MASTERY_SUPPORT(x) ((x>>20)&0x8)
+#define MASTERY_MOVEMENT(x) ((x>>24)&0x2)
 
 #define NUM_ACTION_PER_ABILITY 16
 #define NUM_REACTION_PER_ABILITY 3

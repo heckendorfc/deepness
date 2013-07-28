@@ -1,7 +1,7 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include "battle.h"
+#include <stdint.h>
 #include "classes.h"
 
 #define NUM_ITEMS 100
@@ -9,6 +9,13 @@
 #define NUM_EQ_SLOTS 5
 #define NUM_CHAR_SLOTS 10
 #define NUM_ABILITY 5
+#define NUM_STATUS 36
+#define NUM_STATS 5
+
+#define BIT(x) (1<<x)
+
+#define GENDER_MALE 1
+#define GENDER_FEMALE 2
 
 struct character;
 
@@ -47,8 +54,8 @@ struct battle_char{
 	uint8_t speed;
 	uint8_t wp;
 
-	uint16_t faith;
-	uint16_t brave;
+	uint8_t faith;
+	uint8_t brave;
 
 	uint8_t ct;
 
@@ -77,7 +84,9 @@ typedef int (*weapon_damagef)(const struct eq_item*,struct battle_char*,struct b
 struct character{
 	char gender;
 	char battleready;
-	int jp[NUM_CLASS];
+	uint16_t jp;
+	uint32_t mastery[NUM_CLASS];
+	uint8_t level[NUM_CLASS];
 	char primary;
 	char secondary;
 	int eq[NUM_EQ_SLOTS];
@@ -85,6 +94,9 @@ struct character{
 	reactionf reaction;
 	movementf movement;
 	uint8_t reaction_trigger;
+	uint32_t raw[NUM_STATS];
+	uint8_t faith;
+	uint8_t brave;
 };
 
 struct stored_action{

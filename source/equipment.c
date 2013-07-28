@@ -1,3 +1,4 @@
+#include "battle.h"
 #include "equipment.h"
 #include "classes.h"
 #include "util.h"

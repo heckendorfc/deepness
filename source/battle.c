@@ -3,35 +3,12 @@
 #include "ability.h"
 #include "map.h"
 #include "equipment.h"
+#include "util.h"
 
-int get_dist(struct battle_char *bc, int x, int y, int w, int v, int d){
-	int xd,yd;
+#ifndef RELEASE_MODE
+#include "ui_console.h"
+#endif
 
-	xd=bc->x-x;
-	if(xd<0)xd=-xd;
-
-	yd=bc->y-y;
-	if(yd<0)yd=-yd;
-
-	return xd+yd;
-}
-
-struct battle_char** get_targets(struct battle_char *blist, int num, int x, int y, int w, int v, int d){
-	struct battle_char **ret;
-	int i;
-	int bi=0;
-
-	ret=malloc(sizeof(*ret)*num);
-
-	for(i=0;i<num;i++){
-		if(get_dist(blist+i,x,y,w,v,d)<w)
-			ret[bi++]=blist+i;
-	}
-
-	if(bi<num)ret[bi]=NULL;
-
-	return ret;
-}
 
 void attack(struct battle_char *s, struct battle_char *d){
 	int pri=s->ch->eq[EQ_WEAPON];
@@ -135,11 +112,11 @@ void ct_resolution(struct battle_char *blist, int num){
 
 			// Select new actions
 			if(flags==0)
-				battle_orders(blist,bi,&flags);
+				battle_orders(blist,bi,num,&flags);
 
-			// Move
-			if(flags!=(ACTED_FLAG|MOVED_FLAG))
-				battle_orders(blist,bi,&flags);
+			// Select other action
+			if(flags!=0 && flags!=(ACTED_FLAG|MOVED_FLAG))
+				battle_orders(blist,bi,num,&flags);
 
 			// Update CT
 			if(flags==0)
