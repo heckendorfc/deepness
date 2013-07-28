@@ -14,6 +14,8 @@
 */
 #define NO_DAMAGE ((int16_t)0xFFFF)
 
+#define UNTIMED_STATUS ((uint8_t)0xFF)
+
 #define STATUS_CRITICAL 0
 #define STATUS_NOMOVE 1
 #define STATUS_NOACT 2
@@ -24,9 +26,19 @@
 #define STATUS_CHARGING 7
 #define STATUS_SLEEPING 8
 #define STATUS_POLYMORPH 9
+#define STATUS_DEAD 10
 
 #define MOVED_FLAG BIT(0)
 #define ACTED_FLAG BIT(1)
+
+#define ATTACK_DIR_FRONT 1
+#define ATTACK_DIR_SIDE 2
+#define ATTACK_DIR_REAR 3
+
+#define DIR_NORTH 1
+#define DIR_EAST 2
+#define DIR_SOUTH 3
+#define DIR_WEST 4
 
 void attack(struct battle_char *s, struct battle_char *d);
 

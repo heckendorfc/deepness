@@ -211,5 +211,17 @@ const weapon_damagef weapon_damage[]={
 };
 
 const struct eq_item weapons[NUM_EQW_TYPES][MAX_EQW_PER_TYPE]={
-	{{0,5,1,0,0,0,0}}, // Hands
+	{{0,5,0,1,0,0,0,0}}, // Hands
+};
+const struct eq_item offhand[MAX_EQO_PER_TYPE]={
+	{0,0,0,1,0,0,0,0}, // Naked
+};
+const struct eq_item body_armor[NUM_EQB_TYPES][MAX_EQB_PER_TYPE]={
+	{{0,0,0,1,0,0,0,0}}, // Naked
+};
+const struct eq_item head_armor[NUM_EQH_TYPES][MAX_EQH_PER_TYPE]={
+	{{0,0,0,1,0,0,0,0}}, // Naked
+};
+const struct eq_item misc_armor[NUM_EQM_TYPES][MAX_EQM_PER_TYPE]={
+	{{0,0,0,1,0,0,0,0}}, // Naked
 };

@@ -16,6 +16,9 @@
 #define GENDER_MALE 1
 #define GENDER_FEMALE 2
 
+#define FOF_FRIEND 1
+#define FOF_FOE 2
+
 struct character;
 
 struct aoe{
@@ -45,12 +48,15 @@ struct battle_char{
 	uint8_t y;
 	uint8_t dir;
 
+	uint16_t hp_max;
+	uint16_t mp_max;
+
 	uint16_t hp;
 	uint16_t mp;
-
 	uint8_t pa;
 	uint8_t ma;
 	uint8_t speed;
+
 	uint8_t wp;
 
 	uint8_t faith;
@@ -65,7 +71,8 @@ struct battle_char{
 
 struct eq_item{
 	uint8_t wp;
-	uint8_t evade;
+	uint8_t p_evade;
+	uint8_t m_evade;
 	uint8_t elvl;
 	uint8_t	flags;
 	uint8_t elem;
@@ -81,14 +88,14 @@ typedef int (*weapon_damagef)(const struct eq_item*,struct battle_char*,struct b
 
 
 struct character{
-	char gender;
-	char battleready;
+	uint8_t gender;
+	uint8_t battleready;
 	uint16_t jp;
 	uint32_t mastery[NUM_CLASS];
 	uint8_t level[NUM_CLASS];
-	char primary;
-	char secondary;
-	int eq[NUM_EQ_SLOTS];
+	uint8_t primary;
+	uint8_t secondary;
+	uint16_t eq[NUM_EQ_SLOTS];
 	uint8_t support;
 	reactionf reaction;
 	movementf movement;

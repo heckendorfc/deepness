@@ -22,7 +22,7 @@ terrain  | height
 01 x x x | 01 x x x
 02 x x x | 02 x x x
 */
-void print_map(struct battle_char *blist, int bi, int num){
+void print_map(struct battle_char **blist, int bi, int num){
 	int i,j;
 	int uid;
 
@@ -70,7 +70,7 @@ void print_info(struct battle_char *bc){
 	printf("\n\n");
 }
 
-void battle_orders(struct battle_char *blist, int bi, int num, uint8_t *flags){
+void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 	char buf[100];
 	struct battle_char **tl;
 	int cmd,x,y;
@@ -88,7 +88,7 @@ void battle_orders(struct battle_char *blist, int bi, int num, uint8_t *flags){
 			case 1:
 				if(!(*flags&ACTED_FLAG)){
 					tl=get_targets(blist,num,x,y,1,1,0);
-					attack(blist+bi,tl[0]);
+					attack(blist[bi],tl[0]);
 					free(tl);
 					*flags|=ACTED_FLAG;
 				}
@@ -109,7 +109,7 @@ void battle_orders(struct battle_char *blist, int bi, int num, uint8_t *flags){
 			case 4:
 				uid=unit_at(blist,num,x,y);
 				if(uid>=0)
-					print_info(blist+uid);
+					print_info(blist[uid]);
 				run=1;
 				break;
 			case 5:

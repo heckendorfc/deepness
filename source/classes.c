@@ -1,6 +1,5 @@
 #include "player.h"
 #include "classes.h"
-#include "util.h"
 
 const char class_unlocks[NUM_CLASS][NUM_CLASS+1]={
 	{3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0}, /* Archer */
@@ -76,50 +75,3 @@ const struct class_stat class_stats[]={
 	{3,3,5,{75,120,100,50,130},{12,10,100,65,50}}, // Time Mage
 	{3,3,5,{75,120,100,60,150},{12,9,100,60,50}}, // Wizard
 };
-
-
-void set_base_stats(struct character *ch){
-	if(ch->gender==GENDER_MALE){
-		ch->raw[STAT_HP]=get_random(491520,524287);
-		ch->raw[STAT_MP]=get_random(491520,524287);
-		ch->raw[STAT_PA]=81920;
-		ch->raw[STAT_PA]=65536;
-	}
-	else{
-		ch->raw[STAT_HP]=get_random(458752,491519);
-		ch->raw[STAT_MP]=get_random(458752,491519);
-		ch->raw[STAT_PA]=65536;
-		ch->raw[STAT_PA]=81920;
-	}
-
-	ch->raw[STAT_SP]=98304;
-}
-
-void level_up(struct character *ch){
-	int level;
-	int i;
-
-	for(i=level=0;i<NUM_CLASS;i++)
-		level+=ch->level[i];
-
-
-	for(i=0;i<NUM_STATS;i++)
-		ch->raw[i]+=ch->raw[i]/(class_stats[(int)ch->primary].gainmod[i]+level);
-}
-
-void set_battle_stats(struct battle_char *bc){
-	bc->hp=(bc->ch->raw[STAT_HP]*class_stats[(int)bc->ch->primary].basemod[STAT_HP])/BASE_STAT_DENOMINATOR;
-	if(bc->hp<1)bc->hp=1;
-
-	bc->mp=(bc->ch->raw[STAT_MP]*class_stats[(int)bc->ch->primary].basemod[STAT_MP])/BASE_STAT_DENOMINATOR;
-	if(bc->mp<1)bc->mp=1;
-
-	bc->pa=(bc->ch->raw[STAT_PA]*class_stats[(int)bc->ch->primary].basemod[STAT_PA])/BASE_STAT_DENOMINATOR;
-	if(bc->pa<1)bc->pa=1;
-
-	bc->ma=(bc->ch->raw[STAT_MA]*class_stats[(int)bc->ch->primary].basemod[STAT_MA])/BASE_STAT_DENOMINATOR;
-	if(bc->ma<1)bc->ma=1;
-
-	bc->speed=(bc->ch->raw[STAT_SP]*class_stats[(int)bc->ch->primary].basemod[STAT_SP])/BASE_STAT_DENOMINATOR;
-	if(bc->speed<1)bc->speed=1;
-}

@@ -35,19 +35,28 @@
 #define EQW_STICK 18
 #define EQW_SWORD 19
 
+#define NUM_EQO_TYPES 1
+#define MAX_EQO_PER_TYPE 16
 /* Offhand */
 #define EQO_SHIELD 20
 
+#define NUM_EQH_TYPES 4
+#define MAX_EQH_PER_TYPE 13
 /* Head */
 #define EQH_HAT 1
 #define EQH_RIBBON 2
 #define EQH_HELMET 3
 
+
+#define NUM_EQB_TYPES 4
+#define MAX_EQB_PER_TYPE 14
 /* Body */
 #define EQB_CLOTHES 1
 #define EQB_ARMOR 2
 #define EQB_ROBE 3
 
+#define NUM_EQM_TYPES 4
+#define MAX_EQM_PER_TYPE 7
 /* Misc */
 #define EQM_MANTLE 1
 #define EQM_ARMWEAR 2
@@ -60,5 +69,9 @@
 
 extern const weapon_damagef weapon_damage[];
 extern const struct eq_item weapons[NUM_EQW_TYPES][MAX_EQW_PER_TYPE];
+extern const struct eq_item offhand[MAX_EQO_PER_TYPE];
+extern const struct eq_item body_armor[NUM_EQB_TYPES][MAX_EQB_PER_TYPE];
+extern const struct eq_item head_armor[NUM_EQH_TYPES][MAX_EQH_PER_TYPE];
+extern const struct eq_item misc_armor[NUM_EQM_TYPES][MAX_EQM_PER_TYPE];
 
 #endif

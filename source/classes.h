@@ -1,6 +1,8 @@
 #ifndef CLASSES_H
 #define CLASSES_H
 
+#include "player.h"
+
 #define NUM_CLASS 20
 #define NUM_STATS 5
 
@@ -46,5 +48,7 @@ struct class_stat{
 	uint8_t basemod[NUM_STATS];
 	uint8_t gainmod[NUM_STATS];
 };
+
+extern const struct class_stat class_stats[];
 
 #endif
