@@ -10,7 +10,6 @@
 #define NUM_CHAR_SLOTS 10
 #define NUM_ABILITY 5
 #define NUM_STATUS 36
-#define NUM_STATS 5
 
 #define BIT(x) (1<<x)
 

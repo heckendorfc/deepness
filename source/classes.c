@@ -1,4 +1,6 @@
+#include "player.h"
 #include "classes.h"
+#include "util.h"
 
 const char class_unlocks[NUM_CLASS][NUM_CLASS+1]={
 	{3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0}, /* Archer */
@@ -52,7 +54,7 @@ const struct class_stats[NUM_CLASS]={
 
 // hp/mp gain formula: r(10:17)/c[hm]p
 // Speed point gained every speed levels
-const struct class_stats[NUM_CLASS]={
+const struct class_stat class_stats[]={
 	{3,3,10,{100,75,100,110,80},{11,16,100,45,50}}, // Archer
 	{3,3,5,{55,50,100,30,115},{20,20,100,80,50}}, // Bard
 	{3,3,5,{65,80,50,50,70},{14,10,100,70,50}}, // Calculator
@@ -94,25 +96,30 @@ void set_base_stats(struct character *ch){
 }
 
 void level_up(struct character *ch){
+	int level;
 	int i;
 
+	for(i=level=0;i<NUM_CLASS;i++)
+		level+=ch->level[i];
+
+
 	for(i=0;i<NUM_STATS;i++)
-		ch->raw[i]+=ch->raw[i]/(class_stats[ch->primary].gainmod[i]+level);
+		ch->raw[i]+=ch->raw[i]/(class_stats[(int)ch->primary].gainmod[i]+level);
 }
 
 void set_battle_stats(struct battle_char *bc){
-	bc->hp=(bc->ch->raw[STAT_HP]*chass_stats[bc->ch->primary].basemod[STAT_HP])/BASE_STAT_DENOMINATOR;
+	bc->hp=(bc->ch->raw[STAT_HP]*class_stats[(int)bc->ch->primary].basemod[STAT_HP])/BASE_STAT_DENOMINATOR;
 	if(bc->hp<1)bc->hp=1;
 
-	bc->mp=(bc->ch->raw[STAT_MP]*chass_stats[bc->ch->primary].basemod[STAT_MP])/BASE_STAT_DENOMINATOR;
+	bc->mp=(bc->ch->raw[STAT_MP]*class_stats[(int)bc->ch->primary].basemod[STAT_MP])/BASE_STAT_DENOMINATOR;
 	if(bc->mp<1)bc->mp=1;
 
-	bc->pa=(bc->ch->raw[STAT_PA]*chass_stats[bc->ch->primary].basemod[STAT_PA])/BASE_STAT_DENOMINATOR;
+	bc->pa=(bc->ch->raw[STAT_PA]*class_stats[(int)bc->ch->primary].basemod[STAT_PA])/BASE_STAT_DENOMINATOR;
 	if(bc->pa<1)bc->pa=1;
 
-	bc->ma=(bc->ch->raw[STAT_MA]*chass_stats[bc->ch->primary].basemod[STAT_MA])/BASE_STAT_DENOMINATOR;
+	bc->ma=(bc->ch->raw[STAT_MA]*class_stats[(int)bc->ch->primary].basemod[STAT_MA])/BASE_STAT_DENOMINATOR;
 	if(bc->ma<1)bc->ma=1;
 
-	bc->sp=(bc->ch->raw[STAT_SP]*chass_stats[bc->ch->primary].basemod[STAT_SP])/BASE_STAT_DENOMINATOR;
-	if(bc->sp<1)bc->sp=1;
+	bc->speed=(bc->ch->raw[STAT_SP]*class_stats[(int)bc->ch->primary].basemod[STAT_SP])/BASE_STAT_DENOMINATOR;
+	if(bc->speed<1)bc->speed=1;
 }

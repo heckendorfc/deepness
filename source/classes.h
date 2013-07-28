@@ -1,9 +1,8 @@
 #ifndef CLASSES_H
 #define CLASSES_H
 
-#include "player.h"
-
 #define NUM_CLASS 20
+#define NUM_STATS 5
 
 #define CLBIT(x) (1<<(x-1))
 
@@ -39,7 +38,7 @@
 
 #define BASE_STAT_DENOMINATOR 1683400
 
-struct class_stats{
+struct class_stat{
 	uint8_t move;
 	uint8_t jump;
 	uint8_t evade;
