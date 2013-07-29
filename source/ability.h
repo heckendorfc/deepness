@@ -23,9 +23,18 @@
 #define AFLAG_PHYSICAL BIT(6)
 #define AFLAG_MAGIC BIT(7)
 
-#define RFLAG_REACT_DAMAGE BIT(0)
-#define RFLAG_REACT_COUNTER BIT(1)
-#define RFLAG_REACT_CRITICAL BIT(2)
+#define AFLAG_MOD_PA 0xFF
+#define AFLAG_MOD_MA 0xFE
+#define AFLAG_MOD_XA 0xFD
+
+#define RFLAG_TRIGGER_DAMAGE 0
+#define RFLAG_TRIGGER_COUNTER 1
+#define RFLAG_TRIGGER_CRITICAL 2
+#define RFLAG_TRIGGER_ALWAYS 3
+#define RFLAG_TRIGGER_OTHER 4
+
+#define RFLAG_BRAVE_PERCENT BIT(0)
+#define RFLAG_HITMOD BIT(1)
 
 #define SFLAG_EQUIP_AXE 1
 #define SFLAG_DEFEND 2
@@ -92,9 +101,17 @@ struct ability{
 	uint16_t flags;
 	uint8_t elem;
 	uint8_t ctr;
-	uint8_t mod;
+	uint8_t mod; // Which formula to use
+	uint8_t mod_v;
 	uint8_t mp;
 	struct range_aoe ra;
+};
+
+struct reaction_ability{
+	reactionf rf;
+	uint16_t jp;
+	uint8_t trigger;
+	uint8_t flags;
 };
 
 struct support_ability{
@@ -105,5 +122,7 @@ struct support_ability{
 extern const struct ability claction[NUM_CLASS][NUM_ACTION_PER_ABILITY];
 extern const uint8_t num_support[];
 extern const struct support_ability clsupport[NUM_CLASS][NUM_SUPPORT_PER_ABILITY];
+extern const uint8_t num_reaction[];
+extern const struct reaction_ability clreaction[NUM_CLASS][NUM_REACTION_PER_ABILITY];
 
 #endif

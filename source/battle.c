@@ -12,6 +12,8 @@
 int evaded(struct battle_char *target, int type, int dir, int base_hit){
 	uint32_t tohit=base_hit;
 	if(type==AFLAG_PHYSICAL){
+		if(REACTION(target).flags&RFLAG_HITMOD && should_react(target))
+			base_hit-=REACTION(target).rf(target,NULL);
 		switch(dir){
 			case ATTACK_DIR_FRONT:
 				tohit*=(100-class_stats[(int)target->ch->primary].evade);
@@ -94,25 +96,6 @@ void deal_damage(struct battle_char *bc, uint16_t dmg){
 		bc->status[STATUS_CRITICAL]=UNTIMED_STATUS;
 }
 
-void attack(struct battle_char *s, struct battle_char *d){
-	uint16_t pri=s->ch->eq[EQ_WEAPON];
-	uint16_t sec=s->ch->eq[EQ_OFFHAND];
-	uint16_t dmg;
-
-	if(evaded(d,AFLAG_PHYSICAL,get_attack_dir(s,d),100))
-		return;
-
-	dmg=weapon_damage[EQ_TYPE(pri)](&weapons[EQ_TYPE(pri)][pri>>6],s,d);
-
-	if(sec==0 && s->ch->support==SFLAG_TWO_HANDS)
-		dmg<<=1;
-
-	else if(sec>0 && EQ_TYPE(sec)!=EQO_SHIELD) // Implied SFLAG_TWO_SWORDS. check it?
-		dmg+=weapon_damage[EQ_TYPE(sec)](&weapons[EQ_TYPE(sec)][sec>>6],s,d);
-	
-	deal_damage(d,dmg);
-
-}
 
 void defend(struct battle_char *c){
 }
@@ -141,18 +124,24 @@ void slow_action_charge(struct battle_char **blist, int num){
 }
 
 int should_react(struct battle_char *ch){
-	if(ch->ch->reaction==NULL)
+	if(ch->ch->reaction_class==0)
 		return 0;
 
-	if((ch->ch->reaction_trigger&RFLAG_REACT_DAMAGE) && last_action.damage!=NO_DAMAGE)
+	if(REACTION(ch).flags&RFLAG_BRAVE_PERCENT && get_random(0,100)>ch->brave)
+		return 0;
+
+	if((REACTION(ch).trigger&RFLAG_TRIGGER_DAMAGE) && last_action.damage!=NO_DAMAGE)
 		return 1;
 
-	if((ch->ch->reaction_trigger&RFLAG_REACT_COUNTER) && (claction[last_action.preresolve->jobindex][last_action.preresolve->findex].flags&AFLAG_COUNTER))
+	if((REACTION(ch).trigger&RFLAG_TRIGGER_COUNTER) && (claction[last_action.preresolve->jobindex][last_action.preresolve->findex].flags&AFLAG_COUNTER))
 		return 1;
 	
-	if((ch->ch->reaction_trigger&RFLAG_REACT_CRITICAL) && (ch->status[STATUS_CRITICAL]))
+	if((REACTION(ch).trigger&RFLAG_TRIGGER_CRITICAL) && (ch->status[STATUS_CRITICAL]))
 		return 1;
 	
+	if(REACTION(ch).trigger&RFLAG_TRIGGER_ALWAYS)
+		return 1;
+
 	return 0;
 } 
 
@@ -161,15 +150,18 @@ void react(struct battle_char *attacker, struct battle_char **reacter, int num){
 
 	for(i=0;i<num;i++){
 		if(should_react(reacter[i]))
-			reacter[i]->ch->reaction(reacter[i],attacker);
+			REACTION(reacter[i]).rf(reacter[i],attacker);
 	}
 }
 
 void slow_action_resolution(struct battle_char **blist, int num){
+	int i;
 	int bi;
 	struct stored_action *tmp;
 	struct battle_char **targets;
 	int num_t;
+	int type;
+	int dir;
 
 	for(bi=0;bi<num;bi++){
 		tmp=blist[bi]->slow_act;
@@ -177,6 +169,10 @@ void slow_action_resolution(struct battle_char **blist, int num){
 			//prereact(tmp->origin,tmp->target,tmp->num_target); // for hamedo
 			targets=get_targets(blist,num,tmp->target.x,tmp->target.y,tmp->target.width,tmp->target.vertical,tmp->target.dir);
 			for(num_t=0;targets[num_t];num_t++);
+			/*if(claction[tmp->jobindex][tmp->findex].flags&AFLAG_EVADE)
+				for(i=0;i<num_t;i++)
+			 		if(evaded(targets[i],))
+			*/
 			tmp->f(tmp->origin,targets,num_t);
 			last_action.preresolve=tmp;
 			react(tmp->origin,targets,num_t);

@@ -11,6 +11,8 @@
 #define NUM_ABILITY 5
 #define NUM_STATUS 36
 
+#define REACTION(x) (clreaction[x->ch->reaction_class][x->ch->reaction_index])
+
 #define BIT(x) (1<<x)
 
 #define GENDER_MALE 1
@@ -81,7 +83,7 @@ struct eq_item{
 };
 
 typedef void (*actionf)(struct battle_char*,struct battle_char**,int);
-typedef void (*reactionf)(struct battle_char*,struct battle_char*);
+typedef int (*reactionf)(struct battle_char*,struct battle_char*);
 typedef void (*supportf)(struct battle_char*);
 typedef void (*movementf)(struct battle_char*);
 typedef int (*weapon_damagef)(const struct eq_item*,struct battle_char*,struct battle_char*);
@@ -93,13 +95,15 @@ struct character{
 	uint16_t jp;
 	uint32_t mastery[NUM_CLASS];
 	uint8_t level[NUM_CLASS];
-	uint8_t primary;
-	uint8_t secondary;
+	uint8_t primary; // Abilities
+	uint8_t secondary; // Abilities
 	uint16_t eq[NUM_EQ_SLOTS];
 	uint8_t support;
-	reactionf reaction;
-	movementf movement;
+	//reactionf reaction;
+	uint8_t reaction_class;
+	uint8_t reaction_index;
 	uint8_t reaction_trigger;
+	movementf movement;
 	uint32_t raw[NUM_STATS];
 	uint8_t faith;
 	uint8_t brave;

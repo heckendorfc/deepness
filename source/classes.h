@@ -3,7 +3,7 @@
 
 #include "player.h"
 
-#define NUM_CLASS 20
+#define NUM_CLASS 21
 #define NUM_STATS 5
 
 #define CLBIT(x) (1<<(x-1))
@@ -11,6 +11,7 @@
 #define MALE 1
 #define FEMALE 2
 
+#define CL_GENERIC 0
 #define CL_ARCHER 1
 #define CL_BARD 2
 #define CL_CALCULATOR 3

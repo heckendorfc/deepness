@@ -6,6 +6,7 @@
 #include "util.h"
 #include "battle.h"
 #include "map.h"
+#include "ability.h"
 
 const char terrain_char[]={
 	' ',
@@ -92,7 +93,7 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 			case 1:
 				if(!(*flags&ACTED_FLAG)){
 					tl=get_targets(blist,num,x,y,1,1,0);
-					attack(blist[bi],tl[0]);
+					claction[0][0].f.af(blist[bi],tl,1);
 					free(tl);
 					*flags|=ACTED_FLAG;
 				}

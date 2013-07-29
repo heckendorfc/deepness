@@ -40,7 +40,11 @@
 #define DIR_SOUTH 3
 #define DIR_WEST 4
 
-void attack(struct battle_char *s, struct battle_char *d);
+int evaded(struct battle_char *target, int type, int dir, int base_hit);
+int get_attack_dir(struct battle_char *attacker, struct battle_char *defender);
+void deal_damage(struct battle_char *bc, uint16_t dmg);
+void react(struct battle_char *attacker, struct battle_char **reacter, int num);
+int should_react(struct battle_char *ch);
 void start_battle(struct character **friends, struct character *foes, int numfoe);
 
 #endif
