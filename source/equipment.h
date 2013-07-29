@@ -3,7 +3,7 @@
 
 #include "player.h"
 
-#define EQ_TYPE(x) (x&0x2F)
+#define EQ_TYPE(x) (x&0x3F)
 
 #define EQ_WEAPON 0
 #define EQ_OFFHAND 1

@@ -248,12 +248,35 @@ void init_battle_char(struct battle_char *bc){
 		bc->status[i]=0;
 
 	bc->wp=weapons[EQ_TYPE(bc->ch->eq[EQ_WEAPON])][(bc->ch->eq[EQ_WEAPON]>>6)].wp;
+
+	bc->ct=0;
+}
+
+int place_units(struct battle_char *team, int num, int type){
+	int i,j;
+	int bi=0;
+
+	for(j=0;j<MAP_HEIGHT;j++){
+		for(i=0;i<MAP_WIDTH;i++){
+			if(get_map_start(i,j)==type){
+				team[bi].x=i;
+				team[bi].y=j;
+				bi++;
+				if(bi==num)
+					return num;
+			}
+		}
+	}
+
+	return bi;
 }
 
 void start_battle(struct character **friends, struct character *foes, int numfoe){
 	struct battle_char *blist,**pblist;
 	int bi;
+	int pi;
 	int i;
+	int friend_placed,foe_placed;
 
 	for(i=bi=0;i<NUM_CHAR_SLOTS;i++)
 		if(friends[i] && friends[i]->battleready)
@@ -271,6 +294,10 @@ void start_battle(struct character **friends, struct character *foes, int numfoe
 			bi++;
 		}
 
+	friend_placed=place_units(blist,bi,MAP_FRIEND_START);
+	for(pi=0;pi<friend_placed;pi++)
+		pblist[pi]=blist+pi;
+
 	for(i=0;i<numfoe;i++){
 		blist[bi].ch=foes+i;
 		blist[bi].index=bi;
@@ -279,14 +306,15 @@ void start_battle(struct character **friends, struct character *foes, int numfoe
 		bi++;
 	}
 
-	for(i=0;i<bi;i++)
-		pblist[i]=blist+i;
+	foe_placed=place_units(blist+(bi-numfoe),numfoe,MAP_FOE_START);
+	for(i=0;i<foe_placed;pi++)
+		pblist[pi]=blist+(bi-numfoe)+(i++);
 
 	while(1){
-		status_check(pblist,bi);
-		slow_action_charge(pblist,bi);
-		slow_action_resolution(pblist,bi);
-		ct_charge(pblist,bi);
-		ct_resolution(pblist,&bi);
+		status_check(pblist,pi);
+		slow_action_charge(pblist,pi);
+		slow_action_resolution(pblist,pi);
+		ct_charge(pblist,pi);
+		ct_resolution(pblist,&pi);
 	}
 }

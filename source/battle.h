@@ -41,5 +41,6 @@
 #define DIR_WEST 4
 
 void attack(struct battle_char *s, struct battle_char *d);
+void start_battle(struct character **friends, struct character *foes, int numfoe);
 
 #endif

@@ -8,6 +8,7 @@
 #include "map.h"
 
 const char terrain_char[]={
+	' ',
 	'n',
 	'o',
 	' ',
@@ -26,16 +27,19 @@ void print_map(struct battle_char **blist, int bi, int num){
 	int i,j;
 	int uid;
 
+	fprintf(stderr,"num: %d\n",num);
+
 	for(j=0;j<2;j++){
 		printf("   ");
 		for(i=0;i<MAP_WIDTH;i++){
 			printf("%d ",i);
 		}
-		printf("| ");
+		if(j==0)printf(" | ");
 	}
+	printf("\n");
 
 	for(j=0;j<MAP_HEIGHT;j++){
-		printf("%02d ",i);
+		printf("%02d ",j);
 		for(i=0;i<MAP_WIDTH;i++){
 			if((uid=unit_at(blist,num,i,j))>=0)
 				printf("%d ",uid);
@@ -44,7 +48,7 @@ void print_map(struct battle_char **blist, int bi, int num){
 		}
 		printf(" | ");
 
-		printf("%02d ",i);
+		printf("%02d ",j);
 		for(i=0;i<MAP_WIDTH;i++){
 			if(get_map_terrain(i,j)==MAP_T_NOTARGET)
 				printf("  ");
@@ -59,8 +63,8 @@ void print_map(struct battle_char **blist, int bi, int num){
 void print_info(struct battle_char *bc){
 	int i;
 
-	printf("UID: %d | DIR: %d | FOF: %c\n",bc->index,bc->dir,bc->fof);
-	printf("HP: %d | MP: %d | CT: %d",bc->hp,bc->mp,bc->ct);
+	printf("UID: %d | DIR: %d | FOF: %d\n",bc->index,bc->dir,bc->fof);
+	printf("HP: %d | MP: %d | CT: %d\n",bc->hp,bc->mp,bc->ct);
 	for(i=0;i<NUM_STATUS;i++)
 		printf("%02d ",i);
 	printf("\n");
@@ -84,7 +88,7 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 
 		sscanf(buf,"%d:%d:%d",&cmd,&x,&y);
 
-		switch(buf[0]){
+		switch(cmd){
 			case 1:
 				if(!(*flags&ACTED_FLAG)){
 					tl=get_targets(blist,num,x,y,1,1,0);
