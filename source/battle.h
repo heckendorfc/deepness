@@ -14,7 +14,11 @@
 */
 #define NO_DAMAGE ((int16_t)0xFFFF)
 
+
 #define UNTIMED_STATUS ((uint8_t)0xFF)
+#define IMMUNE_TO_STATUS ((uint8_t)0xFE)
+
+#define STATUS_SET(bc,s) ((bc->status[s]==IMMUNE_TO_STATUS || bc->status[s]==0)?0:1)
 
 #define STATUS_CRITICAL 0
 #define STATUS_NOMOVE 1
@@ -27,6 +31,30 @@
 #define STATUS_SLEEPING 8
 #define STATUS_POLYMORPH 9
 #define STATUS_DEAD 10
+#define STATUS_DEFENDING 11
+#define STATUS_PERFORMING 12
+#define STATUS_HASTE 13
+#define STATUS_SLOW 14
+#define STATUS_FLOAT 15
+#define STATUS_REGEN 16
+#define STATUS_RERAISE 17
+#define STATUS_SHELL 18
+#define STATUS_TRANSPARENT 19
+#define STATUS_CHARM 20
+#define STATUS_CONFUSION 21
+#define STATUS_DARKNESS 22
+#define STATUS_DEATHSENTENCE 23
+#define STATUS_OIL 24
+#define STATUS_PETRIFY 25
+#define STATUS_POISON 26
+#define STATUS_SILENCE 27
+#define STATUS_SLEEP 28
+#define STATUS_STOP 29
+#define STATUS_UNDEAD 30
+#define STATUS_FAITH 31
+#define STATUS_INNOCENT 32
+#define STATUS_REFLECT 33
+#define STATUS_QUICK 34
 
 #define MOVED_FLAG BIT(0)
 #define ACTED_FLAG BIT(1)
@@ -40,6 +68,32 @@
 #define DIR_SOUTH 3
 #define DIR_WEST 4
 
+#define SIGN_ARIES 0
+#define SIGN_TAURUS 1
+#define SIGN_GEMINI 2
+#define SIGN_CANCER 3
+#define SIGN_LEO 4
+#define SIGN_VIRGO 5
+#define SIGN_LIBRA 6
+#define SIGN_SCORPIO 7
+#define SIGN_SAGITTARIUS 8
+#define SIGN_CAPRICORN 9
+#define SIGN_AQUARIUS 10
+#define SIGN_PISCES 11
+#define SIGN_SERPENTARIUS 12
+
+#define SIGN_COMPAT_WORST 1
+#define SIGN_COMPAT_BAD 2
+#define SIGN_COMPAT_NEUTRAL 3
+#define SIGN_COMPAT_GOOD 4
+#define SIGN_COMPAT_BEST 5
+
+#define RESIST_NEUTRAL BIT(0)
+#define RESIST_WEAK BIT(1)
+#define RESIST_HALF BIT(2)
+#define RESIST_ABSORB BIT(3)
+
+int sign_compat(struct character*,struct character*);
 int evaded(struct battle_char *target, int type, int dir, int base_hit);
 int get_attack_dir(struct battle_char *attacker, struct battle_char *defender);
 void deal_damage(struct battle_char *bc, uint16_t dmg);

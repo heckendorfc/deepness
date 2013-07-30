@@ -2,1014 +2,1223 @@
 #include "ability.h"
 #include "player.h"
 #include "equipment.h"
+#include "util.h"
+
+static int is_critical_hit(struct battle_char *attacker){
+	if(get_random(0,20)==0)
+		return 1;
+	return 0;
+}
+
+/* Neutral success */
+uint8_t mod1(struct battle_char *origin, struct battle_char *target, uint8_t var){
+	uint8_t compat=sign_compat(origin->ch,target->ch);
+	int16_t z=0;
+
+	if(compat==SIGN_COMPAT_GOOD)
+		z=origin->ma/4 + var/4;
+	else if(compat==SIGN_COMPAT_BAD)
+		z=-origin->ma/4 - var/4;
+	else if(compat==SIGN_COMPAT_BEST)
+		z=origin->ma/2 + var/2;
+	else if(compat==SIGN_COMPAT_WORST)
+		z=-origin->ma/2 - var/2;
+
+	return origin->ma+var+z;
+}
+
+/* Physical damage */
+uint16_t mod2(struct battle_char *attacker, struct battle_char *defender, uint16_t xa){
+	uint8_t compat=sign_compat(attacker->ch,defender->ch);
+
+	if(is_critical_hit(attacker))
+		xa+=get_random(1,xa)-1;
+// TODO: add Strengthen bonus here
+	if(STATUS_SET(attacker,STATUS_ATTACKUP))
+		xa=xa*4/3;
+	if(attacker->ch->eq[EQ_WEAPON]==0 && attacker->ch->support==SFLAG_MARTIAL_ARTS)
+		xa=xa*3/2;
+	if(STATUS_SET(attacker,STATUS_BERSERK))
+		xa=xa*3/2;
+	if(STATUS_SET(defender,STATUS_DEFENSEUP))
+		xa=xa*2/3;
+	if(STATUS_SET(defender,STATUS_PROTECT))
+		xa=xa*2/3;
+	if(STATUS_SET(defender,STATUS_CHARGING))
+		xa=xa*3/2;
+	if(STATUS_SET(defender,STATUS_SLEEPING))
+		xa=xa*3/2;
+	if(STATUS_SET(defender,STATUS_POLYMORPH))
+		xa=xa*3/2;
+	
+	if(compat==SIGN_COMPAT_GOOD)
+		xa+=xa/4;
+	else if(compat==SIGN_COMPAT_BAD)
+		xa-=xa/4;
+	else if(compat==SIGN_COMPAT_BEST)
+		xa+=xa/2;
+	else if(compat==SIGN_COMPAT_WORST)
+		xa-=xa/2;
+
+	return xa;
+}
+
+/* Physical success */
+uint8_t mod3(struct battle_char *attacker, struct battle_char *defender, uint8_t var){
+	uint8_t compat=sign_compat(attacker->ch,defender->ch);
+	uint8_t xa=attacker->pa;
+
+	if(STATUS_SET(attacker,STATUS_ATTACKUP))
+		xa=xa*4/3;
+	if(attacker->ch->eq[EQ_WEAPON]==0 && attacker->ch->support==SFLAG_MARTIAL_ARTS)
+		xa=xa*3/2;
+	if(STATUS_SET(defender,STATUS_DEFENSEUP))
+		xa=xa*2/3;
+	if(STATUS_SET(defender,STATUS_PROTECT))
+		xa=xa*2/3;
+	if(STATUS_SET(defender,STATUS_CHARGING))
+		xa=xa*3/2;
+	if(STATUS_SET(defender,STATUS_SLEEPING))
+		xa=xa*3/2;
+	if(STATUS_SET(defender,STATUS_POLYMORPH))
+		xa=xa*3/2;
+
+	if(compat==SIGN_COMPAT_GOOD)
+		xa+=xa/4 + var/4;
+	else if(compat==SIGN_COMPAT_BAD)
+		xa+=-xa/4 - var/4;
+	else if(compat==SIGN_COMPAT_BEST)
+		xa+=xa/2 + var/2;
+	else if(compat==SIGN_COMPAT_WORST)
+		xa+=-xa/2 - var/2;
+
+	return xa;
+}
+
+/* Steal success */
+uint8_t mod4(struct battle_char *attacker, struct battle_char *defender, uint8_t var){
+	uint8_t compat=sign_compat(attacker->ch,defender->ch);
+	uint8_t xa=attacker->speed;
+
+	if(STATUS_SET(attacker,STATUS_ATTACKUP))
+		xa=xa*4/3;
+	if(attacker->ch->eq[EQ_WEAPON]==0 && attacker->ch->support==SFLAG_MARTIAL_ARTS)
+		xa=xa*3/2;
+	if(STATUS_SET(defender,STATUS_DEFENSEUP))
+		xa=xa*2/3;
+	if(STATUS_SET(defender,STATUS_PROTECT))
+		xa=xa*2/3;
+	if(STATUS_SET(defender,STATUS_CHARGING))
+		xa=xa*3/2;
+	if(STATUS_SET(defender,STATUS_SLEEPING))
+		xa=xa*3/2;
+	if(STATUS_SET(defender,STATUS_POLYMORPH))
+		xa=xa*3/2;
+
+	if(compat==SIGN_COMPAT_GOOD)
+		xa+=xa/4 + var/4;
+	else if(compat==SIGN_COMPAT_BAD)
+		xa+=-xa/4 - var/4;
+	else if(compat==SIGN_COMPAT_BEST)
+		xa+=xa/2 + var/2;
+	else if(compat==SIGN_COMPAT_WORST)
+		xa+=-xa/2 - var/2;
+
+	return xa+var;
+}
+
+/* Magic damage */
+int16_t mod5(struct battle_char *origin, struct battle_char *target, uint8_t var, uint8_t success){
+	uint8_t compat=sign_compat(origin->ch,target->ch);
+	uint8_t ma=origin->ma;
+	uint8_t tfa=target->faith, cfa=origin->faith;
+	int8_t n=1;
+	int8_t d=1;
 
-static void cure(struct battle_char *origin, struct battle_char **targets, int num){
+// TODO strengthen here
+	if(STATUS_SET(origin,STATUS_ATTACKUP))
+		ma=ma*4/3;
+	if(STATUS_SET(target,STATUS_DEFENSEUP))
+		ma=ma*2/3;
+	if(STATUS_SET(target,STATUS_SHELL))
+		ma=ma*2/3;
+	
+	if(compat==SIGN_COMPAT_GOOD)
+		ma+=ma/4;
+	else if(compat==SIGN_COMPAT_BAD)
+		ma-=-ma/4;
+	else if(compat==SIGN_COMPAT_BEST)
+		ma+=ma/2;
+	else if(compat==SIGN_COMPAT_WORST)
+		ma-=-ma/2;
+
+// TODO un-truth attacks here
+	if(STATUS_SET(target,STATUS_FAITH))
+		tfa=100;
+	else if(STATUS_SET(target,STATUS_INNOCENT))
+		tfa=0;
+
+	if(STATUS_SET(origin,STATUS_FAITH))
+		cfa=100;
+	else if(STATUS_SET(origin,STATUS_INNOCENT))
+		cfa=0;
+	
+// TODO weather here
+	if(target->resist[claction[last_action.preresolve->jobindex][last_action.preresolve->findex].elem]&RESIST_WEAK)
+		n*=2;
+	if(target->resist[claction[last_action.preresolve->jobindex][last_action.preresolve->findex].elem]&RESIST_HALF)
+		d*=2;
+	if(target->resist[claction[last_action.preresolve->jobindex][last_action.preresolve->findex].elem]&RESIST_ABSORB)
+		n=-n;
+
+	return (cfa*tfa*var*ma*n)/(10000*d);
+}
+
+/* Magic success */
+uint8_t mod6(struct battle_char *origin, struct battle_char *target, uint8_t var){
+	uint8_t ma=origin->ma;
+	uint8_t tfa=target->faith, cfa=origin->faith;
+	uint8_t compat=sign_compat(origin->ch,target->ch);
+
+	if(STATUS_SET(target,STATUS_FAITH))
+		tfa=100;
+	else if(STATUS_SET(target,STATUS_INNOCENT))
+		tfa=0;
+
+	if(STATUS_SET(origin,STATUS_FAITH))
+		cfa=100;
+	else if(STATUS_SET(origin,STATUS_INNOCENT))
+		cfa=0;
+
+// TODO strengthen here
+	if(STATUS_SET(origin,STATUS_ATTACKUP))
+		ma=ma*4/3;
+	if(STATUS_SET(target,STATUS_DEFENSEUP))
+		ma=ma*2/3;
+	if(STATUS_SET(target,STATUS_SHELL))
+		ma=ma*2/3;
+
+	if(compat==SIGN_COMPAT_GOOD)
+		ma+=ma/4 + var/4;
+	else if(compat==SIGN_COMPAT_BAD)
+		ma-=-ma/4 - var/4;
+	else if(compat==SIGN_COMPAT_BEST)
+		ma+=ma/2 + var/2;
+	else if(compat==SIGN_COMPAT_WORST)
+		ma-=-ma/2 - var/2;
+
+	return cfa*tfa*(ma+var) / 10000;
+}
+
+static void cure(struct battle_char *origin, struct battle_char *target){
 }
 
-static void cure2(struct battle_char *origin, struct battle_char **targets, int num){
+static void cure2(struct battle_char *origin, struct battle_char *target){
 }
 
-static void cure3(struct battle_char *origin, struct battle_char **targets, int num){
+static void cure3(struct battle_char *origin, struct battle_char *target){
 }
 
-static void cure4(struct battle_char *origin, struct battle_char **targets, int num){
+static void cure4(struct battle_char *origin, struct battle_char *target){
 }
 
-static void raise(struct battle_char *origin, struct battle_char **targets, int num){
+static void raise(struct battle_char *origin, struct battle_char *target){
 }
 
-static void raise2(struct battle_char *origin, struct battle_char **targets, int num){
+static void raise2(struct battle_char *origin, struct battle_char *target){
 }
 
-static void reraise(struct battle_char *origin, struct battle_char **targets, int num){
+static void reraise(struct battle_char *origin, struct battle_char *target){
 }
 
-static void regen(struct battle_char *origin, struct battle_char **targets, int num){
+static void regen(struct battle_char *origin, struct battle_char *target){
 }
 
-static void protect(struct battle_char *origin, struct battle_char **targets, int num){
+static void protect(struct battle_char *origin, struct battle_char *target){
 }
 
-static void protect2(struct battle_char *origin, struct battle_char **targets, int num){
+static void protect2(struct battle_char *origin, struct battle_char *target){
 }
 
-static void shell(struct battle_char *origin, struct battle_char **targets, int num){
+static void shell(struct battle_char *origin, struct battle_char *target){
 }
 
-static void shell2(struct battle_char *origin, struct battle_char **targets, int num){
+static void shell2(struct battle_char *origin, struct battle_char *target){
 }
 
-static void wall(struct battle_char *origin, struct battle_char **targets, int num){
+static void wall(struct battle_char *origin, struct battle_char *target){
 }
 
-static void esuna(struct battle_char *origin, struct battle_char **targets, int num){
+static void esuna(struct battle_char *origin, struct battle_char *target){
+	uint8_t success = mod6(origin,target,190);
 }
 
-static void holy(struct battle_char *origin, struct battle_char **targets, int num){
+static void holy(struct battle_char *origin, struct battle_char *target){
 }
 
-static void fire(struct battle_char *origin, struct battle_char **targets, int num){
+static void fire(struct battle_char *origin, struct battle_char *target){
+	uint16_t dmg = mod5(origin,target,18,100);
 }
 
-static void fire2(struct battle_char *origin, struct battle_char **targets, int num){
+static void fire2(struct battle_char *origin, struct battle_char *target){
 }
 
-static void fire3(struct battle_char *origin, struct battle_char **targets, int num){
+static void fire3(struct battle_char *origin, struct battle_char *target){
 }
 
-static void fire4(struct battle_char *origin, struct battle_char **targets, int num){
+static void fire4(struct battle_char *origin, struct battle_char *target){
 }
 
-static void bolt(struct battle_char *origin, struct battle_char **targets, int num){
+static void bolt(struct battle_char *origin, struct battle_char *target){
 }
 
-static void bolt2(struct battle_char *origin, struct battle_char **targets, int num){
+static void bolt2(struct battle_char *origin, struct battle_char *target){
 }
 
-static void bolt3(struct battle_char *origin, struct battle_char **targets, int num){
+static void bolt3(struct battle_char *origin, struct battle_char *target){
 }
 
-static void bolt4(struct battle_char *origin, struct battle_char **targets, int num){
+static void bolt4(struct battle_char *origin, struct battle_char *target){
 }
 
-static void ice(struct battle_char *origin, struct battle_char **targets, int num){
+static void ice(struct battle_char *origin, struct battle_char *target){
 }
 
-static void ice2(struct battle_char *origin, struct battle_char **targets, int num){
+static void ice2(struct battle_char *origin, struct battle_char *target){
 }
 
-static void ice3(struct battle_char *origin, struct battle_char **targets, int num){
+static void ice3(struct battle_char *origin, struct battle_char *target){
 }
 
-static void ice4(struct battle_char *origin, struct battle_char **targets, int num){
+static void ice4(struct battle_char *origin, struct battle_char *target){
 }
 
-static void poison(struct battle_char *origin, struct battle_char **targets, int num){
+static void poison(struct battle_char *origin, struct battle_char *target){
 }
 
-static void frog(struct battle_char *origin, struct battle_char **targets, int num){
+static void frog(struct battle_char *origin, struct battle_char *target){
 }
 
-static void death(struct battle_char *origin, struct battle_char **targets, int num){
+static void death(struct battle_char *origin, struct battle_char *target){
 }
 
-static void flare(struct battle_char *origin, struct battle_char **targets, int num){
+static void flare(struct battle_char *origin, struct battle_char *target){
 }
 
-static void haste(struct battle_char *origin, struct battle_char **targets, int num){
+static void haste(struct battle_char *origin, struct battle_char *target){
 }
 
-static void haste2(struct battle_char *origin, struct battle_char **targets, int num){
+static void haste2(struct battle_char *origin, struct battle_char *target){
 }
 
-static void slow(struct battle_char *origin, struct battle_char **targets, int num){
+static void slow(struct battle_char *origin, struct battle_char *target){
 }
 
-static void slow2(struct battle_char *origin, struct battle_char **targets, int num){
+static void slow2(struct battle_char *origin, struct battle_char *target){
 }
 
-static void stop(struct battle_char *origin, struct battle_char **targets, int num){
+static void stop(struct battle_char *origin, struct battle_char *target){
 }
 
-static void dont_move(struct battle_char *origin, struct battle_char **targets, int num){
+static void dont_move(struct battle_char *origin, struct battle_char *target){
 }
 
-static void magic_float(struct battle_char *origin, struct battle_char **targets, int num){
+static void magic_float(struct battle_char *origin, struct battle_char *target){
 }
 
-static void reflect(struct battle_char *origin, struct battle_char **targets, int num){
+static void reflect(struct battle_char *origin, struct battle_char *target){
 }
 
-static void quick(struct battle_char *origin, struct battle_char **targets, int num){
+static void quick(struct battle_char *origin, struct battle_char *target){
 }
 
-static void demi(struct battle_char *origin, struct battle_char **targets, int num){
+static void demi(struct battle_char *origin, struct battle_char *target){
 }
 
-static void demi2(struct battle_char *origin, struct battle_char **targets, int num){
+static void demi2(struct battle_char *origin, struct battle_char *target){
 }
 
-static void meteor(struct battle_char *origin, struct battle_char **targets, int num){
+static void meteor(struct battle_char *origin, struct battle_char *target){
 }
 
-static void blind_yin(struct battle_char *origin, struct battle_char **targets, int num){
+static void blind_yin(struct battle_char *origin, struct battle_char *target){
 }
 
-static void spell_absorb(struct battle_char *origin, struct battle_char **targets, int num){
+static void spell_absorb(struct battle_char *origin, struct battle_char *target){
 }
 
-static void life_drain(struct battle_char *origin, struct battle_char **targets, int num){
+static void life_drain(struct battle_char *origin, struct battle_char *target){
 }
 
-static void pray_faith(struct battle_char *origin, struct battle_char **targets, int num){
+static void pray_faith(struct battle_char *origin, struct battle_char *target){
 }
 
-static void doubt_faith(struct battle_char *origin, struct battle_char **targets, int num){
+static void doubt_faith(struct battle_char *origin, struct battle_char *target){
 }
 
-static void zombie_yin(struct battle_char *origin, struct battle_char **targets, int num){
+static void zombie_yin(struct battle_char *origin, struct battle_char *target){
 }
 
-static void silence_song(struct battle_char *origin, struct battle_char **targets, int num){
+static void silence_song(struct battle_char *origin, struct battle_char *target){
 }
 
-static void blind_rage(struct battle_char *origin, struct battle_char **targets, int num){
+static void blind_rage(struct battle_char *origin, struct battle_char *target){
 }
 
-static void foxbird(struct battle_char *origin, struct battle_char **targets, int num){
+static void foxbird(struct battle_char *origin, struct battle_char *target){
 }
 
-static void confusion_song(struct battle_char *origin, struct battle_char **targets, int num){
+static void confusion_song(struct battle_char *origin, struct battle_char *target){
 }
 
-static void dispel_magic(struct battle_char *origin, struct battle_char **targets, int num){
+static void dispel_magic(struct battle_char *origin, struct battle_char *target){
 }
 
-static void paralyze(struct battle_char *origin, struct battle_char **targets, int num){
+static void paralyze(struct battle_char *origin, struct battle_char *target){
 }
 
-static void magic_sleep_yin(struct battle_char *origin, struct battle_char **targets, int num){
+static void magic_sleep_yin(struct battle_char *origin, struct battle_char *target){
 }
 
-static void petrify(struct battle_char *origin, struct battle_char **targets, int num){
+static void petrify(struct battle_char *origin, struct battle_char *target){
 }
 
-static void moogle(struct battle_char *origin, struct battle_char **targets, int num){
+static void moogle(struct battle_char *origin, struct battle_char *target){
 }
 
-static void shiva(struct battle_char *origin, struct battle_char **targets, int num){
+static void shiva(struct battle_char *origin, struct battle_char *target){
 }
 
-static void ramuh(struct battle_char *origin, struct battle_char **targets, int num){
+static void ramuh(struct battle_char *origin, struct battle_char *target){
 }
 
-static void ifrit(struct battle_char *origin, struct battle_char **targets, int num){
+static void ifrit(struct battle_char *origin, struct battle_char *target){
 }
 
-static void titan(struct battle_char *origin, struct battle_char **targets, int num){
+static void titan(struct battle_char *origin, struct battle_char *target){
 }
 
-static void golem(struct battle_char *origin, struct battle_char **targets, int num){
+static void golem(struct battle_char *origin, struct battle_char *target){
 }
 
-static void carbunkle(struct battle_char *origin, struct battle_char **targets, int num){
+static void carbunkle(struct battle_char *origin, struct battle_char *target){
 }
 
-static void bahamut(struct battle_char *origin, struct battle_char **targets, int num){
+static void bahamut(struct battle_char *origin, struct battle_char *target){
 }
 
-static void odin(struct battle_char *origin, struct battle_char **targets, int num){
+static void odin(struct battle_char *origin, struct battle_char *target){
 }
 
-static void leviathan(struct battle_char *origin, struct battle_char **targets, int num){
+static void leviathan(struct battle_char *origin, struct battle_char *target){
 }
 
-static void salamander(struct battle_char *origin, struct battle_char **targets, int num){
+static void salamander(struct battle_char *origin, struct battle_char *target){
 }
 
-static void silf(struct battle_char *origin, struct battle_char **targets, int num){
+static void silf(struct battle_char *origin, struct battle_char *target){
 }
 
-static void fairy(struct battle_char *origin, struct battle_char **targets, int num){
+static void fairy(struct battle_char *origin, struct battle_char *target){
 }
 
-static void lich(struct battle_char *origin, struct battle_char **targets, int num){
+static void lich(struct battle_char *origin, struct battle_char *target){
 }
 
-static void cyclops(struct battle_char *origin, struct battle_char **targets, int num){
+static void cyclops(struct battle_char *origin, struct battle_char *target){
 }
 
-static void zodiac(struct battle_char *origin, struct battle_char **targets, int num){
+static void zodiac(struct battle_char *origin, struct battle_char *target){
 }
 
-static void asura_draw(struct battle_char *origin, struct battle_char **targets, int num){
+static void asura_draw(struct battle_char *origin, struct battle_char *target){
 }
 
-static void koutetsu(struct battle_char *origin, struct battle_char **targets, int num){
+static void koutetsu(struct battle_char *origin, struct battle_char *target){
 }
 
-static void bizen_boat(struct battle_char *origin, struct battle_char **targets, int num){
+static void bizen_boat(struct battle_char *origin, struct battle_char *target){
 }
 
-static void murasame(struct battle_char *origin, struct battle_char **targets, int num){
+static void murasame(struct battle_char *origin, struct battle_char *target){
 }
 
-static void heavens_cloud(struct battle_char *origin, struct battle_char **targets, int num){
+static void heavens_cloud(struct battle_char *origin, struct battle_char *target){
 }
 
-static void kiyomori(struct battle_char *origin, struct battle_char **targets, int num){
+static void kiyomori(struct battle_char *origin, struct battle_char *target){
 }
 
-static void muramasa(struct battle_char *origin, struct battle_char **targets, int num){
+static void muramasa(struct battle_char *origin, struct battle_char *target){
 }
 
-static void kikuichimoji(struct battle_char *origin, struct battle_char **targets, int num){
+static void kikuichimoji(struct battle_char *origin, struct battle_char *target){
 }
 
-static void masamune(struct battle_char *origin, struct battle_char **targets, int num){
+static void masamune(struct battle_char *origin, struct battle_char *target){
 }
 
-static void chirijiraden(struct battle_char *origin, struct battle_char **targets, int num){
+static void chirijiraden(struct battle_char *origin, struct battle_char *target){
 }
 
-static void angel_song(struct battle_char *origin, struct battle_char **targets, int num){
+static void angel_song(struct battle_char *origin, struct battle_char *target){
 }
 
-static void life_song(struct battle_char *origin, struct battle_char **targets, int num){
+static void life_song(struct battle_char *origin, struct battle_char *target){
 }
 
-static void cheer_song(struct battle_char *origin, struct battle_char **targets, int num){
+static void cheer_song(struct battle_char *origin, struct battle_char *target){
 }
 
-static void battle_song(struct battle_char *origin, struct battle_char **targets, int num){
+static void battle_song(struct battle_char *origin, struct battle_char *target){
 }
 
-static void magic_song(struct battle_char *origin, struct battle_char **targets, int num){
+static void magic_song(struct battle_char *origin, struct battle_char *target){
 }
 
-static void nameless_song(struct battle_char *origin, struct battle_char **targets, int num){
+static void nameless_song(struct battle_char *origin, struct battle_char *target){
 }
 
-static void last_song(struct battle_char *origin, struct battle_char **targets, int num){
+static void last_song(struct battle_char *origin, struct battle_char *target){
 }
 
-static void witch_hunt(struct battle_char *origin, struct battle_char **targets, int num){
+static void witch_hunt(struct battle_char *origin, struct battle_char *target){
 }
 
-static void wiznaibus(struct battle_char *origin, struct battle_char **targets, int num){
+static void wiznaibus(struct battle_char *origin, struct battle_char *target){
 }
 
-static void slow_dance(struct battle_char *origin, struct battle_char **targets, int num){
+static void slow_dance(struct battle_char *origin, struct battle_char *target){
 }
 
-static void polka_polka(struct battle_char *origin, struct battle_char **targets, int num){
+static void polka_polka(struct battle_char *origin, struct battle_char *target){
 }
 
-static void disillusion(struct battle_char *origin, struct battle_char **targets, int num){
+static void disillusion(struct battle_char *origin, struct battle_char *target){
 }
 
-static void nameless_dance(struct battle_char *origin, struct battle_char **targets, int num){
+static void nameless_dance(struct battle_char *origin, struct battle_char *target){
 }
 
-static void last_dance(struct battle_char *origin, struct battle_char **targets, int num){
+static void last_dance(struct battle_char *origin, struct battle_char *target){
 }
 
-static void spin_fist(struct battle_char *origin, struct battle_char **targets, int num){
+static void spin_fist(struct battle_char *origin, struct battle_char *target){
 }
 
-static void repeating_fist(struct battle_char *origin, struct battle_char **targets, int num){
+static void repeating_fist(struct battle_char *origin, struct battle_char *target){
 }
 
-static void wave_fist(struct battle_char *origin, struct battle_char **targets, int num){
+static void wave_fist(struct battle_char *origin, struct battle_char *target){
 }
 
-static void earth_slash(struct battle_char *origin, struct battle_char **targets, int num){
+static void earth_slash(struct battle_char *origin, struct battle_char *target){
 }
 
-static void secret_fist(struct battle_char *origin, struct battle_char **targets, int num){
+static void secret_fist(struct battle_char *origin, struct battle_char *target){
 }
 
-static void stigma_magic(struct battle_char *origin, struct battle_char **targets, int num){
+static void stigma_magic(struct battle_char *origin, struct battle_char *target){
 }
 
-static void chakra(struct battle_char *origin, struct battle_char **targets, int num){
+static void chakra(struct battle_char *origin, struct battle_char *target){
 }
 
-static void revive(struct battle_char *origin, struct battle_char **targets, int num){
+static void revive(struct battle_char *origin, struct battle_char *target){
 }
 
-static void gil_taking(struct battle_char *origin, struct battle_char **targets, int num){
+static void gil_taking(struct battle_char *origin, struct battle_char *target){
 }
 
-static void steal_heart(struct battle_char *origin, struct battle_char **targets, int num){
+static void steal_heart(struct battle_char *origin, struct battle_char *target){
 }
 
-static void steal_helmet(struct battle_char *origin, struct battle_char **targets, int num){
+static void steal_helmet(struct battle_char *origin, struct battle_char *target){
 }
 
-static void steal_armor(struct battle_char *origin, struct battle_char **targets, int num){
+static void steal_armor(struct battle_char *origin, struct battle_char *target){
 }
 
-static void steal_shield(struct battle_char *origin, struct battle_char **targets, int num){
+static void steal_shield(struct battle_char *origin, struct battle_char *target){
 }
 
-static void steal_weapon(struct battle_char *origin, struct battle_char **targets, int num){
+static void steal_weapon(struct battle_char *origin, struct battle_char *target){
 }
 
-static void steal_accessry(struct battle_char *origin, struct battle_char **targets, int num){
+static void steal_accessry(struct battle_char *origin, struct battle_char *target){
 }
 
-static void steal_exp(struct battle_char *origin, struct battle_char **targets, int num){
+static void steal_exp(struct battle_char *origin, struct battle_char *target){
 }
 
-static void invitation(struct battle_char *origin, struct battle_char **targets, int num){
+static void invitation(struct battle_char *origin, struct battle_char *target){
 }
 
-static void persuade(struct battle_char *origin, struct battle_char **targets, int num){
+static void persuade(struct battle_char *origin, struct battle_char *target){
 }
 
-static void praise(struct battle_char *origin, struct battle_char **targets, int num){
+static void praise(struct battle_char *origin, struct battle_char *target){
 }
 
-static void threaten(struct battle_char *origin, struct battle_char **targets, int num){
+static void threaten(struct battle_char *origin, struct battle_char *target){
 }
 
-static void preach(struct battle_char *origin, struct battle_char **targets, int num){
+static void preach(struct battle_char *origin, struct battle_char *target){
 }
 
-static void solution(struct battle_char *origin, struct battle_char **targets, int num){
+static void solution(struct battle_char *origin, struct battle_char *target){
 }
 
-static void death_sentence(struct battle_char *origin, struct battle_char **targets, int num){
+static void death_sentence(struct battle_char *origin, struct battle_char *target){
 }
 
-static void negotiate(struct battle_char *origin, struct battle_char **targets, int num){
+static void negotiate(struct battle_char *origin, struct battle_char *target){
 }
 
-static void insult(struct battle_char *origin, struct battle_char **targets, int num){
+static void insult(struct battle_char *origin, struct battle_char *target){
 }
 
-static void mimic_daravon(struct battle_char *origin, struct battle_char **targets, int num){
+static void mimic_daravon(struct battle_char *origin, struct battle_char *target){
 }
 
-static void pitfall(struct battle_char *origin, struct battle_char **targets, int num){
+static void pitfall(struct battle_char *origin, struct battle_char *target){
 }
 
-static void water_ball(struct battle_char *origin, struct battle_char **targets, int num){
+static void water_ball(struct battle_char *origin, struct battle_char *target){
 }
 
-static void hell_ivy(struct battle_char *origin, struct battle_char **targets, int num){
+static void hell_ivy(struct battle_char *origin, struct battle_char *target){
 }
 
-static void carve_model(struct battle_char *origin, struct battle_char **targets, int num){
+static void carve_model(struct battle_char *origin, struct battle_char *target){
 }
 
-static void local_quake(struct battle_char *origin, struct battle_char **targets, int num){
+static void local_quake(struct battle_char *origin, struct battle_char *target){
 }
 
-static void kamaitachi(struct battle_char *origin, struct battle_char **targets, int num){
+static void kamaitachi(struct battle_char *origin, struct battle_char *target){
 }
 
-static void demon_fire(struct battle_char *origin, struct battle_char **targets, int num){
+static void demon_fire(struct battle_char *origin, struct battle_char *target){
 }
 
-static void quicksand(struct battle_char *origin, struct battle_char **targets, int num){
+static void quicksand(struct battle_char *origin, struct battle_char *target){
 }
 
-static void blizzard(struct battle_char *origin, struct battle_char **targets, int num){
+static void blizzard(struct battle_char *origin, struct battle_char *target){
 }
 
-static void gusty_wind(struct battle_char *origin, struct battle_char **targets, int num){
+static void gusty_wind(struct battle_char *origin, struct battle_char *target){
 }
 
-static void lava_ball(struct battle_char *origin, struct battle_char **targets, int num){
+static void lava_ball(struct battle_char *origin, struct battle_char *target){
 }
 
-static void head_break(struct battle_char *origin, struct battle_char **targets, int num){
+static void head_break(struct battle_char *origin, struct battle_char *target){
 }
 
-static void armor_break(struct battle_char *origin, struct battle_char **targets, int num){
+static void armor_break(struct battle_char *origin, struct battle_char *target){
 }
 
-static void shield_break(struct battle_char *origin, struct battle_char **targets, int num){
+static void shield_break(struct battle_char *origin, struct battle_char *target){
 }
 
-static void weapon_break(struct battle_char *origin, struct battle_char **targets, int num){
+static void weapon_break(struct battle_char *origin, struct battle_char *target){
 }
 
-static void magic_break(struct battle_char *origin, struct battle_char **targets, int num){
+static void magic_break(struct battle_char *origin, struct battle_char *target){
 }
 
-static void speed_break(struct battle_char *origin, struct battle_char **targets, int num){
+static void speed_break(struct battle_char *origin, struct battle_char *target){
 }
 
-static void power_break(struct battle_char *origin, struct battle_char **targets, int num){
+static void power_break(struct battle_char *origin, struct battle_char *target){
 }
 
-static void mind_break(struct battle_char *origin, struct battle_char **targets, int num){
+static void mind_break(struct battle_char *origin, struct battle_char *target){
 }
 
-static void accumulate(struct battle_char *origin, struct battle_char **targets, int num){
+static void accumulate(struct battle_char *origin, struct battle_char *target){
 }
 
-static void dash(struct battle_char *origin, struct battle_char **targets, int num){
+static void dash(struct battle_char *origin, struct battle_char *target){
 }
 
-static void throw_stone(struct battle_char *origin, struct battle_char **targets, int num){
+static void throw_stone(struct battle_char *origin, struct battle_char *target){
 }
 
-static void heal(struct battle_char *origin, struct battle_char **targets, int num){
+static void heal(struct battle_char *origin, struct battle_char *target){
 }
 
-static void yell(struct battle_char *origin, struct battle_char **targets, int num){
+static void yell(struct battle_char *origin, struct battle_char *target){
 }
 
-static void cheer_up(struct battle_char *origin, struct battle_char **targets, int num){
+static void cheer_up(struct battle_char *origin, struct battle_char *target){
 }
 
-static void wish(struct battle_char *origin, struct battle_char **targets, int num){
+static void wish(struct battle_char *origin, struct battle_char *target){
 }
 
-static void scream(struct battle_char *origin, struct battle_char **targets, int num){
+static void scream(struct battle_char *origin, struct battle_char *target){
 }
 
-static void ultima_guts(struct battle_char *origin, struct battle_char **targets, int num){
+static void ultima_guts(struct battle_char *origin, struct battle_char *target){
 }
 
-static void stasis_sword(struct battle_char *origin, struct battle_char **targets, int num){
+static void stasis_sword(struct battle_char *origin, struct battle_char *target){
 }
 
-static void split_punch(struct battle_char *origin, struct battle_char **targets, int num){
+static void split_punch(struct battle_char *origin, struct battle_char *target){
 }
 
-static void crush_punch(struct battle_char *origin, struct battle_char **targets, int num){
+static void crush_punch(struct battle_char *origin, struct battle_char *target){
 }
 
-static void lightning_stab(struct battle_char *origin, struct battle_char **targets, int num){
+static void lightning_stab(struct battle_char *origin, struct battle_char *target){
 }
 
-static void holy_explosion(struct battle_char *origin, struct battle_char **targets, int num){
+static void holy_explosion(struct battle_char *origin, struct battle_char *target){
 }
 
-static void shellbust_stab(struct battle_char *origin, struct battle_char **targets, int num){
+static void shellbust_stab(struct battle_char *origin, struct battle_char *target){
 }
 
-static void blastar_punch(struct battle_char *origin, struct battle_char **targets, int num){
+static void blastar_punch(struct battle_char *origin, struct battle_char *target){
 }
 
-static void hellcry_punch(struct battle_char *origin, struct battle_char **targets, int num){
+static void hellcry_punch(struct battle_char *origin, struct battle_char *target){
 }
 
-static void icewolf_bite(struct battle_char *origin, struct battle_char **targets, int num){
+static void icewolf_bite(struct battle_char *origin, struct battle_char *target){
 }
 
-static void dark_sword(struct battle_char *origin, struct battle_char **targets, int num){
+static void dark_sword(struct battle_char *origin, struct battle_char *target){
 }
 
-static void night_sword(struct battle_char *origin, struct battle_char **targets, int num){
+static void night_sword(struct battle_char *origin, struct battle_char *target){
 }
 
-static void dark_holy(struct battle_char *origin, struct battle_char **targets, int num){
+static void dark_holy(struct battle_char *origin, struct battle_char *target){
 }
 
-static void deathspell2(struct battle_char *origin, struct battle_char **targets, int num){
+static void deathspell2(struct battle_char *origin, struct battle_char *target){
 }
 
-static void galaxy_stop(struct battle_char *origin, struct battle_char **targets, int num){
+static void galaxy_stop(struct battle_char *origin, struct battle_char *target){
 }
 
-static void heaven_thunder(struct battle_char *origin, struct battle_char **targets, int num){
+static void heaven_thunder(struct battle_char *origin, struct battle_char *target){
 }
 
-static void asura_truth(struct battle_char *origin, struct battle_char **targets, int num){
+static void asura_truth(struct battle_char *origin, struct battle_char *target){
 }
 
-static void diamond_sword(struct battle_char *origin, struct battle_char **targets, int num){
+static void diamond_sword(struct battle_char *origin, struct battle_char *target){
 }
 
-static void hydragon_pit(struct battle_char *origin, struct battle_char **targets, int num){
+static void hydragon_pit(struct battle_char *origin, struct battle_char *target){
 }
 
-static void space_storage(struct battle_char *origin, struct battle_char **targets, int num){
+static void space_storage(struct battle_char *origin, struct battle_char *target){
 }
 
-static void sky_demon(struct battle_char *origin, struct battle_char **targets, int num){
+static void sky_demon(struct battle_char *origin, struct battle_char *target){
 }
 
-static void heaven_bltback(struct battle_char *origin, struct battle_char **targets, int num){
+static void heaven_bltback(struct battle_char *origin, struct battle_char *target){
 }
 
-static void asura_back(struct battle_char *origin, struct battle_char **targets, int num){
+static void asura_back(struct battle_char *origin, struct battle_char *target){
 }
 
-static void dia_swd_back(struct battle_char *origin, struct battle_char **targets, int num){
+static void dia_swd_back(struct battle_char *origin, struct battle_char *target){
 }
 
-static void dragon_pit_back(struct battle_char *origin, struct battle_char **targets, int num){
+static void dragon_pit_back(struct battle_char *origin, struct battle_char *target){
 }
 
-static void space_str_back(struct battle_char *origin, struct battle_char **targets, int num){
+static void space_str_back(struct battle_char *origin, struct battle_char *target){
 }
 
-static void sky_demon_back(struct battle_char *origin, struct battle_char **targets, int num){
+static void sky_demon_back(struct battle_char *origin, struct battle_char *target){
 }
 
-static void seal(struct battle_char *origin, struct battle_char **targets, int num){
+static void seal(struct battle_char *origin, struct battle_char *target){
 }
 
-static void shadow_stitch(struct battle_char *origin, struct battle_char **targets, int num){
+static void shadow_stitch(struct battle_char *origin, struct battle_char *target){
 }
 
-static void stop_bracelet(struct battle_char *origin, struct battle_char **targets, int num){
+static void stop_bracelet(struct battle_char *origin, struct battle_char *target){
 }
 
-static void shock(struct battle_char *origin, struct battle_char **targets, int num){
+static void shock(struct battle_char *origin, struct battle_char *target){
 }
 
-static void difference(struct battle_char *origin, struct battle_char **targets, int num){
+static void difference(struct battle_char *origin, struct battle_char *target){
 }
 
-static void chicken_race(struct battle_char *origin, struct battle_char **targets, int num){
+static void chicken_race(struct battle_char *origin, struct battle_char *target){
 }
 
-static void hold_tight(struct battle_char *origin, struct battle_char **targets, int num){
+static void hold_tight(struct battle_char *origin, struct battle_char *target){
 }
 
-static void darkness(struct battle_char *origin, struct battle_char **targets, int num){
+static void darkness(struct battle_char *origin, struct battle_char *target){
 }
 
-static void lose_voice(struct battle_char *origin, struct battle_char **targets, int num){
+static void lose_voice(struct battle_char *origin, struct battle_char *target){
 }
 
-static void loss(struct battle_char *origin, struct battle_char **targets, int num){
+static void loss(struct battle_char *origin, struct battle_char *target){
 }
 
-static void spell(struct battle_char *origin, struct battle_char **targets, int num){
+static void spell(struct battle_char *origin, struct battle_char *target){
 }
 
-static void nightmare(struct battle_char *origin, struct battle_char **targets, int num){
+static void nightmare(struct battle_char *origin, struct battle_char *target){
 }
 
-static void death_cold(struct battle_char *origin, struct battle_char **targets, int num){
+static void death_cold(struct battle_char *origin, struct battle_char *target){
 }
 
-static void magic_ruin(struct battle_char *origin, struct battle_char **targets, int num){
+static void magic_ruin(struct battle_char *origin, struct battle_char *target){
 }
 
-static void speed_ruin(struct battle_char *origin, struct battle_char **targets, int num){
+static void speed_ruin(struct battle_char *origin, struct battle_char *target){
 }
 
-static void power_ruin(struct battle_char *origin, struct battle_char **targets, int num){
+static void power_ruin(struct battle_char *origin, struct battle_char *target){
 }
 
-static void mind_ruin(struct battle_char *origin, struct battle_char **targets, int num){
+static void mind_ruin(struct battle_char *origin, struct battle_char *target){
 }
 
-static void blood_suck(struct battle_char *origin, struct battle_char **targets, int num){
+static void blood_suck(struct battle_char *origin, struct battle_char *target){
 }
 
-static void allure(struct battle_char *origin, struct battle_char **targets, int num){
+static void allure(struct battle_char *origin, struct battle_char *target){
 }
 
-static void bio(struct battle_char *origin, struct battle_char **targets, int num){
+static void bio(struct battle_char *origin, struct battle_char *target){
 	// May add either dark, poison, oil
 }
 
-static void bio2(struct battle_char *origin, struct battle_char **targets, int num){
+static void bio2(struct battle_char *origin, struct battle_char *target){
 	// Adds either frog, slow, silence, petrify
 }
 
-static void bio3(struct battle_char *origin, struct battle_char **targets, int num){
+static void bio3(struct battle_char *origin, struct battle_char *target){
 	// May add either dead, undead, petrify
 }
 
-static void mbarrier(struct battle_char *origin, struct battle_char **targets, int num){
+static void mbarrier(struct battle_char *origin, struct battle_char *target){
 }
 
-static void leg_aim(struct battle_char *origin, struct battle_char **targets, int num){
+static void leg_aim(struct battle_char *origin, struct battle_char *target){
 }
 
-static void arm_aim(struct battle_char *origin, struct battle_char **targets, int num){
+static void arm_aim(struct battle_char *origin, struct battle_char *target){
 }
 
-static void seal_evil(struct battle_char *origin, struct battle_char **targets, int num){
+static void seal_evil(struct battle_char *origin, struct battle_char *target){
 }
 
-static void melt(struct battle_char *origin, struct battle_char **targets, int num){
+static void melt(struct battle_char *origin, struct battle_char *target){
 }
 
-static void tornado(struct battle_char *origin, struct battle_char **targets, int num){
+static void tornado(struct battle_char *origin, struct battle_char *target){
 }
 
-static void quake(struct battle_char *origin, struct battle_char **targets, int num){
+static void quake(struct battle_char *origin, struct battle_char *target){
 }
 
-static void toad2(struct battle_char *origin, struct battle_char **targets, int num){
+static void toad2(struct battle_char *origin, struct battle_char *target){
 }
 
-static void gravi2(struct battle_char *origin, struct battle_char **targets, int num){
+static void gravi2(struct battle_char *origin, struct battle_char *target){
 }
 
-static void flare2(struct battle_char *origin, struct battle_char **targets, int num){
+static void flare2(struct battle_char *origin, struct battle_char *target){
 }
 
-static void blind2(struct battle_char *origin, struct battle_char **targets, int num){
+static void blind2(struct battle_char *origin, struct battle_char *target){
 }
 
-static void small_bomb_grenade(struct battle_char *origin, struct battle_char **targets, int num){
+static void small_bomb_grenade(struct battle_char *origin, struct battle_char *target){
 }
 
-static void small_bomb_explosive(struct battle_char *origin, struct battle_char **targets, int num){
+static void small_bomb_explosive(struct battle_char *origin, struct battle_char *target){
 }
 
-static void confuse2(struct battle_char *origin, struct battle_char **targets, int num){
+static void confuse2(struct battle_char *origin, struct battle_char *target){
 }
 
-static void sleep2(struct battle_char *origin, struct battle_char **targets, int num){
+static void sleep2(struct battle_char *origin, struct battle_char *target){
 }
 
-static void ultima_ultimate(struct battle_char *origin, struct battle_char **targets, int num){
+static void ultima_ultimate(struct battle_char *origin, struct battle_char *target){
 }
 
-static void mute(struct battle_char *origin, struct battle_char **targets, int num){
+static void mute(struct battle_char *origin, struct battle_char *target){
 }
 
-static void despair2(struct battle_char *origin, struct battle_char **targets, int num){
+static void despair2(struct battle_char *origin, struct battle_char *target){
 }
 
-static void return2(struct battle_char *origin, struct battle_char **targets, int num){
+static void return2(struct battle_char *origin, struct battle_char *target){
 }
 
-static void blind_sword(struct battle_char *origin, struct battle_char **targets, int num){
+static void blind_sword(struct battle_char *origin, struct battle_char *target){
 }
 
-static void aspel(struct battle_char *origin, struct battle_char **targets, int num){
+static void aspel(struct battle_char *origin, struct battle_char *target){
 }
 
-static void drain(struct battle_char *origin, struct battle_char **targets, int num){
+static void drain(struct battle_char *origin, struct battle_char *target){
 }
 
-static void faith(struct battle_char *origin, struct battle_char **targets, int num){
+static void faith(struct battle_char *origin, struct battle_char *target){
 }
 
-static void innocent(struct battle_char *origin, struct battle_char **targets, int num){
+static void innocent(struct battle_char *origin, struct battle_char *target){
 }
 
-static void zombie_sword(struct battle_char *origin, struct battle_char **targets, int num){
+static void zombie_sword(struct battle_char *origin, struct battle_char *target){
 }
 
-static void silence(struct battle_char *origin, struct battle_char **targets, int num){
+static void silence(struct battle_char *origin, struct battle_char *target){
 }
 
-static void berserk(struct battle_char *origin, struct battle_char **targets, int num){
+static void berserk(struct battle_char *origin, struct battle_char *target){
 }
 
-static void chicken(struct battle_char *origin, struct battle_char **targets, int num){
+static void chicken(struct battle_char *origin, struct battle_char *target){
 }
 
-static void confuse(struct battle_char *origin, struct battle_char **targets, int num){
+static void confuse(struct battle_char *origin, struct battle_char *target){
 }
 
-static void despair(struct battle_char *origin, struct battle_char **targets, int num){
+static void despair(struct battle_char *origin, struct battle_char *target){
 }
 
-static void magic_sleep_sword(struct battle_char *origin, struct battle_char **targets, int num){
+static void magic_sleep_sword(struct battle_char *origin, struct battle_char *target){
 }
 
 // The magic sword ability: break. It does not break swords.
-static void break_sword(struct battle_char *origin, struct battle_char **targets, int num){
+static void break_sword(struct battle_char *origin, struct battle_char *target){
 }
 
-static void ice_bracelet(struct battle_char *origin, struct battle_char **targets, int num){
+static void ice_bracelet(struct battle_char *origin, struct battle_char *target){
 }
 
-static void fire_bracelet(struct battle_char *origin, struct battle_char **targets, int num){
+static void fire_bracelet(struct battle_char *origin, struct battle_char *target){
 }
 
-static void thnder_brcelet(struct battle_char *origin, struct battle_char **targets, int num){
+static void thnder_brcelet(struct battle_char *origin, struct battle_char *target){
 }
 
-static void dragon_tame(struct battle_char *origin, struct battle_char **targets, int num){
+static void dragon_tame(struct battle_char *origin, struct battle_char *target){
 }
 
-static void dragon_care(struct battle_char *origin, struct battle_char **targets, int num){
+static void dragon_care(struct battle_char *origin, struct battle_char *target){
 }
 
-static void dragon_powerup(struct battle_char *origin, struct battle_char **targets, int num){
+static void dragon_powerup(struct battle_char *origin, struct battle_char *target){
 }
 
-static void dragon_levelup(struct battle_char *origin, struct battle_char **targets, int num){
+static void dragon_levelup(struct battle_char *origin, struct battle_char *target){
 }
 
-static void holy_bracelet(struct battle_char *origin, struct battle_char **targets, int num){
+static void holy_bracelet(struct battle_char *origin, struct battle_char *target){
 }
 
-static void braver(struct battle_char *origin, struct battle_char **targets, int num){
+static void braver(struct battle_char *origin, struct battle_char *target){
 }
 
-static void blade_beam(struct battle_char *origin, struct battle_char **targets, int num){
+static void blade_beam(struct battle_char *origin, struct battle_char *target){
 }
 
-static void climhazzard(struct battle_char *origin, struct battle_char **targets, int num){
+static void climhazzard(struct battle_char *origin, struct battle_char *target){
 }
 
-static void meteorain(struct battle_char *origin, struct battle_char **targets, int num){
+static void meteorain(struct battle_char *origin, struct battle_char *target){
 }
 
-static void finish_touch(struct battle_char *origin, struct battle_char **targets, int num){
+static void finish_touch(struct battle_char *origin, struct battle_char *target){
 }
 
-static void omnislash(struct battle_char *origin, struct battle_char **targets, int num){
+static void omnislash(struct battle_char *origin, struct battle_char *target){
 }
 
-static void cherry_blossom(struct battle_char *origin, struct battle_char **targets, int num){
+static void cherry_blossom(struct battle_char *origin, struct battle_char *target){
 }
 
-static void choco_attack(struct battle_char *origin, struct battle_char **targets, int num){
+static void choco_attack(struct battle_char *origin, struct battle_char *target){
 }
 
-static void choco_ball(struct battle_char *origin, struct battle_char **targets, int num){
+static void choco_ball(struct battle_char *origin, struct battle_char *target){
 }
 
-static void choco_meteor(struct battle_char *origin, struct battle_char **targets, int num){
+static void choco_meteor(struct battle_char *origin, struct battle_char *target){
 }
 
-static void choco_esuna(struct battle_char *origin, struct battle_char **targets, int num){
+static void choco_esuna(struct battle_char *origin, struct battle_char *target){
 }
 
-static void choco_cure(struct battle_char *origin, struct battle_char **targets, int num){
+static void choco_cure(struct battle_char *origin, struct battle_char *target){
 }
 
-static void tackle(struct battle_char *origin, struct battle_char **targets, int num){
+static void tackle(struct battle_char *origin, struct battle_char *target){
 }
 
-static void goblin_punch(struct battle_char *origin, struct battle_char **targets, int num){
+static void goblin_punch(struct battle_char *origin, struct battle_char *target){
 }
 
-static void turn_punch(struct battle_char *origin, struct battle_char **targets, int num){
+static void turn_punch(struct battle_char *origin, struct battle_char *target){
 }
 
-static void eye_gouge(struct battle_char *origin, struct battle_char **targets, int num){
+static void eye_gouge(struct battle_char *origin, struct battle_char *target){
 }
 
-static void mutilate(struct battle_char *origin, struct battle_char **targets, int num){
+static void mutilate(struct battle_char *origin, struct battle_char *target){
 }
 
-static void small_bomb_bomb(struct battle_char *origin, struct battle_char **targets, int num){
+static void small_bomb_bomb(struct battle_char *origin, struct battle_char *target){
 }
 
-static void flame_attack(struct battle_char *origin, struct battle_char **targets, int num){
+static void flame_attack(struct battle_char *origin, struct battle_char *target){
 }
 
-static void spark(struct battle_char *origin, struct battle_char **targets, int num){
+static void spark(struct battle_char *origin, struct battle_char *target){
 }
 
-static void scratch(struct battle_char *origin, struct battle_char **targets, int num){
+static void scratch(struct battle_char *origin, struct battle_char *target){
 }
 
-static void cat_kick(struct battle_char *origin, struct battle_char **targets, int num){
+static void cat_kick(struct battle_char *origin, struct battle_char *target){
 }
 
-static void blaster(struct battle_char *origin, struct battle_char **targets, int num){
+static void blaster(struct battle_char *origin, struct battle_char *target){
 }
 
-static void poison_nail(struct battle_char *origin, struct battle_char **targets, int num){
+static void poison_nail(struct battle_char *origin, struct battle_char *target){
 }
 
-static void blood_suck_coeurl(struct battle_char *origin, struct battle_char **targets, int num){
+static void blood_suck_coeurl(struct battle_char *origin, struct battle_char *target){
 }
 
-static void black_ink(struct battle_char *origin, struct battle_char **targets, int num){
+static void black_ink(struct battle_char *origin, struct battle_char *target){
 }
 
-static void odd_soundwave(struct battle_char *origin, struct battle_char **targets, int num){
+static void odd_soundwave(struct battle_char *origin, struct battle_char *target){
 }
 
-static void mind_blast(struct battle_char *origin, struct battle_char **targets, int num){
+static void mind_blast(struct battle_char *origin, struct battle_char *target){
 }
 
-static void level_blast(struct battle_char *origin, struct battle_char **targets, int num){
+static void level_blast(struct battle_char *origin, struct battle_char *target){
 }
 
-static void knife_hand(struct battle_char *origin, struct battle_char **targets, int num){
+static void knife_hand(struct battle_char *origin, struct battle_char *target){
 }
 
-static void thunder_soul(struct battle_char *origin, struct battle_char **targets, int num){
+static void thunder_soul(struct battle_char *origin, struct battle_char *target){
 }
 
-static void aqua_soul(struct battle_char *origin, struct battle_char **targets, int num){
+static void aqua_soul(struct battle_char *origin, struct battle_char *target){
 }
 
-static void ice_soul(struct battle_char *origin, struct battle_char **targets, int num){
+static void ice_soul(struct battle_char *origin, struct battle_char *target){
 }
 
-static void wind_soul(struct battle_char *origin, struct battle_char **targets, int num){
+static void wind_soul(struct battle_char *origin, struct battle_char *target){
 }
 
-static void throw_spirit(struct battle_char *origin, struct battle_char **targets, int num){
+static void throw_spirit(struct battle_char *origin, struct battle_char *target){
 }
 
-static void zombie_touch(struct battle_char *origin, struct battle_char **targets, int num){
+static void zombie_touch(struct battle_char *origin, struct battle_char *target){
 }
 
-static void sleep_touch(struct battle_char *origin, struct battle_char **targets, int num){
+static void sleep_touch(struct battle_char *origin, struct battle_char *target){
 }
 
-static void drain_touch(struct battle_char *origin, struct battle_char **targets, int num){
+static void drain_touch(struct battle_char *origin, struct battle_char *target){
 }
 
-static void grease_touch(struct battle_char *origin, struct battle_char **targets, int num){
+static void grease_touch(struct battle_char *origin, struct battle_char *target){
 }
 
-static void wing_attack(struct battle_char *origin, struct battle_char **targets, int num){
+static void wing_attack(struct battle_char *origin, struct battle_char *target){
 }
 
-static void look_of_devil(struct battle_char *origin, struct battle_char **targets, int num){
+static void look_of_devil(struct battle_char *origin, struct battle_char *target){
 }
 
-static void look_of_fright(struct battle_char *origin, struct battle_char **targets, int num){
+static void look_of_fright(struct battle_char *origin, struct battle_char *target){
 }
 
-static void circle(struct battle_char *origin, struct battle_char **targets, int num){
+static void circle(struct battle_char *origin, struct battle_char *target){
 }
 
-static void death_sentence_ahriman(struct battle_char *origin, struct battle_char **targets, int num){
+static void death_sentence_ahriman(struct battle_char *origin, struct battle_char *target){
 }
 
-static void scratch_up(struct battle_char *origin, struct battle_char **targets, int num){
+static void scratch_up(struct battle_char *origin, struct battle_char *target){
 }
 
-static void beak(struct battle_char *origin, struct battle_char **targets, int num){
+static void beak(struct battle_char *origin, struct battle_char *target){
 }
 
-static void shine_lover(struct battle_char *origin, struct battle_char **targets, int num){
+static void shine_lover(struct battle_char *origin, struct battle_char *target){
 }
 
-static void feather_bomb(struct battle_char *origin, struct battle_char **targets, int num){
+static void feather_bomb(struct battle_char *origin, struct battle_char *target){
 }
 
-static void beaking(struct battle_char *origin, struct battle_char **targets, int num){
+static void beaking(struct battle_char *origin, struct battle_char *target){
 }
 
-static void straight_dash(struct battle_char *origin, struct battle_char **targets, int num){
+static void straight_dash(struct battle_char *origin, struct battle_char *target){
 }
 
-static void nose_bracelet(struct battle_char *origin, struct battle_char **targets, int num){
+static void nose_bracelet(struct battle_char *origin, struct battle_char *target){
 }
 
-static void oink(struct battle_char *origin, struct battle_char **targets, int num){
+static void oink(struct battle_char *origin, struct battle_char *target){
 }
 
-static void please_eat(struct battle_char *origin, struct battle_char **targets, int num){
+static void please_eat(struct battle_char *origin, struct battle_char *target){
 }
 
-static void leaf_dance(struct battle_char *origin, struct battle_char **targets, int num){
+static void leaf_dance(struct battle_char *origin, struct battle_char *target){
 }
 
-static void protect_spirit(struct battle_char *origin, struct battle_char **targets, int num){
+static void protect_spirit(struct battle_char *origin, struct battle_char *target){
 }
 
-static void clam_spirit(struct battle_char *origin, struct battle_char **targets, int num){
+static void clam_spirit(struct battle_char *origin, struct battle_char *target){
 }
 
-static void spirit_of_life(struct battle_char *origin, struct battle_char **targets, int num){
+static void spirit_of_life(struct battle_char *origin, struct battle_char *target){
 }
 
-static void magic_spirit(struct battle_char *origin, struct battle_char **targets, int num){
+static void magic_spirit(struct battle_char *origin, struct battle_char *target){
 }
 
-static void shake_off(struct battle_char *origin, struct battle_char **targets, int num){
+static void shake_off(struct battle_char *origin, struct battle_char *target){
 }
 
-static void wave_around(struct battle_char *origin, struct battle_char **targets, int num){
+static void wave_around(struct battle_char *origin, struct battle_char *target){
 }
 
-static void mimic_titan(struct battle_char *origin, struct battle_char **targets, int num){
+static void mimic_titan(struct battle_char *origin, struct battle_char *target){
 }
 
-static void gather_power(struct battle_char *origin, struct battle_char **targets, int num){
+static void gather_power(struct battle_char *origin, struct battle_char *target){
 }
 
-static void blow_fire(struct battle_char *origin, struct battle_char **targets, int num){
+static void blow_fire(struct battle_char *origin, struct battle_char *target){
 }
 
-static void tentacle(struct battle_char *origin, struct battle_char **targets, int num){
+static void tentacle(struct battle_char *origin, struct battle_char *target){
 }
 
-static void lick(struct battle_char *origin, struct battle_char **targets, int num){
+static void lick(struct battle_char *origin, struct battle_char *target){
 }
 
-static void goo(struct battle_char *origin, struct battle_char **targets, int num){
+static void goo(struct battle_char *origin, struct battle_char *target){
 }
 
-static void bad_bracelet(struct battle_char *origin, struct battle_char **targets, int num){
+static void bad_bracelet(struct battle_char *origin, struct battle_char *target){
 }
 
-static void moldball_virus(struct battle_char *origin, struct battle_char **targets, int num){
+static void moldball_virus(struct battle_char *origin, struct battle_char *target){
 }
 
-static void stab_up(struct battle_char *origin, struct battle_char **targets, int num){
+static void stab_up(struct battle_char *origin, struct battle_char *target){
 }
 
-static void sudden_cry(struct battle_char *origin, struct battle_char **targets, int num){
+static void sudden_cry(struct battle_char *origin, struct battle_char *target){
 }
 
-static void hurricane(struct battle_char *origin, struct battle_char **targets, int num){
+static void hurricane(struct battle_char *origin, struct battle_char *target){
 }
 
-static void ulmaguest(struct battle_char *origin, struct battle_char **targets, int num){
+static void ulmaguest(struct battle_char *origin, struct battle_char *target){
 }
 
-static void giga_flare(struct battle_char *origin, struct battle_char **targets, int num){
+static void giga_flare(struct battle_char *origin, struct battle_char *target){
 }
 
-static void dash_dragon(struct battle_char *origin, struct battle_char **targets, int num){
+static void dash_dragon(struct battle_char *origin, struct battle_char *target){
 }
 
-static void tail_swing(struct battle_char *origin, struct battle_char **targets, int num){
+static void tail_swing(struct battle_char *origin, struct battle_char *target){
 }
 
-static void ice_bracelet_dragon(struct battle_char *origin, struct battle_char **targets, int num){
+static void ice_bracelet_dragon(struct battle_char *origin, struct battle_char *target){
 }
 
-static void fire_bracelet_dragon(struct battle_char *origin, struct battle_char **targets, int num){
+static void fire_bracelet_dragon(struct battle_char *origin, struct battle_char *target){
 }
 
-static void thnder_brcelet_dragon(struct battle_char *origin, struct battle_char **targets, int num){
+static void thnder_brcelet_dragon(struct battle_char *origin, struct battle_char *target){
 }
 
-static void triple_attack(struct battle_char *origin, struct battle_char **targets, int num){
+static void triple_attack(struct battle_char *origin, struct battle_char *target){
 }
 
-static void triple_bracelet(struct battle_char *origin, struct battle_char **targets, int num){
+static void triple_bracelet(struct battle_char *origin, struct battle_char *target){
 }
 
-static void triple_thunder(struct battle_char *origin, struct battle_char **targets, int num){
+static void triple_thunder(struct battle_char *origin, struct battle_char *target){
 }
 
-static void triple_flame(struct battle_char *origin, struct battle_char **targets, int num){
+static void triple_flame(struct battle_char *origin, struct battle_char *target){
 }
 
-static void dark_whisper(struct battle_char *origin, struct battle_char **targets, int num){
+static void dark_whisper(struct battle_char *origin, struct battle_char *target){
 }
 
-static void snake_carrier(struct battle_char *origin, struct battle_char **targets, int num){
+static void snake_carrier(struct battle_char *origin, struct battle_char *target){
 }
 
-static void poison_frog(struct battle_char *origin, struct battle_char **targets, int num){
+static void poison_frog(struct battle_char *origin, struct battle_char *target){
 }
 
-static void midgar_swarm(struct battle_char *origin, struct battle_char **targets, int num){
+static void midgar_swarm(struct battle_char *origin, struct battle_char *target){
 }
 
-static void lifebreak(struct battle_char *origin, struct battle_char **targets, int num){
+static void lifebreak(struct battle_char *origin, struct battle_char *target){
 }
 
-static void nanoflare(struct battle_char *origin, struct battle_char **targets, int num){
+static void nanoflare(struct battle_char *origin, struct battle_char *target){
 }
 
-static void grand_cross(struct battle_char *origin, struct battle_char **targets, int num){
+static void grand_cross(struct battle_char *origin, struct battle_char *target){
 }
 
-static void destroy(struct battle_char *origin, struct battle_char **targets, int num){
+static void destroy(struct battle_char *origin, struct battle_char *target){
 }
 
-static void compress(struct battle_char *origin, struct battle_char **targets, int num){
+static void compress(struct battle_char *origin, struct battle_char *target){
 }
 
-static void dispose(struct battle_char *origin, struct battle_char **targets, int num){
+static void dispose(struct battle_char *origin, struct battle_char *target){
 }
 
-static void crush(struct battle_char *origin, struct battle_char **targets, int num){
+static void crush(struct battle_char *origin, struct battle_char *target){
 }
 
-static void energy(struct battle_char *origin, struct battle_char **targets, int num){
+static void energy(struct battle_char *origin, struct battle_char *target){
 }
 
-static void parasite(struct battle_char *origin, struct battle_char **targets, int num){
+static void parasite(struct battle_char *origin, struct battle_char *target){
 }
 
-static void attack(struct battle_char *s, struct battle_char **d, int num){
+static void attack(struct battle_char *s, struct battle_char *d){
 	uint16_t pri=s->ch->eq[EQ_WEAPON];
 	uint16_t sec=s->ch->eq[EQ_OFFHAND];
 	uint16_t dmg;
@@ -1020,31 +1229,31 @@ static void attack(struct battle_char *s, struct battle_char **d, int num){
 	thisact.findex=0;
 	thisact.f=attack;
 	thisact.origin=s;
-	thisact.target.x=d[0]->x;
-	thisact.target.y=d[0]->y;
+	thisact.target.x=d->x;
+	thisact.target.y=d->y;
 	thisact.target.width=1;
 	thisact.target.vertical=3;
 	thisact.target.dir=0;
 
-	if(evaded(d[0],AFLAG_PHYSICAL,get_attack_dir(s,d[0]),100))
+	if(evaded(d,AFLAG_PHYSICAL,get_attack_dir(s,d),100))
 		return;
 
-	dmg=weapon_damage[EQ_TYPE(pri)](&weapons[EQ_TYPE(pri)][pri>>6],s,d[0]);
+	dmg=weapon_damage[EQ_TYPE(pri)](&weapons[EQ_TYPE(pri)][pri>>6],s,d);
 
 	if(sec==0 && s->ch->support==SFLAG_TWO_HANDS)
 		dmg<<=1;
 
 	else if(sec>0 && EQ_TYPE(sec)!=EQO_SHIELD) // Implied SFLAG_TWO_SWORDS. check it?
-		dmg+=weapon_damage[EQ_TYPE(sec)](&weapons[EQ_TYPE(sec)][sec>>6],s,d[0]);
+		dmg+=weapon_damage[EQ_TYPE(sec)](&weapons[EQ_TYPE(sec)][sec>>6],s,d);
 	
-	deal_damage(d[0],dmg);
+	deal_damage(d,dmg);
 
 	last_action.preresolve=&thisact;
 	last_action.damage=dmg;
 	last_action.mp_used=0;
 	last_action.item=0;
 
-	react(s,d,num);
+	react(s,&d,1);
 }
 
 

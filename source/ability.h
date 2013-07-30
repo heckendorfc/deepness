@@ -65,6 +65,7 @@
 #define SFLAG_MONSTER_TALK 27
 #define SFLAG_TRAIN 28
 
+#define ELEM_NEUTRAL 0
 #define ELEM_FIRE 1
 #define ELEM_ICE 2
 #define ELEM_LIGHTNING 3
@@ -118,6 +119,13 @@ struct support_ability{
 	uint16_t jp;
 	uint16_t flags;
 };
+
+uint8_t mod1(struct battle_char *origin, struct battle_char *target, uint8_t var);
+uint16_t mod2(struct battle_char *attacker, struct battle_char *defender, uint16_t xa);
+uint8_t mod3(struct battle_char *origin, struct battle_char *target, uint8_t var);
+uint8_t mod4(struct battle_char *origin, struct battle_char *target, uint8_t var);
+int16_t mod5(struct battle_char *origin, struct battle_char *target, uint8_t var, uint8_t success);
+uint8_t mod6(struct battle_char *origin, struct battle_char *target, uint8_t var);
 
 extern const struct ability claction[NUM_CLASS][NUM_ACTION_PER_ABILITY];
 extern const uint8_t num_support[];

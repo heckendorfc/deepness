@@ -66,71 +66,40 @@ const int cleqm []={
 		CLBIT(CL_WIZARD),
 };
 
-static int is_critical_hit(struct battle_char *attacker){
-	if(get_random(0,20)==0)
-		return 1;
-	return 0;
-}
-
-static int get_dmg_mod(int xa, struct battle_char *attacker, struct battle_char *defender){
-	if(is_critical_hit(attacker))
-		xa+=get_random(1,xa)-1;
-// TODO: add Strengthen bonus here
-	if(attacker->status[STATUS_ATTACKUP])
-		xa=xa*4/3;
-	if(attacker->ch->eq[EQ_WEAPON]==0 && attacker->ch->support==SFLAG_MARTIAL_ARTS)
-		xa=xa*3/2;
-	if(attacker->status[STATUS_BERSERK])
-		xa=xa*3/2;
-	if(defender->status[STATUS_DEFENSEUP])
-		xa=xa*2/3;
-	if(defender->status[STATUS_PROTECT])
-		xa=xa*2/3;
-	if(defender->status[STATUS_CHARGING])
-		xa=xa*3/2;
-	if(defender->status[STATUS_SLEEPING])
-		xa=xa*3/2;
-	if(defender->status[STATUS_POLYMORPH])
-		xa=xa*3/2;
-// TODO: add zodiac modifiers here
-
-	return xa;
-}
-
 static int hands_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
-	return attacker->pa*get_dmg_mod(attacker->pa*attacker->brave/100,attacker,defender);
+	return attacker->pa*mod2(attacker,defender,attacker->pa*attacker->brave/100);
 }
 
 static int axe_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
-	return item->wp*get_dmg_mod(get_random(1,attacker->pa),attacker,defender);
+	return item->wp*mod2(attacker,defender,get_random(1,attacker->pa));
 }
 
 static int bag_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
-	return item->wp*get_dmg_mod(get_random(1,attacker->pa),attacker,defender);
+	return item->wp*mod2(attacker,defender,get_random(1,attacker->pa));
 }
 
 static int bow_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
-	return item->wp*get_dmg_mod((attacker->pa+attacker->speed)/2,attacker,defender);
+	return item->wp*mod2(attacker,defender,(attacker->pa+attacker->speed)/2);
 }
 
 static int cloth_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
-	return get_dmg_mod((attacker->pa+attacker->ma)/2,attacker,defender)*item->wp;
+	return mod2(attacker,defender,(attacker->pa+attacker->ma)/2)*item->wp;
 }
 
 static int crossbow_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
-	return item->wp*get_dmg_mod(attacker->pa,attacker,defender);
+	return item->wp*mod2(attacker,defender,attacker->pa);
 }
 
 static int dictionary_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
-	return get_dmg_mod((attacker->pa+attacker->ma)/2,attacker,defender)*item->wp;
+	return mod2(attacker,defender,(attacker->pa+attacker->ma)/2)*item->wp;
 }
 
 static int flail_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
-	return item->wp*get_dmg_mod(get_random(1,attacker->pa),attacker,defender);
+	return item->wp*mod2(attacker,defender,get_random(1,attacker->pa));
 }
 
 static int gun_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
-	return item->wp*get_dmg_mod(item->wp,attacker,defender);
+	return item->wp*mod2(attacker,defender,item->wp);
 }
 
 static int spellgun_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
@@ -148,43 +117,43 @@ static int spellgun_dmg(const struct eq_item *item, struct battle_char *attacker
 }
 
 static int harp_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
-	return get_dmg_mod((attacker->pa+attacker->ma)/2,attacker,defender)*item->wp;
+	return mod2(attacker,defender,(attacker->pa+attacker->ma)/2)*item->wp;
 }
 
 static int katana_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
-	return get_dmg_mod((attacker->brave/100)*attacker->pa,attacker,defender)*item->wp;
+	return mod2(attacker,defender,(attacker->brave/100)*attacker->pa)*item->wp;
 }
 
 static int knightsword_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
-	return get_dmg_mod((attacker->brave/100)*attacker->pa,attacker,defender)*item->wp;
+	return mod2(attacker,defender,(attacker->brave/100)*attacker->pa)*item->wp;
 }
 
 static int knife_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
-	return get_dmg_mod((attacker->pa+attacker->speed)/2,attacker,defender)*item->wp;
+	return mod2(attacker,defender,(attacker->pa+attacker->speed)/2)*item->wp;
 }
 
 static int ninjasword_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
-	return get_dmg_mod((attacker->pa+attacker->speed)/2,attacker,defender)*item->wp;
+	return mod2(attacker,defender,(attacker->pa+attacker->speed)/2)*item->wp;
 }
 
 static int rod_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
-	return get_dmg_mod(attacker->pa,attacker,defender)*item->wp;
+	return mod2(attacker,defender,attacker->pa)*item->wp;
 }
 
 static int spear_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
-	return get_dmg_mod(attacker->pa,attacker,defender)*item->wp;
+	return mod2(attacker,defender,attacker->pa)*item->wp;
 }
 
 static int staff_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
-	return get_dmg_mod(attacker->ma,attacker,defender)*item->wp;
+	return mod2(attacker,defender,attacker->ma)*item->wp;
 }
 
 static int stick_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
-	return get_dmg_mod(attacker->ma,attacker,defender)*item->wp;
+	return mod2(attacker,defender,attacker->ma)*item->wp;
 }
 
 static int sword_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
-	return get_dmg_mod(attacker->pa,attacker,defender)*item->wp;
+	return mod2(attacker,defender,attacker->pa)*item->wp;
 }
 
 const weapon_damagef weapon_damage[]={

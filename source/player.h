@@ -10,6 +10,7 @@
 #define NUM_CHAR_SLOTS 10
 #define NUM_ABILITY 5
 #define NUM_STATUS 36
+#define NUM_ELEM 9
 
 #define REACTION(x) (clreaction[x->ch->reaction_class][x->ch->reaction_index])
 
@@ -18,8 +19,8 @@
 #define GENDER_MALE 1
 #define GENDER_FEMALE 2
 
-#define FOF_FRIEND 1
-#define FOF_FOE 2
+#define FOF_FRIEND 0
+#define FOF_FOE 1
 
 struct character;
 
@@ -69,6 +70,7 @@ struct battle_char{
 	struct stored_action *slow_act;
 
 	uint8_t status[NUM_STATUS];
+	uint8_t resist[NUM_ELEM];
 };
 
 struct eq_item{
@@ -82,16 +84,16 @@ struct eq_item{
 	uint16_t price;
 };
 
-typedef void (*actionf)(struct battle_char*,struct battle_char**,int);
+typedef void (*actionf)(struct battle_char*,struct battle_char*);
 typedef int (*reactionf)(struct battle_char*,struct battle_char*);
 typedef void (*supportf)(struct battle_char*);
 typedef void (*movementf)(struct battle_char*);
 typedef int (*weapon_damagef)(const struct eq_item*,struct battle_char*,struct battle_char*);
 
-
 struct character{
 	uint8_t gender;
 	uint8_t battleready;
+	uint8_t sign;
 	uint16_t jp;
 	uint32_t mastery[NUM_CLASS];
 	uint8_t level[NUM_CLASS];

@@ -9,6 +9,154 @@
 #include "ui_console.h"
 #endif
 
+int sign_compat(struct character *a, struct character *b){
+	if(a->sign==SIGN_SERPENTARIUS)
+		return SIGN_COMPAT_NEUTRAL;
+
+	if((a->sign-b->sign)%4==0)
+		return SIGN_COMPAT_GOOD;
+
+	if((a->sign-b->sign)%6==0)
+		return a->gender==b->gender?SIGN_COMPAT_WORST:SIGN_COMPAT_BEST;
+
+	if((a->sign-b->sign)%3==0)
+		return SIGN_COMPAT_BAD;
+
+	return SIGN_COMPAT_NEUTRAL;
+}
+
+void remove_status(struct battle_char *bc, int status){
+	if(bc->status[status]!=IMMUNE_TO_STATUS)
+		bc->status[status]=0;
+	else
+		return;
+
+	switch(status){
+		case STATUS_CHARM:
+			bc->fof=!bc->fof;
+			break;
+		case STATUS_OIL:
+			bc->resist[ELEM_FIRE]&=~RESIST_WEAK;
+			break;
+	}
+}
+
+void add_status(struct battle_char *bc, int status){
+	if(bc->status[status]==IMMUNE_TO_STATUS)
+		return;
+
+	switch(status){
+		case STATUS_CHARGING:
+			bc->status[status]=UNTIMED_STATUS;
+			break;
+		case STATUS_DEFENDING:
+			bc->status[status]=UNTIMED_STATUS;
+			break;
+		case STATUS_PERFORMING:
+			bc->status[status]=UNTIMED_STATUS;
+			break;
+		case STATUS_FLOAT:
+			bc->status[status]=UNTIMED_STATUS;
+			break;
+		case STATUS_HASTE:
+			bc->status[status]=32;
+			remove_status(bc,STATUS_SLOW);
+			break;
+		case STATUS_REGEN:
+			bc->status[status]=36;
+			remove_status(bc,STATUS_POISON);
+			break;
+		case STATUS_PROTECT:
+			bc->status[status]=32;
+			break;
+		case STATUS_RERAISE:
+			bc->status[status]=UNTIMED_STATUS;
+			break;
+		case STATUS_SHELL:
+			bc->status[status]=32;
+			break;
+		case STATUS_TRANSPARENT:
+			bc->status[status]=UNTIMED_STATUS;
+			break;
+		case STATUS_CHARM:
+			bc->status[status]=32;
+			bc->fof=!bc->fof;
+			break;
+		case STATUS_CONFUSION:
+			bc->status[status]=UNTIMED_STATUS;
+			break;
+		case STATUS_DARKNESS:
+			bc->status[status]=UNTIMED_STATUS;
+			break;
+		case STATUS_DEATHSENTENCE:
+			bc->status[status]=120;
+			break;
+		case STATUS_NOACT:
+			bc->status[status]=24;
+			break;
+		case STATUS_NOMOVE:
+			bc->status[status]=24;
+			break;
+		case STATUS_POLYMORPH:
+			bc->status[status]=UNTIMED_STATUS;
+			break;
+		case STATUS_OIL:
+			if(!bc->resist[ELEM_FIRE]&RESIST_WEAK){
+				bc->status[status]=UNTIMED_STATUS;
+				bc->resist[ELEM_FIRE]|=RESIST_WEAK;
+			}
+			break;
+		case STATUS_PETRIFY:
+			bc->status[status]=UNTIMED_STATUS;
+			break;
+		case STATUS_POISON:
+			bc->status[status]=36;
+			break;
+		case STATUS_SILENCE:
+			bc->status[status]=UNTIMED_STATUS;
+			break;
+		case STATUS_SLEEP:
+			bc->status[status]=60;
+			break;
+		case STATUS_SLOW:
+			bc->status[status]=24;
+			remove_status(bc,STATUS_HASTE);
+			break;
+		case STATUS_STOP:
+			bc->status[status]=20;
+			break;
+		case STATUS_UNDEAD:
+			bc->status[status]=UNTIMED_STATUS;
+			break;
+		case STATUS_CRITICAL:
+			bc->status[status]=UNTIMED_STATUS;
+			break;
+		case STATUS_DEAD:
+			bc->status[status]=4; // turns
+			break;
+		case STATUS_BERSERK:
+			bc->status[status]=UNTIMED_STATUS;
+			remove_status(bc,STATUS_CHARGING);
+			remove_status(bc,STATUS_DEFENDING);
+			remove_status(bc,STATUS_PERFORMING);
+		case STATUS_FAITH:
+			bc->status[status]=32;
+			remove_status(bc,STATUS_INNOCENT);
+			break;
+		case STATUS_INNOCENT:
+			bc->status[status]=32;
+			remove_status(bc,STATUS_FAITH);
+			break;
+		case STATUS_REFLECT:
+			bc->status[status]=32;
+			break;
+		case STATUS_QUICK:
+			bc->status[status]=1;
+			bc->ct=100;
+			break;
+	}
+}
+
 int evaded(struct battle_char *target, int type, int dir, int base_hit){
 	uint32_t tohit=base_hit;
 	if(type==AFLAG_PHYSICAL){
@@ -90,10 +238,10 @@ void deal_damage(struct battle_char *bc, uint16_t dmg){
 	bc->hp-=dmg;
 	if(bc->hp<0){
 		bc->hp=0;
-		bc->status[STATUS_DEAD]=4;
+		add_status(bc,STATUS_DEAD);
 	}
 	else if((bc->hp*100)/bc->hp_max<5)
-		bc->status[STATUS_CRITICAL]=UNTIMED_STATUS;
+		add_status(bc,STATUS_CRITICAL);
 }
 
 
@@ -106,7 +254,7 @@ void status_check(struct battle_char **blist, int num){
 	
 	for(bi=0;bi<num;bi++){
 		for(i=0;i<NUM_STATUS;i++){
-			if(blist[bi]->status[i]>0 && i!=STATUS_DEAD && blist[bi]->status[i]!=UNTIMED_STATUS)
+			if(STATUS_SET(blist[bi],i) && i!=STATUS_DEAD && blist[bi]->status[i]!=UNTIMED_STATUS)
 				blist[bi]->status[i]--;
 		}
 	}
@@ -136,7 +284,7 @@ int should_react(struct battle_char *ch){
 	if((REACTION(ch).trigger&RFLAG_TRIGGER_COUNTER) && (claction[last_action.preresolve->jobindex][last_action.preresolve->findex].flags&AFLAG_COUNTER))
 		return 1;
 	
-	if((REACTION(ch).trigger&RFLAG_TRIGGER_CRITICAL) && (ch->status[STATUS_CRITICAL]))
+	if((REACTION(ch).trigger&RFLAG_TRIGGER_CRITICAL) && (STATUS_SET(ch,STATUS_CRITICAL)))
 		return 1;
 	
 	if(REACTION(ch).trigger&RFLAG_TRIGGER_ALWAYS)
@@ -162,20 +310,48 @@ void slow_action_resolution(struct battle_char **blist, int num){
 	int num_t;
 	int type;
 	int dir;
+	int base_hit;
+	uint8_t (*hitmod)(struct battle_char*,struct battle_char*,uint8_t);
 
 	for(bi=0;bi<num;bi++){
 		tmp=blist[bi]->slow_act;
 		if(tmp && tmp->ctr==0){
+			switch(claction[tmp->jobindex][tmp->findex].mod){
+				case 1:
+					hitmod=mod1;
+					break;
+				case 3:
+					hitmod=mod3;
+					break;
+				case 4:
+					hitmod=mod4;
+					break;
+				case 6:
+					hitmod=mod6;
+					break;
+				default:
+					hitmod=NULL;
+					base_hit=100;
+			}
+
+			if(claction[tmp->jobindex][tmp->findex].flags&AFLAG_PHYSICAL)
+				type=AFLAG_PHYSICAL;
+			else
+				type=AFLAG_MAGIC;
+
 			//prereact(tmp->origin,tmp->target,tmp->num_target); // for hamedo
 			targets=get_targets(blist,num,tmp->target.x,tmp->target.y,tmp->target.width,tmp->target.vertical,tmp->target.dir);
-			for(num_t=0;targets[num_t];num_t++);
-			/*if(claction[tmp->jobindex][tmp->findex].flags&AFLAG_EVADE)
-				for(i=0;i<num_t;i++)
-			 		if(evaded(targets[i],))
-			*/
-			tmp->f(tmp->origin,targets,num_t);
 			last_action.preresolve=tmp;
-			react(tmp->origin,targets,num_t);
+			for(num_t=0;targets[num_t];num_t++){
+				dir=get_attack_dir(blist[bi],targets[num_t]);
+				if(hitmod)
+					base_hit=hitmod(blist[bi],targets[num_t],claction[tmp->jobindex][tmp->findex].mod_v);
+
+				if(claction[tmp->jobindex][tmp->findex].flags&AFLAG_EVADE && evaded(targets[num_t],type,dir,base_hit))
+						continue;
+				tmp->f(tmp->origin,targets[num_t]);
+				react(tmp->origin,targets,num_t);
+			}
 			free(targets);
 		}
 	}
@@ -185,7 +361,8 @@ void ct_charge(struct battle_char **blist, int num){
 	int bi;
 	
 	for(bi=0;bi<num;bi++){
-		blist[bi]->ct+=blist[bi]->speed;
+		if(!STATUS_SET(blist[bi],STATUS_STOP) && !STATUS_SET(blist[bi],STATUS_SLEEP) && !STATUS_SET(blist[bi],STATUS_PETRIFY))
+			blist[bi]->ct+=blist[bi]->speed;
 	}
 }
 
@@ -203,9 +380,9 @@ void ct_resolution(struct battle_char **blist, int *num){
 			}
 
 			flags=0;
-			if(blist[bi]->status[STATUS_NOMOVE])
+			if(STATUS_SET(blist[bi],STATUS_NOMOVE))
 				flags|=MOVED_FLAG;
-			if(blist[bi]->status[STATUS_NOACT])
+			if(STATUS_SET(blist[bi],STATUS_NOACT))
 				flags|=ACTED_FLAG;
 
 			// Select new actions
@@ -244,6 +421,9 @@ void init_battle_char(struct battle_char *bc){
 		bc->status[i]=0;
 
 	bc->wp=weapons[EQ_TYPE(bc->ch->eq[EQ_WEAPON])][(bc->ch->eq[EQ_WEAPON]>>6)].wp;
+
+	for(i=0;i<NUM_ELEM;i++)
+		bc->resist[i]=0;
 
 	bc->ct=0;
 }
