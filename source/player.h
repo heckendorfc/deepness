@@ -60,6 +60,9 @@ struct battle_char{
 	uint8_t ma;
 	uint8_t speed;
 
+	uint8_t move;
+	uint8_t jump;
+	
 	uint8_t wp;
 
 	uint8_t faith;
@@ -71,17 +74,28 @@ struct battle_char{
 
 	uint8_t status[NUM_STATUS];
 	uint8_t resist[NUM_ELEM];
+	uint16_t strengthen;
 };
+
+typedef void (*eqwearf)(struct battle_char*);
+typedef void (*eqremovef)(struct battle_char*);
 
 struct eq_item{
 	uint8_t wp;
-	uint8_t p_evade;
-	uint8_t m_evade;
+	union{
+		uint8_t evade;
+		uint8_t hp;
+	}phys;
+	union{
+		uint8_t evade;
+		uint8_t mp;
+	}mag;
 	uint8_t elvl;
 	uint8_t	flags;
 	uint8_t elem;
-	uint16_t add;
 	uint16_t price;
+	eqwearf wear;
+	eqremovef remove;
 };
 
 typedef void (*actionf)(struct battle_char*,struct battle_char*);

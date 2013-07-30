@@ -165,33 +165,33 @@ int evaded(struct battle_char *target, int type, int dir, int base_hit){
 		switch(dir){
 			case ATTACK_DIR_FRONT:
 				tohit*=(100-class_stats[(int)target->ch->primary].evade);
-				tohit*=(100-misc_armor[EQ_TYPE(target->ch->eq[EQ_MISC])][target->ch->eq[EQ_MISC]>>6].p_evade);
-				tohit*=(100-weapons[EQ_TYPE(target->ch->eq[EQ_WEAPON])][target->ch->eq[EQ_WEAPON]>>6].p_evade);
+				tohit*=(100-misc_armor[EQ_TYPE(target->ch->eq[EQ_MISC])][target->ch->eq[EQ_MISC]>>6].phys.evade);
+				tohit*=(100-weapons[EQ_TYPE(target->ch->eq[EQ_WEAPON])][target->ch->eq[EQ_WEAPON]>>6].phys.evade);
 				if(EQ_TYPE(target->ch->eq[EQ_OFFHAND])==EQO_SHIELD)
-					tohit*=(100-offhand[target->ch->eq[EQ_OFFHAND]>>6].p_evade);
+					tohit*=(100-offhand[target->ch->eq[EQ_OFFHAND]>>6].phys.evade);
 				else
 					tohit*=100;
 				tohit/=100000000;
 				break;
 			case ATTACK_DIR_SIDE:
-				tohit*=(100-misc_armor[EQ_TYPE(target->ch->eq[EQ_MISC])][target->ch->eq[EQ_MISC]>>6].p_evade);
-				tohit*=(100-weapons[EQ_TYPE(target->ch->eq[EQ_WEAPON])][target->ch->eq[EQ_WEAPON]>>6].p_evade);
+				tohit*=(100-misc_armor[EQ_TYPE(target->ch->eq[EQ_MISC])][target->ch->eq[EQ_MISC]>>6].phys.evade);
+				tohit*=(100-weapons[EQ_TYPE(target->ch->eq[EQ_WEAPON])][target->ch->eq[EQ_WEAPON]>>6].phys.evade);
 				if(EQ_TYPE(target->ch->eq[EQ_OFFHAND])==EQO_SHIELD)
-					tohit*=(100-offhand[target->ch->eq[EQ_OFFHAND]>>6].p_evade);
+					tohit*=(100-offhand[target->ch->eq[EQ_OFFHAND]>>6].phys.evade);
 				else
 					tohit*=100;
 				tohit/=1000000;
 				break;
 			case ATTACK_DIR_REAR:
-				tohit*=(100-misc_armor[EQ_TYPE(target->ch->eq[EQ_MISC])][target->ch->eq[EQ_MISC]>>6].p_evade);
+				tohit*=(100-misc_armor[EQ_TYPE(target->ch->eq[EQ_MISC])][target->ch->eq[EQ_MISC]>>6].phys.evade);
 				tohit/=100;
 				break;
 		}
 	}
 	else{
-		tohit*=(100-misc_armor[EQ_TYPE(target->ch->eq[EQ_MISC])][target->ch->eq[EQ_MISC]>>6].m_evade);
+		tohit*=(100-misc_armor[EQ_TYPE(target->ch->eq[EQ_MISC])][target->ch->eq[EQ_MISC]>>6].mag.evade);
 		if(EQ_TYPE(target->ch->eq[EQ_OFFHAND])==EQO_SHIELD)
-			tohit*=(100-offhand[target->ch->eq[EQ_OFFHAND]>>6].m_evade);
+			tohit*=(100-offhand[target->ch->eq[EQ_OFFHAND]>>6].mag.evade);
 		else
 			tohit*=100;
 		tohit/=10000;
@@ -409,6 +409,7 @@ void ct_resolution(struct battle_char **blist, int *num){
 
 void init_battle_char(struct battle_char *bc){
 	int i;
+	const struct eq_item *eqgroup;
 
 	set_battle_stats(bc);
 
@@ -420,11 +421,32 @@ void init_battle_char(struct battle_char *bc){
 	for(i=0;i<NUM_STATUS;i++)
 		bc->status[i]=0;
 
-	bc->wp=weapons[EQ_TYPE(bc->ch->eq[EQ_WEAPON])][(bc->ch->eq[EQ_WEAPON]>>6)].wp;
-
 	for(i=0;i<NUM_ELEM;i++)
 		bc->resist[i]=0;
 
+	bc->strengthen=0;
+	bc->move=class_stats[bc->ch->primary].move;
+	bc->jump=class_stats[bc->ch->primary].jump;
+
+	eqgroup=&weapons[EQ_TYPE(bc->ch->eq[EQ_WEAPON])][(bc->ch->eq[EQ_WEAPON]>>6)];
+	bc->wp=eqgroup->wp;
+	if(eqgroup->wear)eqgroup->wear(bc);
+	
+	if(EQ_TYPE(bc->ch->eq[EQ_OFFHAND])==EQO_SHIELD)
+		eqgroup=&offhand[(bc->ch->eq[EQ_OFFHAND]>>6)];
+	else
+		eqgroup=&weapons[EQ_TYPE(bc->ch->eq[EQ_OFFHAND])][(bc->ch->eq[EQ_OFFHAND]>>6)];
+	if(eqgroup->wear)eqgroup->wear(bc);
+	
+	eqgroup=&head_armor[EQ_TYPE(bc->ch->eq[EQ_HEAD])][(bc->ch->eq[EQ_HEAD]>>6)];
+	if(eqgroup->wear)eqgroup->wear(bc);
+	
+	eqgroup=&body_armor[EQ_TYPE(bc->ch->eq[EQ_BODY])][(bc->ch->eq[EQ_BODY]>>6)];
+	if(eqgroup->wear)eqgroup->wear(bc);
+	
+	eqgroup=&misc_armor[EQ_TYPE(bc->ch->eq[EQ_MISC])][(bc->ch->eq[EQ_MISC]>>6)];
+	if(eqgroup->wear)eqgroup->wear(bc);
+	
 	bc->ct=0;
 }
 

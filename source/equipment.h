@@ -36,7 +36,7 @@
 #define EQW_SWORD 19
 
 #define NUM_EQO_TYPES 1
-#define MAX_EQO_PER_TYPE 16
+#define MAX_EQO_PER_TYPE 17
 /* Offhand */
 #define EQO_SHIELD 20
 
@@ -56,7 +56,7 @@
 #define EQB_ROBE 3
 
 #define NUM_EQM_TYPES 4
-#define MAX_EQM_PER_TYPE 7
+#define MAX_EQM_PER_TYPE 14
 /* Misc */
 #define EQM_MANTLE 1
 #define EQM_ARMWEAR 2
@@ -65,6 +65,8 @@
 #define EQWFLAG_TWO_SWORDS BIT(0)
 #define EQWFLAG_TWO_HAND BIT(1)
 #define EQWFLAG_TWO_HAND_ONLY BIT(2)
+
+#define EQFLAG_NOFOE BIT(7)
 
 
 extern const weapon_damagef weapon_damage[];
