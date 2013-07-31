@@ -11,6 +11,7 @@
 #define NUM_ABILITY 5
 #define NUM_STATUS 36
 #define NUM_ELEM 9
+#define NUM_ADD_STATUS 16
 
 #define REACTION(x) (clreaction[x->ch->reaction_class][x->ch->reaction_index])
 

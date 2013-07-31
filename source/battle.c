@@ -411,6 +411,7 @@ void init_battle_char(struct battle_char *bc){
 	int i;
 	const struct eq_item *eqgroup;
 
+	// HP,MP,MA,PA,SP
 	set_battle_stats(bc);
 
 	bc->faith=bc->ch->faith;
@@ -425,6 +426,8 @@ void init_battle_char(struct battle_char *bc){
 		bc->resist[i]=0;
 
 	bc->strengthen=0;
+	bc->add_status=0;
+	bc->ct=0;
 	bc->move=class_stats[bc->ch->primary].move;
 	bc->jump=class_stats[bc->ch->primary].jump;
 
@@ -447,7 +450,6 @@ void init_battle_char(struct battle_char *bc){
 	eqgroup=&misc_armor[EQ_TYPE(bc->ch->eq[EQ_MISC])][(bc->ch->eq[EQ_MISC]>>6)];
 	if(eqgroup->wear)eqgroup->wear(bc);
 	
-	bc->ct=0;
 }
 
 int place_units(struct battle_char *team, int num, int type){

@@ -1218,10 +1218,24 @@ static void energy(struct battle_char *origin, struct battle_char *target){
 static void parasite(struct battle_char *origin, struct battle_char *target){
 }
 
+static int8_t elem_weapon_dmg(int16_t dmg, int elem, struct battle_char *d){
+	if(d->resist[elem]&RESIST_ABSORB)
+		return -dmg;
+	else {
+		if(d->resist[elem]&RESIST_WEAK)
+			return dmg<<2;
+		if(d->resist[elem]&RESIST_HALF)
+			return dmg>>2;
+	}
+	return dmg;
+}
+
 static void attack(struct battle_char *s, struct battle_char *d){
 	uint16_t pri=s->ch->eq[EQ_WEAPON];
 	uint16_t sec=s->ch->eq[EQ_OFFHAND];
-	uint16_t dmg;
+	int16_t pdmg=0;
+	int16_t sdmg=0;
+	int biti;
 	struct stored_action thisact;
 
 	thisact.ctr=0;
@@ -1238,18 +1252,28 @@ static void attack(struct battle_char *s, struct battle_char *d){
 	if(evaded(d,AFLAG_PHYSICAL,get_attack_dir(s,d),100))
 		return;
 
-	dmg=weapon_damage[EQ_TYPE(pri)](&weapons[EQ_TYPE(pri)][pri>>6],s,d);
+	pdmg=weapon_damage[EQ_TYPE(pri)](&weapons[EQ_TYPE(pri)][pri>>6],s,d);
 
 	if(sec==0 && s->ch->support==SFLAG_TWO_HANDS)
-		dmg<<=1;
+		pdmg<<=1;
+	else if(sec>0 && EQ_TYPE(sec)!=EQO_SHIELD){ // Implied SFLAG_TWO_SWORDS. check it?
+		sdmg+=weapon_damage[EQ_TYPE(sec)](&weapons[EQ_TYPE(sec)][sec>>6],s,d);
+		sdmg=elem_weapon_dmg_mod(sdmg,weapons[EQ_TYPE(sec)][sec>>6].elem,d);
+	}
 
-	else if(sec>0 && EQ_TYPE(sec)!=EQO_SHIELD) // Implied SFLAG_TWO_SWORDS. check it?
-		dmg+=weapon_damage[EQ_TYPE(sec)](&weapons[EQ_TYPE(sec)][sec>>6],s,d);
+	pdmg=elem_weapon_dmg_mod(pdmg,weapons[EQ_TYPE(pri)][pri>>6].elem,d);
 	
-	deal_damage(d,dmg);
+	deal_damage(d,pdmg+sdmg);
+
+	if(s->add_status>0 && get_random(0,4)==0){
+		for(biti=0;biti<NUM_ADD_STATUS;biti++)
+			if(s->add_status&BIT(biti))
+				add_status(d,biti);
+
+	}
 
 	last_action.preresolve=&thisact;
-	last_action.damage=dmg;
+	last_action.damage=pdmg+sdmg;
 	last_action.mp_used=0;
 	last_action.item=0;
 
