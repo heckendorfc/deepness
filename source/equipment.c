@@ -180,8 +180,464 @@ const weapon_damagef weapon_damage[]={
 	sword_dmg,
 };
 
+static void wear_blind_knife(struct battle_char *bc){
+	bc->add_status|=BIT(STATUS_DARKNESS);
+}
+
+static void remove_blind_knife(struct battle_char *bc){
+	bc->add_status&=~BIT(STATUS_DARKNESS);
+}
+
+static void wear_mage_masher(struct battle_char *bc){
+	bc->add_status|=BIT(STATUS_SILENCE);
+}
+
+static void remove_mage_masher(struct battle_char *bc){
+	bc->add_status&=~BIT(STATUS_SILENCE);
+}
+
+static void wear_assassin_dagger(struct battle_char *bc){
+	bc->add_status|=BIT(STATUS_DEATHSENTENCE);
+}
+
+static void remove_assassin_dagger(struct battle_char *bc){
+	bc->add_status&=~BIT(STATUS_DEATHSENTENCE);
+}
+
+static void wear_zorlin_shape(struct battle_char *bc){
+	bc->add_status|=BIT(STATUS_SLEEPING);
+}
+
+static void remove_zorlin_shape(struct battle_char *bc){
+	bc->add_status&=~BIT(STATUS_SLEEPING);
+}
+
+static void wear_spell_edge(struct battle_char *bc){
+	bc->add_status|=BIT(STATUS_NOACT);
+}
+
+static void remove_spell_edge(struct battle_char *bc){
+	bc->add_status&=~BIT(STATUS_NOACT);
+}
+
+static void wear_blood_sword(struct battle_char *bc){
+	bc->status[STATUS_UNDEAD]=UNTIMED_STATUS;
+}
+
+static void remove_blood_sword(struct battle_char *bc){
+	bc->status[STATUS_UNDEAD]=0;
+}
+
+static void wear_ancient_sword(struct battle_char *bc){
+	bc->add_status|=BIT(STATUS_NOMOVE);
+}
+
+static void remove_ancient_sword(struct battle_char *bc){
+	bc->add_status&=~BIT(STATUS_NOMOVE);
+}
+
+static void wear_sleep_sword(struct battle_char *bc){
+	bc->add_status|=BIT(STATUS_SLEEPING);
+}
+
+static void remove_sleep_sword(struct battle_char *bc){
+	bc->add_status&=~BIT(STATUS_SLEEPING);
+}
+
+static void wear_rune_blade(struct battle_char *bc){
+	bc->ma+=2;
+}
+
+static void remove_rune_blade(struct battle_char *bc){
+	bc->ma-=2;
+}
+
+static void wear_nagrarock(struct battle_char *bc){
+	bc->add_status|=BIT(STATUS_POLYMORPH);
+}
+
+static void remove_nagrarock(struct battle_char *bc){
+	bc->add_status&=~BIT(STATUS_POLYMORPH);
+}
+
+static void wear_save_the_queen(struct battle_char *bc){
+	bc->status[STATUS_PROTECT]=UNTIMED_STATUS;
+}
+
+static void remove_save_the_queen(struct battle_char *bc){
+	bc->status[STATUS_PROTECT]=0;
+}
+
+static void wear_excalibur(struct battle_char *bc){
+	bc->status[STATUS_HASTE]=UNTIMED_STATUS;
+	bc->resist[ELEM_HOLY]|=RESIST_ABSORB;
+	bc->strengthen|=BIT(ELEM_HOLY);
+}
+
+static void remove_excalibur(struct battle_char *bc){
+	bc->status[STATUS_HASTE]=0;
+	bc->resist[ELEM_HOLY]&=~RESIST_ABSORB;
+	bc->strengthen&=~BIT(ELEM_HOLY);
+}
+
+static void wear_ragnarok(struct battle_char *bc){
+	bc->status[STATUS_SHELL]=UNTIMED_STATUS;
+}
+
+static void remove_ragnarok(struct battle_char *bc){
+	bc->status[STATUS_SHELL]=0;
+}
+
+static void wear_chaos_blade(struct battle_char *bc){
+	bc->status[STATUS_REGEN]=UNTIMED_STATUS;
+	bc->add_status|=BIT(STATUS_PETRIFY);
+}
+
+static void remove_chaos_blade(struct battle_char *bc){
+	bc->status[STATUS_REGEN]=0;
+	bc->add_status&=~BIT(STATUS_PETRIFY);
+}
+
+static void wear_slasher(struct battle_char *bc){
+	bc->add_status|=BIT(STATUS_SLOW);
+}
+
+static void remove_slasher(struct battle_char *bc){
+	bc->add_status&=~BIT(STATUS_SLOW);
+}
+
+static void wear_thunder_rod(struct battle_char *bc){
+	bc->strengthen|=BIT(ELEM_LIGHTNING);
+}
+
+static void remove_thunder_rod(struct battle_char *bc){
+	bc->strengthen&=~BIT(ELEM_LIGHTNING);
+}
+
+static void wear_flame_rod(struct battle_char *bc){
+	bc->strengthen|=BIT(ELEM_FIRE);
+}
+
+static void remove_flame_rod(struct battle_char *bc){
+	bc->strengthen&=~BIT(ELEM_FIRE);
+}
+
+static void wear_ice_rod(struct battle_char *bc){
+	bc->strengthen|=BIT(ELEM_ICE);
+}
+
+static void remove_ice_rod(struct battle_char *bc){
+	bc->strengthen&=~BIT(ELEM_ICE);
+}
+
+static void wear_poison_rod(struct battle_char *bc){
+	bc->add_status|=BIT(STATUS_POISON);
+}
+
+static void remove_poison_rod(struct battle_char *bc){
+	bc->add_status&=~BIT(STATUS_POISON);
+}
+
+static void wear_wizard_rod(struct battle_char *bc){
+	bc->ma+=2;
+}
+
+static void remove_wizard_rod(struct battle_char *bc){
+	bc->ma-=2;
+}
+
+static void wear_faith_rod(struct battle_char *bc){
+	bc->status[STATUS_FAITH]=UNTIMED_STATUS;
+	bc->add_status|=BIT(STATUS_FAITH);
+}
+
+static void remove_faith_rod(struct battle_char *bc){
+	bc->status[STATUS_FAITH]=0;
+	bc->add_status&=~BIT(STATUS_FAITH);
+}
+
+static void wear_white_staff(struct battle_char *bc){
+	bc->add_status|=BIT(STATUS_DEATHSENTENCE);
+}
+
+static void remove_white_staff(struct battle_char *bc){
+	bc->add_status&=~BIT(STATUS_DEATHSENTENCE);
+}
+
+static void wear_healing_staff(struct battle_char *bc){
+	bc->add_status|=BIT(STATUS_REGEN);
+}
+
+static void remove_healing_staff(struct battle_char *bc){
+	bc->add_status&=~BIT(STATUS_REGEN);
+}
+
+static void wear_wizard_staff(struct battle_char *bc){
+	bc->ma+=1;
+}
+
+static void remove_wizard_staff(struct battle_char *bc){
+	bc->ma-=1;
+}
+
+static void wear_mace_of_zeus(struct battle_char *bc){
+	bc->pa+=2;
+	bc->ma+=1;
+}
+
+static void remove_mace_of_zeus(struct battle_char *bc){
+	bc->pa-=2;
+	bc->ma-=1;
+}
+
+static void wear_stone_gun(struct battle_char *bc){
+	add_status(bc,STATUS_PETRIFY);
+}
+
+static void remove_stone_gun(struct battle_char *bc){
+	remove_status(bc,STATUS_PETRIFY);
+}
+
+static void wear_night_killer(struct battle_char *bc){
+	bc->add_status|=BIT(STATUS_DARKNESS);
+}
+
+static void remove_night_killer(struct battle_char *bc){
+	bc->add_status&=~BIT(STATUS_DARKNESS);
+}
+
+static void wear_poison_bow(struct battle_char *bc){
+	bc->add_status|=BIT(STATUS_POISON);
+}
+
+static void remove_poison_bow(struct battle_char *bc){
+	bc->add_status&=~BIT(STATUS_POISON);
+}
+
+static void wear_ramia_harp(struct battle_char *bc){
+	bc->add_status|=BIT(STATUS_CONFUSION);
+}
+
+static void remove_ramia_harp(struct battle_char *bc){
+	bc->add_status|=~BIT(STATUS_CONFUSION);
+}
+
+static void wear_bloody_strings(struct battle_char *bc){
+	bc->status[STATUS_UNDEAD]=UNTIMED_STATUS;
+}
+
+static void remove_bloody_strings(struct battle_char *bc){
+	bc->status[STATUS_UNDEAD]=0;
+}
+
+static void wear_fairy_harp(struct battle_char *bc){
+	bc->add_status|=BIT(STATUS_SLEEPING);
+}
+
+static void remove_fairy_harp(struct battle_char *bc){
+	bc->add_status&=~BIT(STATUS_SLEEPING);
+}
+
+static void wear_gokuu_rod(struct battle_char *bc){
+	bc->add_status|=BIT(STATUS_INNOCENT);
+}
+
+static void remove_gokuu_rod(struct battle_char *bc){
+	bc->add_status&=~BIT(STATUS_INNOCENT);
+}
+
+static void wear_octagon_rod(struct battle_char *bc){
+	bc->status[STATUS_REFLECT]=UNTIMED_STATUS;
+}
+
+static void remove_octagon_rod(struct battle_char *bc){
+	bc->status[STATUS_REFLECT]=0;
+}
+
+static void wear_c_bag(struct battle_char *bc){
+	bc->ma+=1;
+}
+
+static void remove_c_bag(struct battle_char *bc){
+	bc->ma-=1;
+}
+
+static void wear_p_bag(struct battle_char *bc){
+	bc->status[STATUS_REGEN]=UNTIMED_STATUS;
+}
+
+static void remove_p_bag(struct battle_char *bc){
+	bc->status[STATUS_REGEN]=0;
+}
+
+static void wear_h_bag(struct battle_char *bc){
+	bc->speed+=1;
+}
+
+static void remove_h_bag(struct battle_char *bc){
+	bc->speed-=1;
+}
+
 const struct eq_item weapons[NUM_EQW_TYPES][MAX_EQW_PER_TYPE]={
 	{{0,{5},{0},1,0,0,0,NULL,NULL}}, // Hands
+	{
+		{9,{0},{0},4,0,0,1500,NULL,NULL},
+		{12,{0},{0},12,0,0,4000,NULL,NULL},
+		{16,{0},{0},31,0,0,12000,wear_slasher,remove_slasher},
+	}, //Axes
+	{
+		{10,{0},{0},80,EQFLAG_NOFOE,0,53000,wear_c_bag,remove_c_bag},
+		{20,{0},{0},81,EQFLAG_NOFOE,0,60000,NULL,NULL},
+		{12,{0},{0},82,EQFLAG_NOFOE,0,52000,wear_p_bag,remove_p_bag},
+		{14,{0},{0},83,EQFLAG_NOFOE,0,58000,wear_h_bag,remove_h_bag},
+	}, //Bags
+	{
+		{4,{0},{0},2,0,0,800,NULL,NULL},
+		{5,{0},{0},6,0,0,1500,NULL,NULL},
+		{5,{0},{0},11,0,ELEM_ICE,2000,NULL,NULL},
+		{6,{0},{0},15,0,ELEM_LIGHTNING,3000,NULL,NULL},
+		{8,{0},{0},27,0,ELEM_WIND,8000,NULL,NULL},
+		{7,{0},{0},20,0,0,5000,NULL,NULL},
+		{10,{0},{0},37,0,0,22000,NULL,NULL},
+		{12,{0},{0},52,EQFLAG_NOFOE,0,10,NULL,NULL},
+		{16,{0},{0},53,EQFLAG_NOFOE,0,10,NULL,NULL},
+	}, //Longbows
+	{
+		{8,{50},{0},24,EQFLAG_NOFOE,0,7000,NULL,NULL},
+		{10,{50},{0},29,EQFLAG_NOFOE,0,15000,NULL,NULL},
+		{15,{50},{0},95,EQFLAG_NOFOE,0,40000,NULL,NULL},
+	}, //Cloths
+	{
+		{3,{5},{0},1,0,0,400,NULL,NULL},
+		{3,{5},{0},5,0,0,1500,wear_night_killer,remove_night_killer},
+		{4,{5},{0},11,0,0,2000,NULL,NULL},
+		{4,{5},{0},14,0,0,4000,wear_poison_bow,remove_poison_bow},
+		{6,{5},{0},24,0,0,8000,NULL,NULL},
+		{10,{5},{0},33,EQFLAG_NOFOE,0,20000,NULL,NULL},
+	}, //Crossbows
+	{
+		{7,{15},{0},13,0,0,3000,NULL,NULL},
+		{8,{15},{0},23,0,0,6000,NULL,NULL},
+		{9,{15},{0},34,0,0,10000,NULL,NULL},
+		{11,{15},{0},95,EQFLAG_NOFOE,0,30000,NULL,NULL},
+	}, //Dictionaries
+	{
+		{9,{0},{0},10,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,1200,NULL,NULL},
+		{11,{0},{0},20,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,ELEM_FIRE,4000,NULL,NULL},
+		{16,{0},{0},32,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,9000,NULL,NULL},
+		{23,{0},{0},90,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,40000,NULL,NULL},
+	}, //Hammers (flails)
+	{
+		{6,{5},{0},11,EQFLAG_NOFOE,0,5000,NULL,NULL},
+		{8,{5},{0},15,EQFLAG_NOFOE,0,15000,NULL,NULL},
+		{16,{5},{0},95,EQFLAG_NOFOE,0,10,wear_stone_gun,remove_stone_gun},
+	}, //guns
+	{
+		{20,{5},{0},91,EQFLAG_NOFOE,ELEM_FIRE,10,NULL,NULL},
+		{21,{5},{0},92,EQFLAG_NOFOE,ELEM_ICE,10,NULL,NULL},
+		{22,{5},{0},93,EQFLAG_NOFOE,ELEM_LIGHTNING,10,NULL,NULL},
+	}, //Spell Guns
+	{
+		{10,{10},{0},13,0,0,5000,wear_ramia_harp,remove_ramia_harp},
+		{13,{10},{0},25,0,0,10000,wear_bloody_strings,remove_bloody_strings},
+		{15,{10},{0},36,EQFLAG_NOFOE,0,10,wear_fairy_harp,remove_fairy_harp},
+	}, //Instruments
+	{
+		{7,{15},{0},9,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,1600,NULL,NULL},
+		{8,{15},{0},12,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,3000,NULL,NULL},
+		{9,{15},{0},15,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,5000,NULL,NULL},
+		{10,{15},{0},21,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,7000,NULL,NULL},
+		{11,{15},{0},24,EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,8000,NULL,NULL},
+		{12,{15},{0},27,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10000,NULL,NULL},
+		{14,{15},{0},30,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,15000,NULL,NULL},
+		{15,{15},{0},33,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,22000,NULL,NULL},
+		{18,{15},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,NULL,NULL},
+		{25,{15},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,NULL,NULL},
+	}, //Katana
+	{
+		{16,{60},{0},92,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,40000,NULL,NULL},
+		{18,{30},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_save_the_queen,remove_save_the_queen},
+		{21,{35},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_excalibur,remove_excalibur},
+		{24,{20},{0},97,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_ragnarok,remove_ragnarok},
+		{40,{20},{0},98,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_chaos_blade,remove_chaos_blade},
+	}, //Knight Swords
+	{
+		{3,{0},{0},1,0|EQWFLAG_TWO_SWORDS,0,100,NULL,NULL},
+		{4,{5},{0},3,0|EQWFLAG_TWO_SWORDS,0,500,NULL,NULL},
+		{4,{5},{0},7,0|EQWFLAG_TWO_SWORDS,0,800,wear_blind_knife,remove_blind_knife},
+		{4,{5},{0},11,0|EQWFLAG_TWO_SWORDS,0,1500,wear_mage_masher,remove_mage_masher},
+		{5,{10},{0},14,0|EQWFLAG_TWO_SWORDS,0,1800,NULL,NULL},
+		{6,{40},{0},21,0|EQWFLAG_TWO_SWORDS,0,3000,NULL,NULL},
+		{7,{5},{0},25,0|EQWFLAG_TWO_SWORDS,0,4000,NULL,NULL},
+		{7,{5},{0},29,0|EQWFLAG_TWO_SWORDS,0,5000,wear_assassin_dagger,remove_assassin_dagger},
+		{10,{5},{0},33,0|EQWFLAG_TWO_SWORDS,ELEM_WIND,8000,NULL,NULL},
+		{12,{10},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_SWORDS,0,12000,wear_zorlin_shape,remove_zorlin_shape},
+	}, //Knifes
+	{
+		{8,{5},{0},10,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,3000,NULL,NULL},
+		{9,{5},{0},13,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,5000,NULL,NULL},
+		{10,{5},{0},15,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,7000,NULL,NULL},
+		{12,{5},{0},22,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10000,NULL,NULL},
+		{13,{5},{0},27,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,16000,wear_spell_edge,remove_spell_edge},
+		{14,{15},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,NULL,NULL},
+		{15,{10},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,NULL,NULL},
+		{15,{5},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,NULL,NULL},
+	}, //Ninja Swords
+	{
+		{3,{20},{0},1,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,200,NULL,NULL},
+		{3,{20},{0},5,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,ELEM_LIGHTNING,400,wear_thunder_rod,remove_thunder_rod},
+		{3,{20},{0},5,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,ELEM_FIRE,400,wear_flame_rod,remove_flame_rod},
+		{3,{20},{0},5,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,ELEM_ICE,400,wear_ice_rod,remove_ice_rod},
+		{3,{20},{0},12,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,500,wear_poison_rod,remove_poison_rod},
+		{4,{20},{0},23,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,8000,wear_wizard_rod,remove_wizard_rod},
+		{5,{20},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,12000,NULL,NULL},
+		{5,{20},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_faith_rod,remove_faith_rod},
+	}, //Rods
+	{
+		{8,{10},{0},12,0|EQWFLAG_TWO_HAND,0,1000,NULL,NULL},
+		{9,{10},{0},16,0|EQWFLAG_TWO_HAND,0,2000,NULL,NULL},
+		{10,{10},{0},21,0|EQWFLAG_TWO_HAND,0,4500,NULL,NULL},
+		{11,{10},{0},25,0|EQWFLAG_TWO_HAND,0,7000,NULL,NULL},
+		{12,{10},{0},29,0|EQWFLAG_TWO_HAND,0,10000,NULL,NULL},
+		{14,{10},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND,ELEM_HOLY,36000,NULL,NULL},
+		{17,{10},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND,0,44000,NULL,NULL},
+		{30,{10},{0},97,EQFLAG_NOFOE|EQWFLAG_TWO_HAND,0,10,NULL,NULL},
+	}, //Spears
+	{
+		{3,{15},{0},1,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,120,NULL,NULL},
+		{3,{15},{0},5,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,800,wear_white_staff,remove_white_staff},
+		{4,{15},{0},9,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,4000,wear_healing_staff,remove_healing_staff},
+		{5,{15},{0},12,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,4000,NULL,NULL},
+		{4,{15},{0},15,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,2200,wear_wizard_staff,remove_wizard_staff},
+		{6,{15},{0},24,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,7000,NULL,NULL},
+		{6,{15},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_mace_of_zeus,remove_mace_of_zeus},
+		{7,{15},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,NULL,NULL},
+	}, //Staves
+	{
+		{6,{20},{0},9,0|EQWFLAG_TWO_HAND,0,1000,NULL,NULL},
+		{7,{20},{0},13,0|EQWFLAG_TWO_HAND,0,1400,NULL,NULL},
+		{8,{20},{0},21,0|EQWFLAG_TWO_HAND,0,2400,NULL,NULL},
+		{9,{20},{0},24,0|EQWFLAG_TWO_HAND,0,4000,NULL,NULL},
+		{10,{20},{0},27,0|EQWFLAG_TWO_HAND,0,7500,wear_gokuu_rod,remove_gokuu_rod},
+		{11,{20},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND,0,10000,NULL,NULL},
+		{12,{20},{0},40,0|EQWFLAG_TWO_HAND,0,20000,wear_octagon_rod,remove_octagon_rod},
+		{16,{20},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND,0,37000,NULL,NULL},
+	}, //Sticks
+	{
+		{4,{5},{0},1,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,200,NULL,NULL},
+		{5,{10},{0},4,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,500,NULL,NULL},
+		{6,{5},{0},7,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,900,NULL,NULL},
+		{7,{8},{0},9,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,1600,NULL,NULL},
+		{8,{5},{0},12,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,2500,wear_blood_sword,remove_blood_sword},
+		{8,{5},{0},15,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,ELEM_LIGHTNING,3300,NULL,NULL},
+		{9,{5},{0},21,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,5000,wear_ancient_sword,remove_ancient_sword},
+		{9,{5},{0},23,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,5000,wear_sleep_sword,remove_sleep_sword},
+		{12,{10},{0},28,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,11000,NULL,NULL},
+		{10,{10},{0},26,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,8000,NULL,NULL},
+		{13,{10},{0},34,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,ELEM_ICE,14000,NULL,NULL},
+		{14,{15},{0},37,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,20000,wear_rune_blade,remove_rune_blade},
+		{1,{50},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_nagrarock,remove_nagrarock},
+	}, //Swords
 };
 
 
@@ -218,11 +674,11 @@ static void remove_aegis_shield(struct battle_char *bc){
 }
 
 static void wear_kaiser_shield(struct battle_char *bc){
-	bc->strengthen|=ELEM_FIRE|ELEM_LIGHTNING|ELEM_ICE;
+	bc->strengthen|=BIT(ELEM_FIRE)|BIT(ELEM_LIGHTNING)|BIT(ELEM_ICE);
 }
 
 static void remove_kaiser_shield(struct battle_char *bc){
-	bc->strengthen&=~(ELEM_FIRE|ELEM_LIGHTNING|ELEM_ICE);
+	bc->strengthen&=~(BIT(ELEM_FIRE)|BIT(ELEM_LIGHTNING)|BIT(ELEM_ICE));
 }
 
 static void wear_venetian_shield(struct battle_char *bc){
@@ -282,12 +738,12 @@ static void remove_power_sleeve(struct battle_char *bc){
 }
 
 static void wear_earth_clothes(struct battle_char *bc){
-	bc->strengthen|=ELEM_EARTH;
+	bc->strengthen|=BIT(ELEM_EARTH);
 	bc->resist[ELEM_EARTH]|=RESIST_ABSORB;
 }
 
 static void remove_earth_clothes(struct battle_char *bc){
-	bc->strengthen&=~ELEM_EARTH;
+	bc->strengthen&=~BIT(ELEM_EARTH);
 	bc->resist[ELEM_EARTH]&=~RESIST_ABSORB;
 }
 
@@ -346,11 +802,11 @@ static void remove_white_robe(struct battle_char *bc){
 }
 
 static void wear_black_robe(struct battle_char *bc){
-	bc->strengthen|=ELEM_FIRE|ELEM_LIGHTNING|ELEM_ICE;
+	bc->strengthen|=BIT(ELEM_FIRE)|BIT(ELEM_LIGHTNING)|BIT(ELEM_ICE);
 }
 
 static void remove_black_robe(struct battle_char *bc){
-	bc->strengthen&=~(ELEM_FIRE|ELEM_LIGHTNING|ELEM_ICE);
+	bc->strengthen&=~(BIT(ELEM_FIRE)|BIT(ELEM_LIGHTNING)|BIT(ELEM_ICE));
 }
 
 static void wear_robe_of_lords(struct battle_char *bc){

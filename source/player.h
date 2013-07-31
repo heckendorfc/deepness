@@ -75,6 +75,7 @@ struct battle_char{
 	uint8_t status[NUM_STATUS];
 	uint8_t resist[NUM_ELEM];
 	uint16_t strengthen;
+	uint16_t add_status;
 };
 
 typedef void (*eqwearf)(struct battle_char*);

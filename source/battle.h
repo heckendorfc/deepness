@@ -20,41 +20,42 @@
 
 #define STATUS_SET(bc,s) ((bc->status[s]==IMMUNE_TO_STATUS || bc->status[s]==0)?0:1)
 
-#define STATUS_CRITICAL 0
-#define STATUS_NOMOVE 1
-#define STATUS_NOACT 2
-#define STATUS_ATTACKUP 3
-#define STATUS_BERSERK 4
-#define STATUS_DEFENSEUP 5
-#define STATUS_PROTECT 6
-#define STATUS_CHARGING 7
-#define STATUS_SLEEPING 8
-#define STATUS_POLYMORPH 9
-#define STATUS_DEAD 10
-#define STATUS_DEFENDING 11
-#define STATUS_PERFORMING 12
-#define STATUS_HASTE 13
-#define STATUS_SLOW 14
-#define STATUS_FLOAT 15
-#define STATUS_REGEN 16
-#define STATUS_RERAISE 17
-#define STATUS_SHELL 18
-#define STATUS_TRANSPARENT 19
-#define STATUS_CHARM 20
-#define STATUS_CONFUSION 21
-#define STATUS_DARKNESS 22
-#define STATUS_DEATHSENTENCE 23
-#define STATUS_OIL 24
-#define STATUS_PETRIFY 25
-#define STATUS_POISON 26
-#define STATUS_SILENCE 27
-#define STATUS_SLEEP 28
-#define STATUS_STOP 29
-#define STATUS_UNDEAD 30
-#define STATUS_FAITH 31
-#define STATUS_INNOCENT 32
-#define STATUS_REFLECT 33
-#define STATUS_QUICK 34
+#define STATUS_NOMOVE 0
+#define STATUS_NOACT 1
+#define STATUS_DARKNESS 2
+#define STATUS_UNDEAD 3
+#define STATUS_SLEEPING 4
+#define STATUS_POLYMORPH 5
+#define STATUS_SLOW 6
+#define STATUS_REGEN 7
+#define STATUS_CONFUSION 8
+#define STATUS_PETRIFY 9
+#define STATUS_POISON 10
+#define STATUS_SLEEP 11
+#define STATUS_SILENCE 12
+#define STATUS_DEATHSENTENCE 13
+#define STATUS_INNOCENT 14
+#define STATUS_FAITH 15
+/* Weapons can't add status beyond here */
+#define STATUS_STOP 16
+#define STATUS_OIL 17
+#define STATUS_ATTACKUP 18
+#define STATUS_CHARM 19
+#define STATUS_SHELL 20
+#define STATUS_HASTE 21
+#define STATUS_FLOAT 22
+#define STATUS_PROTECT 23
+#define STATUS_DEFENSEUP 24
+#define STATUS_REFLECT 25
+#define STATUS_RERAISE 26
+#define STATUS_TRANSPARENT 27
+#define STATUS_BERSERK 28
+#define STATUS_QUICK 29
+#define STATUS_CRITICAL 30
+#define STATUS_DEAD 31
+#define STATUS_PERFORMING 32
+#define STATUS_CHARGING 33
+#define STATUS_DEFENDING 34
 
 #define MOVED_FLAG BIT(0)
 #define ACTED_FLAG BIT(1)
@@ -93,6 +94,8 @@
 #define RESIST_HALF BIT(2)
 #define RESIST_ABSORB BIT(3)
 
+void remove_status(struct battle_char *bc, int status);
+void add_status(struct battle_char *bc, int status);
 int sign_compat(struct character*,struct character*);
 int evaded(struct battle_char *target, int type, int dir, int base_hit);
 int get_attack_dir(struct battle_char *attacker, struct battle_char *defender);
