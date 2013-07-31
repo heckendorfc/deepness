@@ -38,6 +38,9 @@ void remove_status(struct battle_char *bc, int status){
 		case STATUS_OIL:
 			bc->resist[ELEM_FIRE]&=~RESIST_WEAK;
 			break;
+		case STATUS_RERAISE:
+			bc->status[status]=IMMUNE_TO_STATUS;
+			break;
 	}
 }
 
@@ -159,39 +162,45 @@ void add_status(struct battle_char *bc, int status){
 
 int evaded(struct battle_char *target, int type, int dir, int base_hit){
 	uint32_t tohit=base_hit;
+	uint8_t evademod=1;
+
+	if(REACTION(target).flags&RFLAG_EVADEMOD && should_react(target))
+		evademod=REACTION(target).rf(target,NULL);
 	if(type==AFLAG_PHYSICAL){
 		if(REACTION(target).flags&RFLAG_HITMOD && should_react(target))
-			base_hit-=REACTION(target).rf(target,NULL);
+			tohit-=REACTION(target).rf(target,NULL);
 		switch(dir){
 			case ATTACK_DIR_FRONT:
 				tohit*=(100-class_stats[(int)target->ch->primary].evade);
-				tohit*=(100-misc_armor[EQ_TYPE(target->ch->eq[EQ_MISC])][target->ch->eq[EQ_MISC]>>6].phys.evade);
-				tohit*=(100-weapons[EQ_TYPE(target->ch->eq[EQ_WEAPON])][target->ch->eq[EQ_WEAPON]>>6].phys.evade);
+				tohit*=(100-misc_armor[EQ_TYPE(target->ch->eq[EQ_MISC])][target->ch->eq[EQ_MISC]>>6].phys.evade*evademod);
+				if(REACTION(target).flags&RFLAG_WEAPONEVADE)
+					tohit*=(100-weapons[EQ_TYPE(target->ch->eq[EQ_WEAPON])][target->ch->eq[EQ_WEAPON]>>6].phys.evade*evademod);
 				if(EQ_TYPE(target->ch->eq[EQ_OFFHAND])==EQO_SHIELD)
-					tohit*=(100-offhand[target->ch->eq[EQ_OFFHAND]>>6].phys.evade);
+					tohit*=(100-offhand[target->ch->eq[EQ_OFFHAND]>>6].phys.evade*evademod);
 				else
 					tohit*=100;
 				tohit/=100000000;
 				break;
 			case ATTACK_DIR_SIDE:
-				tohit*=(100-misc_armor[EQ_TYPE(target->ch->eq[EQ_MISC])][target->ch->eq[EQ_MISC]>>6].phys.evade);
-				tohit*=(100-weapons[EQ_TYPE(target->ch->eq[EQ_WEAPON])][target->ch->eq[EQ_WEAPON]>>6].phys.evade);
+				tohit*=(100-misc_armor[EQ_TYPE(target->ch->eq[EQ_MISC])][target->ch->eq[EQ_MISC]>>6].phys.evade*evademod);
+				if(REACTION(target).flags&RFLAG_WEAPONEVADE)
+					tohit*=(100-weapons[EQ_TYPE(target->ch->eq[EQ_WEAPON])][target->ch->eq[EQ_WEAPON]>>6].phys.evade*evademod);
 				if(EQ_TYPE(target->ch->eq[EQ_OFFHAND])==EQO_SHIELD)
-					tohit*=(100-offhand[target->ch->eq[EQ_OFFHAND]>>6].phys.evade);
+					tohit*=(100-offhand[target->ch->eq[EQ_OFFHAND]>>6].phys.evade*evademod);
 				else
 					tohit*=100;
 				tohit/=1000000;
 				break;
 			case ATTACK_DIR_REAR:
-				tohit*=(100-misc_armor[EQ_TYPE(target->ch->eq[EQ_MISC])][target->ch->eq[EQ_MISC]>>6].phys.evade);
+				tohit*=(100-misc_armor[EQ_TYPE(target->ch->eq[EQ_MISC])][target->ch->eq[EQ_MISC]>>6].phys.evade*evademod);
 				tohit/=100;
 				break;
 		}
 	}
 	else{
-		tohit*=(100-misc_armor[EQ_TYPE(target->ch->eq[EQ_MISC])][target->ch->eq[EQ_MISC]>>6].mag.evade);
+		tohit*=(100-misc_armor[EQ_TYPE(target->ch->eq[EQ_MISC])][target->ch->eq[EQ_MISC]>>6].mag.evade*evademod);
 		if(EQ_TYPE(target->ch->eq[EQ_OFFHAND])==EQO_SHIELD)
-			tohit*=(100-offhand[target->ch->eq[EQ_OFFHAND]>>6].mag.evade);
+			tohit*=(100-offhand[target->ch->eq[EQ_OFFHAND]>>6].mag.evade*evademod);
 		else
 			tohit*=100;
 		tohit/=10000;
@@ -234,16 +243,17 @@ int get_attack_dir(struct battle_char *attacker, struct battle_char *defender){
 	return ATTACK_DIR_FRONT;
 }
 
-void deal_damage(struct battle_char *bc, uint16_t dmg){
+void deal_damage(struct battle_char *bc, int16_t dmg){
 	bc->hp-=dmg;
 	if(bc->hp<0){
 		bc->hp=0;
 		add_status(bc,STATUS_DEAD);
 	}
+	else if(bc->hp>bc->hp_max) // undead or absorbs
+		bc->hp=bc->hp_max;
 	else if((bc->hp*100)/bc->hp_max<5)
 		add_status(bc,STATUS_CRITICAL);
 }
-
 
 void defend(struct battle_char *c){
 }
@@ -272,7 +282,7 @@ void slow_action_charge(struct battle_char **blist, int num){
 }
 
 int should_react(struct battle_char *ch){
-	if(ch->ch->reaction_class==0)
+	if(ch->ch->reaction_class==0 || STATUS_SET(ch,STATUS_NOMOVE) || STATUS_SET(ch,STATUS_BERSERK) || STATUS_SET(ch,STATUS_SLEEPING) || STATUS_SET(ch,STATUS_CONFUSION) || STATUS_SET(ch,STATUS_STOP))
 		return 0;
 
 	if(REACTION(ch).flags&RFLAG_BRAVE_PERCENT && get_random(0,100)>ch->brave)
@@ -300,6 +310,31 @@ void react(struct battle_char *attacker, struct battle_char **reacter, int num){
 		if(should_react(reacter[i]))
 			REACTION(reacter[i]).rf(reacter[i],attacker);
 	}
+}
+
+void fast_action(struct battle_char *source, struct battle_char *target, const struct ability *a){
+	struct stored_action thisact;
+
+	thisact.ctr=0;
+	thisact.jobindex=CL_GENERIC;
+	thisact.findex=0;
+	thisact.f=a->f.af;
+	thisact.origin=source;
+	thisact.target.x=target->x;
+	thisact.target.y=target->y;
+	thisact.target.width=1;
+	thisact.target.vertical=3;
+	thisact.target.dir=0;
+
+	a->f.af(source,target);
+
+	last_action.preresolve=&thisact;
+
+	react(source,&target,1);
+
+	last_action.mp_used=a->mp;
+	last_action.item=0;
+
 }
 
 void slow_action_resolution(struct battle_char **blist, int num){

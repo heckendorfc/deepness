@@ -100,8 +100,10 @@ struct eq_item{
 	eqremovef remove;
 };
 
+typedef uint8_t reactret;
+
 typedef void (*actionf)(struct battle_char*,struct battle_char*);
-typedef int (*reactionf)(struct battle_char*,struct battle_char*);
+typedef reactret (*reactionf)(struct battle_char*,struct battle_char*);
 typedef void (*supportf)(struct battle_char*);
 typedef void (*movementf)(struct battle_char*);
 typedef int (*weapon_damagef)(const struct eq_item*,struct battle_char*,struct battle_char*);

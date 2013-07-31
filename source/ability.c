@@ -3,6 +3,7 @@
 #include "player.h"
 #include "equipment.h"
 #include "util.h"
+#include "map.h"
 
 static int is_critical_hit(struct battle_char *attacker){
 	if(get_random(0,20)==0)
@@ -1223,9 +1224,9 @@ static int8_t elem_weapon_dmg(int16_t dmg, int elem, struct battle_char *d){
 		return -dmg;
 	else {
 		if(d->resist[elem]&RESIST_WEAK)
-			return dmg<<2;
+			return dmg*2;
 		if(d->resist[elem]&RESIST_HALF)
-			return dmg>>2;
+			return dmg/2;
 	}
 	return dmg;
 }
@@ -1236,18 +1237,6 @@ static void attack(struct battle_char *s, struct battle_char *d){
 	int16_t pdmg=0;
 	int16_t sdmg=0;
 	int biti;
-	struct stored_action thisact;
-
-	thisact.ctr=0;
-	thisact.jobindex=CL_GENERIC;
-	thisact.findex=0;
-	thisact.f=attack;
-	thisact.origin=s;
-	thisact.target.x=d->x;
-	thisact.target.y=d->y;
-	thisact.target.width=1;
-	thisact.target.vertical=3;
-	thisact.target.dir=0;
 
 	if(evaded(d,AFLAG_PHYSICAL,get_attack_dir(s,d),100))
 		return;
@@ -1255,13 +1244,13 @@ static void attack(struct battle_char *s, struct battle_char *d){
 	pdmg=weapon_damage[EQ_TYPE(pri)](&weapons[EQ_TYPE(pri)][pri>>6],s,d);
 
 	if(sec==0 && s->ch->support==SFLAG_TWO_HANDS)
-		pdmg<<=1;
+		pdmg*=2;
 	else if(sec>0 && EQ_TYPE(sec)!=EQO_SHIELD){ // Implied SFLAG_TWO_SWORDS. check it?
-		sdmg+=weapon_damage[EQ_TYPE(sec)](&weapons[EQ_TYPE(sec)][sec>>6],s,d);
-		sdmg=elem_weapon_dmg_mod(sdmg,weapons[EQ_TYPE(sec)][sec>>6].elem,d);
+		//sdmg+=weapon_damage[EQ_TYPE(sec)](&weapons[EQ_TYPE(sec)][sec>>6],s,d);
+		sdmg=elem_weapon_dmg(sdmg,weapons[EQ_TYPE(sec)][sec>>6].elem,d);
 	}
 
-	pdmg=elem_weapon_dmg_mod(pdmg,weapons[EQ_TYPE(pri)][pri>>6].elem,d);
+	pdmg=elem_weapon_dmg(pdmg,weapons[EQ_TYPE(pri)][pri>>6].elem,d);
 	
 	deal_damage(d,pdmg+sdmg);
 
@@ -1272,12 +1261,7 @@ static void attack(struct battle_char *s, struct battle_char *d){
 
 	}
 
-	last_action.preresolve=&thisact;
 	last_action.damage=pdmg+sdmg;
-	last_action.mp_used=0;
-	last_action.item=0;
-
-	react(s,&d,1);
 }
 
 
@@ -1385,10 +1369,199 @@ const struct support_ability clsupport[NUM_CLASS][NUM_SUPPORT_PER_ABILITY]={
 	{{SFLAG_MAGIC_ATTACKUP,400}}, // Wizard
 };
 
-static int speed_save(struct battle_char *reacter, struct battle_char *attacker){
+static reactret speed_save(struct battle_char *reacter, struct battle_char *attacker){
+	reacter->speed+=1;
+	return 0;
 }
 
-/*
+static reactret arrow_guard(struct battle_char *reacter, struct battle_char *attacker){
+	return reacter->brave;
+}
+
+static reactret ma_save(struct battle_char *reacter, struct battle_char *attacker){
+	reacter->ma+=1;
+	return 0;
+}
+
+static reactret face_up(struct battle_char *reacter, struct battle_char *attacker){
+	if(claction[last_action.preresolve->jobindex][last_action.preresolve->jobindex].mod==5 || claction[last_action.preresolve->jobindex][last_action.preresolve->jobindex].mod==6)
+		reacter->faith+=3;
+	return 0;
+}
+
+static reactret distribute(struct battle_char *reacter, struct battle_char *attacker){
+	if(last_action.damage<0 || STATUS_SET(reacter,STATUS_UNDEAD))
+		deal_damage(attacker,last_action.damage/2);
+	return 0;
+}
+
+static reactret damage_split(struct battle_char *reacter, struct battle_char *attacker){
+	if(last_action.damage>0 || STATUS_SET(reacter,STATUS_UNDEAD)){
+		deal_damage(attacker,last_action.damage/2);
+		deal_damage(reacter,-last_action.damage/2);
+	}
+	return 0;
+}
+
+static reactret auto_potion(struct battle_char *reacter, struct battle_char *attacker){
+	if(last_action.damage>0 || STATUS_SET(reacter,STATUS_UNDEAD)){
+		//TODO use_item
+	}
+	return 0;
+}
+
+static reactret a_save(struct battle_char *reacter, struct battle_char *attacker){
+	reacter->pa+=1;
+	return 0;
+}
+
+static reactret brave_up(struct battle_char *reacter, struct battle_char *attacker){
+	reacter->brave+=3;
+	return 0;
+}
+
+static reactret counter_flood(struct battle_char *reacter, struct battle_char *attacker){
+	uint8_t terrain;
+	uint8_t findex=0;
+
+	if(!claction[last_action.preresolve->jobindex][last_action.preresolve->findex].flags&AFLAG_COUNTER_FLOOD)
+		return 0;
+
+	terrain=get_map_terrain(reacter->x,reacter->y);
+	switch(terrain){
+		case MAP_T_NORMAL:
+			findex=0;
+			break;
+		case MAP_T_WATER:
+			findex=1;
+			break;
+		case MAP_T_STONE:
+			findex=2;
+			break;
+		case MAP_T_GRASS:
+			findex=3;
+			break;
+		case MAP_T_ROCK:
+			findex=4;
+			break;
+		case MAP_T_WOOD:
+			findex=6;
+			break;
+		case MAP_T_SWAMP:
+			findex=7;
+			break;
+		case MAP_T_SAND:
+			findex=8;
+			break;
+		case MAP_T_SNOW:
+			findex=9;
+			break;
+	}
+
+	// TODO cast the spell
+
+	return 0;
+}
+
+static reactret weapon_guard(struct battle_char *reacter, struct battle_char *attacker){
+	return 0;
+}
+
+static reactret dragon_spirit(struct battle_char *reacter, struct battle_char *attacker){
+	if(reacter->status[STATUS_RERAISE]!=IMMUNE_TO_STATUS)
+		reacter->status[STATUS_RERAISE]=UNTIMED_STATUS;
+	return 0;
+}
+
+static reactret finger_guard(struct battle_char *reacter, struct battle_char *attacker){
+	if(last_action.preresolve->jobindex==CL_MEDIATOR)
+		return reacter->brave;
+	return 0;
+}
+
+static reactret hp_restore(struct battle_char *reacter, struct battle_char *attacker){
+	reacter->hp=reacter->hp_max;
+	return 0;
+}
+
+static reactret counter(struct battle_char *reacter, struct battle_char *attacker){
+	attack(reacter,attacker);
+	return 0;
+}
+
+static reactret abandon(struct battle_char *reacter, struct battle_char *attacker){
+	return 2;
+}
+
+static reactret sunken_state(struct battle_char *reacter, struct battle_char *attacker){
+	reacter->status[STATUS_TRANSPARENT]=UNTIMED_STATUS;
+	return 0;
+}
+
+static reactret absorb_used_mp(struct battle_char *reacter, struct battle_char *attacker){
+	reacter->mp+=last_action.mp_used;
+	if(reacter->mp>reacter->mp_max)
+		reacter->mp=reacter->mp_max;
+	return 0;
+}
+
+static reactret regenerator(struct battle_char *reacter, struct battle_char *attacker){
+	add_status(reacter,STATUS_REGEN);
+	return 0;
+}
+
+static reactret blade_grasp(struct battle_char *reacter, struct battle_char *attacker){
+	return reacter->brave;
+}
+
+static reactret meatbone_slash(struct battle_char *reacter, struct battle_char *attacker){
+	deal_damage(attacker,reacter->hp);
+	return 0;
+}
+
+static reactret counter_tackle(struct battle_char *reacter, struct battle_char *attacker){
+	dash(reacter,attacker);
+	return 0;
+}
+
+static reactret mp_restore(struct battle_char *reacter, struct battle_char *attacker){
+	reacter->mp=reacter->mp_max;
+	return 0;
+}
+
+static reactret caution(struct battle_char *reacter, struct battle_char *attacker){
+	add_status(reacter,STATUS_DEFENDING);
+	return 0;
+}
+
+static reactret critical_quick(struct battle_char *reacter, struct battle_char *attacker){
+	add_status(reacter,STATUS_QUICK);
+	return 0;
+}
+
+static reactret mp_switch(struct battle_char *reacter, struct battle_char *attacker){
+	if(reacter->mp>0){
+		if(reacter->mp>last_action.damage){
+			reacter->mp-=last_action.damage;
+			reacter->hp+=last_action.damage;
+		}
+		else{
+			reacter->hp+=reacter->mp;
+			reacter->mp=0;
+		}
+	}
+	return 0;
+}
+
+static reactret counter_magic(struct battle_char *reacter, struct battle_char *attacker){
+	const struct ability *act=&claction[last_action.preresolve->jobindex][last_action.preresolve->findex];
+	if(act->flags&AFLAG_COUNTER_MAGIC && reacter->mp>act->mp){
+		reacter->mp-=act->mp;
+		act->f.af(reacter,attacker);
+	}
+	return 0;
+}
+
 const uint8_t num_reaction[]={};
 const struct reaction_ability clreaction[NUM_CLASS][NUM_REACTION_PER_ABILITY]={
 	{}, // Generic
@@ -1404,5 +1577,61 @@ const struct reaction_ability clreaction[NUM_CLASS][NUM_REACTION_PER_ABILITY]={
 		{distribute,200,RFLAG_TRIGGER_OTHER,RFLAG_BRAVE_PERCENT},
 		{damage_split,300,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
 	}, // Calculator
+	{
+		{auto_potion,400,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
+	}, // Chemist
+	{
+		{a_save,550,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
+		{brave_up,500,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
+	}, // Dancer
+	{
+		{counter_flood,300,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
+	}, // Geomancer
+	{
+		{weapon_guard,200,RFLAG_TRIGGER_ALWAYS,RFLAG_WEAPONEVADE|RFLAG_BRAVE_PERCENT},
+	}, // Knight
+	{
+		{dragon_spirit,200,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
+	}, // Lancer
+	{
+		{finger_guard,300,RFLAG_TRIGGER_ALWAYS,RFLAG_HITMOD},
+	}, // Mediator
+	{}, // Mime
+	{
+		{hp_restore,500,RFLAG_TRIGGER_CRITICAL,RFLAG_BRAVE_PERCENT},
+		{counter,300,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
+		//{hamedo,1200,RFLAG_TRIGGER_PRECOUNTER,RFLAG_BRAVE_PERCENT},
+	}, // Monk
+	{
+		{abandon,400,RFLAG_TRIGGER_ALWAYS,RFLAG_EVADEMOD},
+		{sunken_state,900,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
+	}, // Ninja
+	{
+		{absorb_used_mp,250,RFLAG_TRIGGER_ALWAYS,RFLAG_BRAVE_PERCENT},
+	}, // Oracle
+	{
+		{regenerator,400,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
+	}, // Priest
+	{
+		{blade_grasp,700,RFLAG_TRIGGER_COUNTER,RFLAG_HITMOD|RFLAG_BRAVE_PERCENT},
+		{meatbone_slash,200,RFLAG_TRIGGER_CRITICAL,RFLAG_BRAVE_PERCENT},
+	}, // Priest
+	{
+		{counter_tackle,180,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
+	}, // Squire
+	{
+		{mp_restore,400,RFLAG_TRIGGER_CRITICAL,RFLAG_BRAVE_PERCENT},
+	}, // Summoner
+	{
+		{caution,200,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
+		//{gilgame_heart,200,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
+		//{catch,200,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
+	}, // Thief
+	{
+		{critical_quick,700,RFLAG_TRIGGER_CRITICAL,RFLAG_BRAVE_PERCENT},
+		{mp_switch,400,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
+	}, // Time Mage
+	{
+		{counter_magic,800,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
+	}, // Time Mage
 };
-*/

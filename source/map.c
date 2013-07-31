@@ -21,7 +21,7 @@ void gen_random_map(){
 
 	for(i=0;i<MAP_WIDTH*MAP_HEIGHT;i++){
 		height[i]=0;
-		terrain[i]=MAP_T_NORMAL;
+		terrain[i]=MAP_T_NORMAL<<2;
 	}
 
 	for(i=0;i<5;i++){

@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "player.h"
+#include "ability.h"
 
 /*
 #define NUM_PREP_STATUS 3
@@ -99,9 +100,10 @@ void add_status(struct battle_char *bc, int status);
 int sign_compat(struct character*,struct character*);
 int evaded(struct battle_char *target, int type, int dir, int base_hit);
 int get_attack_dir(struct battle_char *attacker, struct battle_char *defender);
-void deal_damage(struct battle_char *bc, uint16_t dmg);
+void deal_damage(struct battle_char *bc, int16_t dmg);
 void react(struct battle_char *attacker, struct battle_char **reacter, int num);
 int should_react(struct battle_char *ch);
+void fast_action(struct battle_char *source, struct battle_char *target, const struct ability *a);
 void start_battle(struct character **friends, struct character *foes, int numfoe);
 
 #endif
