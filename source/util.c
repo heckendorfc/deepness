@@ -68,7 +68,7 @@ void level_up(struct character *ch){
 	int i;
 
 	for(i=level=0;i<NUM_CLASS;i++)
-		level+=ch->level[i];
+		level+=ch->exp[i]/100;
 
 
 	for(i=0;i<NUM_STATS;i++)
@@ -100,7 +100,7 @@ void create_character(struct character *ch){
 	ch->jp=0;
 	for(i=0;i<NUM_CLASS;i++){
 		ch->mastery[i]=0;
-		ch->level[i]=0;
+		ch->exp[i]=0;
 	}
 	ch->primary=ch->secondary=CL_SQUIRE;
 	for(i=0;i<NUM_EQ_SLOTS;i++)

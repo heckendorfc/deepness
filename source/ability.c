@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "battle.h"
 #include "ability.h"
 #include "player.h"
@@ -1634,4 +1635,141 @@ const struct reaction_ability clreaction[NUM_CLASS][NUM_REACTION_PER_ABILITY]={
 	{
 		{counter_magic,800,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
 	}, // Time Mage
+};
+
+static moveret mjump1(struct battle_char *bc, int dist){
+	bc->jump+=1;
+	return 1;
+}
+
+static moveret mjump2(struct battle_char *bc, int dist){
+	bc->jump+=2;
+	return 1;
+}
+
+static moveret mjump3(struct battle_char *bc, int dist){
+	bc->jump+=3;
+	return 1;
+}
+
+static moveret mmove1(struct battle_char *bc, int dist){
+	bc->move+=1;
+	return 1;
+}
+
+static moveret mmove2(struct battle_char *bc, int dist){
+	bc->move+=2;
+	return 1;
+}
+
+static moveret mmove3(struct battle_char *bc, int dist){
+	bc->move+=3;
+	return 1;
+}
+
+static moveret mget_exp(struct battle_char *bc, int dist){
+	bc->ch->exp[bc->ch->primary]+=2; // What's a goot number?
+	return 1;
+}
+
+static moveret mget_jp(struct battle_char *bc, int dist){
+	bc->ch->jp+=2; // What's a goot number?
+	return 1;
+}
+
+static moveret mfind_item(struct battle_char *bc, int dist){
+// TODO: find items
+	return 1;
+}
+
+static moveret mhp_up(struct battle_char *bc, int dist){
+	if(dist>=0)
+		bc->hp+=bc->hp_max/10;
+	if(bc->hp>bc->hp_max)
+		bc->hp=bc->hp_max;
+	return 1;
+}
+
+static moveret mmp_up(struct battle_char *bc, int dist){
+	if(dist>=0)
+		bc->mp+=bc->mp_max/10;
+	if(bc->mp>bc->mp_max)
+		bc->mp=bc->mp_max;
+	return 1;
+}
+
+static moveret mteleport(struct battle_char *bc, int dist){
+	uint8_t success=100;
+
+	if(dist>bc->move+9)
+		return 0;
+	
+	if(get_random(0,100)<success-((dist-bc->move)*10))
+		return 1;
+
+	return 0;
+}
+
+const uint8_t num_move[]={};
+const struct movement_ability clmovement[NUM_CLASS][NUM_MOVEMENT_PER_ABILITY]={
+	{}, // Generic
+	{
+		{mjump1,200,MFLAG_TRIGGER_START,0},
+	}, // Archer
+	{
+		{NULL,1200,MFLAG_TRIGGER_SPECIAL,MFLAG_FLY},
+		{mmove3,1000,MFLAG_TRIGGER_START,0},
+	}, // Bard
+	{
+		{mget_exp,400,MFLAG_TRIGGER_MOVE,0},
+		{mget_jp,400,MFLAG_TRIGGER_MOVE,0},
+	}, // Calculator
+	{
+		{mfind_item,100,MFLAG_TRIGGER_MOVE,0},
+	}, // Chemist
+	{
+		{NULL,1200,MFLAG_TRIGGER_SPECIAL,MFLAG_FLY},
+		{mjump3,1000,MFLAG_TRIGGER_START,0},
+	}, // Dancer
+	{
+		{NULL,220,MFLAG_TRIGGER_SPECIAL,MFLAG_WATERWALK},
+		{NULL,150,MFLAG_TRIGGER_SPECIAL,MFLAG_LAVAWALK},
+	}, // Geomancer
+	{
+	}, // Knight
+	{
+		{NULL,700,MFLAG_TRIGGER_SPECIAL,MFLAG_IGNOREHEIGHT},
+	}, // Lancer
+	{
+	}, // Mediator
+	{}, // Mime
+	{
+		{mhp_up,300,MFLAG_TRIGGER_MOVE,0},
+	}, // Monk
+	{
+		{NULL,220,MFLAG_TRIGGER_SPECIAL,MFLAG_WATERWALK},
+	}, // Ninja
+	{
+		{mmp_up,300,MFLAG_TRIGGER_MOVE,0},
+	}, // Oracle
+	{
+	}, // Priest
+	{
+		{NULL,300,MFLAG_TRIGGER_SPECIAL,MFLAG_WATERWALK},
+	}, // Samurai
+	{
+		{mmove1,200,MFLAG_TRIGGER_START,0},
+	}, // Squire
+	{
+	}, // Summoner
+	{
+		{mjump2,480,MFLAG_TRIGGER_START,0},
+		{mmove2,520,MFLAG_TRIGGER_START,0},
+	}, // Thief
+	{
+		{NULL,540,MFLAG_TRIGGER_SPECIAL,MFLAG_FLOAT},
+		{mteleport,600,MFLAG_TRIGGER_MOVE,MFLAG_FLY},
+	}, // Time Mage
+	{
+	}, // Wizard
 };

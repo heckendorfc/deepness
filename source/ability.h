@@ -67,6 +67,16 @@
 #define SFLAG_MONSTER_TALK 27
 #define SFLAG_TRAIN 28
 
+#define MFLAG_TRIGGER_START 1
+#define MFLAG_TRIGGER_MOVE 2
+#define MFLAG_TRIGGER_SPECIAL 3
+
+#define MFLAG_WATERWALK 1
+#define MFLAG_FLOAT 2
+#define MFLAG_FLY 3
+#define MFLAG_IGNOREHEIGHT 4
+#define MFLAG_LAVAWALK 5
+
 #define ELEM_NEUTRAL 0
 #define ELEM_FIRE 1
 #define ELEM_ICE 2
@@ -112,6 +122,13 @@ struct ability{
 
 struct reaction_ability{
 	reactionf rf;
+	uint16_t jp;
+	uint8_t trigger;
+	uint8_t flags;
+};
+
+struct movement_ability{
+	movementf mf;
 	uint16_t jp;
 	uint8_t trigger;
 	uint8_t flags;

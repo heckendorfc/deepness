@@ -101,11 +101,12 @@ struct eq_item{
 };
 
 typedef uint8_t reactret;
+typedef uint8_t moveret;
 
 typedef void (*actionf)(struct battle_char*,struct battle_char*);
 typedef reactret (*reactionf)(struct battle_char*,struct battle_char*);
 typedef void (*supportf)(struct battle_char*);
-typedef void (*movementf)(struct battle_char*);
+typedef moveret (*movementf)(struct battle_char*,int);
 typedef int (*weapon_damagef)(const struct eq_item*,struct battle_char*,struct battle_char*);
 
 struct character{
@@ -114,7 +115,7 @@ struct character{
 	uint8_t sign;
 	uint16_t jp;
 	uint32_t mastery[NUM_CLASS];
-	uint8_t level[NUM_CLASS];
+	uint16_t exp[NUM_CLASS];
 	uint8_t primary; // Abilities
 	uint8_t secondary; // Abilities
 	uint16_t eq[NUM_EQ_SLOTS];
