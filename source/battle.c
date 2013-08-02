@@ -160,6 +160,39 @@ void add_status(struct battle_char *bc, int status){
 	}
 }
 
+int get_shortest_path_len(struct battle_char *bc, int x, int y){
+	//int ox,oy;
+	//int i;
+	int tlen=0;
+
+	if(bc->x<x)
+		tlen+=x-bc->x;
+	else
+		tlen+=bc->x-x;
+
+	if(bc->y<y)
+		tlen+=y-bc->y;
+	else
+		tlen+=bc->y-y;
+
+	//for(i=0;i<bc->move;i++){
+	//}
+
+	return tlen;
+}
+
+int move(struct battle_char *bc, int x, int y){
+	int len=get_shortest_path_len(bc,x,y);
+
+	if(len<=bc->move){
+		bc->x=x;
+		bc->y=y;
+		return MOVE_SUCCESS;
+	}
+
+	return MOVE_INVALID;
+}
+
 int evaded(struct battle_char *target, int type, int dir, int base_hit){
 	uint32_t tohit=base_hit;
 	uint8_t evademod=1;
@@ -244,12 +277,14 @@ int get_attack_dir(struct battle_char *attacker, struct battle_char *defender){
 }
 
 void deal_damage(struct battle_char *bc, int16_t dmg){
-	bc->hp-=dmg;
-	if(bc->hp<0){
+	if(dmg>0 && bc->hp<dmg){
 		bc->hp=0;
 		add_status(bc,STATUS_DEAD);
 	}
-	else if(bc->hp>bc->hp_max) // undead or absorbs
+	else
+		bc->hp-=dmg;
+
+	if(bc->hp>bc->hp_max) // undead or absorbs
 		bc->hp=bc->hp_max;
 	else if((bc->hp*100)/bc->hp_max<5)
 		add_status(bc,STATUS_CRITICAL);
@@ -312,21 +347,30 @@ void react(struct battle_char *attacker, struct battle_char **reacter, int num){
 	}
 }
 
-void fast_action(struct battle_char *source, struct battle_char *target, const struct ability *a){
+void fast_action(struct battle_char *source, struct battle_char *target, int jobindex, int findex){
 	struct stored_action thisact;
+	uint8_t type;
+	uint8_t dir;
+	const struct ability *a=&claction[jobindex][findex];
+
+	if(claction[jobindex][findex].flags&AFLAG_PHYSICAL)
+		type=AFLAG_PHYSICAL;
+	else
+		type=AFLAG_MAGIC;
 
 	thisact.ctr=0;
-	thisact.jobindex=CL_GENERIC;
-	thisact.findex=0;
+	thisact.jobindex=jobindex;
+	thisact.findex=findex;
 	thisact.f=a->f.af;
 	thisact.origin=source;
 	thisact.target.x=target->x;
 	thisact.target.y=target->y;
-	thisact.target.width=1;
-	thisact.target.vertical=3;
-	thisact.target.dir=0;
+	thisact.target.width=a->ra.aoe;
+	thisact.target.vertical=a->ra.aoe_vertical;
+	thisact.target.dir=AOE_DIR(a->ra.dir);
 
-	a->f.af(source,target);
+	if(!(claction[jobindex][findex].flags&AFLAG_EVADE && evaded(target,type,dir,base_hit)))
+		a->f.af(source,target);
 
 	last_action.preresolve=&thisact;
 
@@ -382,9 +426,8 @@ void slow_action_resolution(struct battle_char **blist, int num){
 				if(hitmod)
 					base_hit=hitmod(blist[bi],targets[num_t],claction[tmp->jobindex][tmp->findex].mod_v);
 
-				if(claction[tmp->jobindex][tmp->findex].flags&AFLAG_EVADE && evaded(targets[num_t],type,dir,base_hit))
-						continue;
-				tmp->f(tmp->origin,targets[num_t]);
+				if(!(claction[tmp->jobindex][tmp->findex].flags&AFLAG_EVADE && evaded(targets[num_t],type,dir,base_hit)))
+					tmp->f(tmp->origin,targets[num_t]);
 				react(tmp->origin,targets,num_t);
 			}
 			free(targets);

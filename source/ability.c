@@ -259,16 +259,27 @@ static void holy(struct battle_char *origin, struct battle_char *target){
 }
 
 static void fire(struct battle_char *origin, struct battle_char *target){
-	uint16_t dmg = mod5(origin,target,18,100);
+	uint16_t dmg = mod5(origin,target,14,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void fire2(struct battle_char *origin, struct battle_char *target){
+	uint16_t dmg = mod5(origin,target,18,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void fire3(struct battle_char *origin, struct battle_char *target){
+	uint16_t dmg = mod5(origin,target,24,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void fire4(struct battle_char *origin, struct battle_char *target){
+	uint16_t dmg = mod5(origin,target,32,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void bolt(struct battle_char *origin, struct battle_char *target){
@@ -1266,6 +1277,7 @@ static void attack(struct battle_char *s, struct battle_char *d){
 }
 
 
+const uint8_t num_action[]={1};
 // Sorry this is so ugly... it's perl's fault :P
 const struct ability claction[NUM_CLASS][NUM_ACTION_PER_ABILITY]={
 {{.f.af=attack,0,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,0,0,2,AFLAG_MOD_XA,0,{RANGE_WEAPON,0,1,0,0}}}, // Generic
@@ -1563,7 +1575,7 @@ static reactret counter_magic(struct battle_char *reacter, struct battle_char *a
 	return 0;
 }
 
-const uint8_t num_reaction[]={};
+const uint8_t num_reaction[]={0,2,2,2,1,2,1,1,1,1,0,2,2,1,1,2,1,1,1,2,1};
 const struct reaction_ability clreaction[NUM_CLASS][NUM_REACTION_PER_ABILITY]={
 	{}, // Generic
 	{
@@ -1710,7 +1722,7 @@ static moveret mteleport(struct battle_char *bc, int dist){
 	return 0;
 }
 
-const uint8_t num_move[]={};
+const uint8_t num_move[]={0,1,2,2,1,2,2,10,1,0,0,1,1,1,0,1,1,0,2,2,0};
 const struct movement_ability clmovement[NUM_CLASS][NUM_MOVEMENT_PER_ABILITY]={
 	{}, // Generic
 	{

@@ -66,6 +66,7 @@ void print_info(struct battle_char *bc){
 
 	printf("UID: %d | DIR: %d | FOF: %d\n",bc->index,bc->dir,bc->fof);
 	printf("HP: %d | MP: %d | CT: %d\n",bc->hp,bc->mp,bc->ct);
+	printf("PA: %d | MA: %d | WP: %d\n",bc->pa,bc->ma,bc->wp);
 	for(i=0;i<NUM_STATUS;i++)
 		printf("%02d ",i);
 	printf("\n");
@@ -84,7 +85,7 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 	
 	do{
 		run=0;
-		printf("1:attack, 2:move, 3:map, 4:info, 5:skip\n:");
+		printf("%d | %s, %s, 3:map, 4:info, 5:skip\n:",bi,(*flags&ACTED_FLAG)==0?"1:attack":"",(*flags&MOVED_FLAG)==0?"2:move":"");
 		fgets(buf,100,stdin);
 
 		sscanf(buf,"%d:%d:%d",&cmd,&x,&y);
@@ -93,7 +94,7 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 			case 1:
 				if(!(*flags&ACTED_FLAG)){
 					tl=get_targets(blist,num,x,y,1,1,0);
-					fast_action(blist[bi],tl[0],&claction[0][0]);
+					fast_action(blist[bi],tl[0],,0,0);
 					free(tl);
 					*flags|=ACTED_FLAG;
 				}
@@ -102,7 +103,10 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 				break;
 			case 2:
 				if(!(*flags&MOVED_FLAG)){
-					*flags|=MOVED_FLAG;
+					if(move(blist[bi],x,y)==MOVE_INVALID)
+						run=1;
+					else
+						*flags|=MOVED_FLAG;
 				}
 				else
 					run=1;

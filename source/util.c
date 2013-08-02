@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include "util.h"
 #include "player.h"
+#include "equipment.h"
 
 int get_random(int min, int max){
 	return (rand()%(max-min))+min;
@@ -78,9 +79,11 @@ void level_up(struct character *ch){
 void set_battle_stats(struct battle_char *bc){
 	bc->hp=(bc->ch->raw[STAT_HP]*class_stats[(int)bc->ch->primary].basemod[STAT_HP])/BASE_STAT_DENOMINATOR;
 	if(bc->hp<1)bc->hp=1;
+	bc->hp_max=bc->hp;
 
 	bc->mp=(bc->ch->raw[STAT_MP]*class_stats[(int)bc->ch->primary].basemod[STAT_MP])/BASE_STAT_DENOMINATOR;
 	if(bc->mp<1)bc->mp=1;
+	bc->mp_max=bc->mp;
 
 	bc->ma=(bc->ch->raw[STAT_MA]*class_stats[(int)bc->ch->primary].basemod[STAT_MA])/BASE_STAT_DENOMINATOR;
 	if(bc->ma<1)bc->ma=1;
@@ -105,6 +108,7 @@ void create_character(struct character *ch){
 	ch->primary=ch->secondary=CL_SQUIRE;
 	for(i=0;i<NUM_EQ_SLOTS;i++)
 		ch->eq[i]=0;
+	ch->eq[EQ_WEAPON]=EQW_SWORD; // | 0<<6
 	ch->faith=ch->brave=50;
 
 	set_base_stats(ch);

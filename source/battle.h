@@ -95,15 +95,20 @@
 #define RESIST_HALF BIT(2)
 #define RESIST_ABSORB BIT(3)
 
+#define MOVE_INVALID 0
+#define MOVE_SUCCESS 1
+#define MOVE_FAILURE 2
+
 void remove_status(struct battle_char *bc, int status);
 void add_status(struct battle_char *bc, int status);
 int sign_compat(struct character*,struct character*);
+int move(struct battle_char *bc, int x, int y);
 int evaded(struct battle_char *target, int type, int dir, int base_hit);
 int get_attack_dir(struct battle_char *attacker, struct battle_char *defender);
 void deal_damage(struct battle_char *bc, int16_t dmg);
 void react(struct battle_char *attacker, struct battle_char **reacter, int num);
 int should_react(struct battle_char *ch);
-void fast_action(struct battle_char *source, struct battle_char *target, const struct ability *a);
+void fast_action(struct battle_char *source, struct battle_char *target, int jobindex, int findex);
 void start_battle(struct character **friends, struct character *foes, int numfoe);
 
 #endif
