@@ -20,11 +20,17 @@
 #define MAP_T_SNOW (11)
 #define MAP_T_STONE (12)
 
+#define MAP_M_UNCHARTED 0
+#define MAP_M_INVALID 1
+#define MAP_M_VALID 2
+
 #define MAP_INDEX(x,y) (x+(y*MAP_WIDTH))
 
 uint8_t get_map_height(int x,int y);
 uint8_t get_map_terrain(int x,int y);
 uint8_t get_map_start(int x,int y);
 void gen_random_map();
+void set_map_moves(int x, int y, int moves, int jump, int flags);
+uint8_t move_valid(int x, int y);
 
 #endif

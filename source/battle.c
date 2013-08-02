@@ -160,31 +160,8 @@ void add_status(struct battle_char *bc, int status){
 	}
 }
 
-int get_shortest_path_len(struct battle_char *bc, int x, int y){
-	//int ox,oy;
-	//int i;
-	int tlen=0;
-
-	if(bc->x<x)
-		tlen+=x-bc->x;
-	else
-		tlen+=bc->x-x;
-
-	if(bc->y<y)
-		tlen+=y-bc->y;
-	else
-		tlen+=bc->y-y;
-
-	//for(i=0;i<bc->move;i++){
-	//}
-
-	return tlen;
-}
-
 int move(struct battle_char *bc, int x, int y){
-	int len=get_shortest_path_len(bc,x,y);
-
-	if(len<=bc->move){
+	if(move_valid(x,y)){
 		bc->x=x;
 		bc->y=y;
 		return MOVE_SUCCESS;
@@ -347,10 +324,37 @@ void react(struct battle_char *attacker, struct battle_char **reacter, int num){
 	}
 }
 
+static uint8_t get_base_hit(struct battle_char *source, struct battle_char *target, int jobindex, int findex){
+	uint8_t base_hit;
+	uint8_t (*hitmod)(struct battle_char*,struct battle_char*,uint8_t);
+
+	switch(claction[jobindex][findex].mod){
+		case 1:
+			hitmod=mod1;
+			break;
+		case 3:
+			hitmod=mod3;
+			break;
+		case 4:
+			hitmod=mod4;
+			break;
+		case 6:
+			hitmod=mod6;
+			break;
+		default:
+			hitmod=NULL;
+			base_hit=100;
+	}
+
+	if(hitmod)
+		base_hit=hitmod(source,target,claction[jobindex][findex].mod_v);
+
+	return base_hit;
+}
+
 void fast_action(struct battle_char *source, struct battle_char *target, int jobindex, int findex){
 	struct stored_action thisact;
 	uint8_t type;
-	uint8_t dir;
 	const struct ability *a=&claction[jobindex][findex];
 
 	if(claction[jobindex][findex].flags&AFLAG_PHYSICAL)
@@ -369,7 +373,7 @@ void fast_action(struct battle_char *source, struct battle_char *target, int job
 	thisact.target.vertical=a->ra.aoe_vertical;
 	thisact.target.dir=AOE_DIR(a->ra.dir);
 
-	if(!(claction[jobindex][findex].flags&AFLAG_EVADE && evaded(target,type,dir,base_hit)))
+	if(!(claction[jobindex][findex].flags&AFLAG_EVADE && evaded(target,type,thisact.target.dir,get_base_hit(source,target,jobindex,findex))))
 		a->f.af(source,target);
 
 	last_action.preresolve=&thisact;
@@ -390,29 +394,10 @@ void slow_action_resolution(struct battle_char **blist, int num){
 	int type;
 	int dir;
 	int base_hit;
-	uint8_t (*hitmod)(struct battle_char*,struct battle_char*,uint8_t);
 
 	for(bi=0;bi<num;bi++){
 		tmp=blist[bi]->slow_act;
 		if(tmp && tmp->ctr==0){
-			switch(claction[tmp->jobindex][tmp->findex].mod){
-				case 1:
-					hitmod=mod1;
-					break;
-				case 3:
-					hitmod=mod3;
-					break;
-				case 4:
-					hitmod=mod4;
-					break;
-				case 6:
-					hitmod=mod6;
-					break;
-				default:
-					hitmod=NULL;
-					base_hit=100;
-			}
-
 			if(claction[tmp->jobindex][tmp->findex].flags&AFLAG_PHYSICAL)
 				type=AFLAG_PHYSICAL;
 			else
@@ -423,9 +408,7 @@ void slow_action_resolution(struct battle_char **blist, int num){
 			last_action.preresolve=tmp;
 			for(num_t=0;targets[num_t];num_t++){
 				dir=get_attack_dir(blist[bi],targets[num_t]);
-				if(hitmod)
-					base_hit=hitmod(blist[bi],targets[num_t],claction[tmp->jobindex][tmp->findex].mod_v);
-
+				base_hit=get_base_hit(blist[bi],targets[num_t],tmp->jobindex,tmp->findex);
 				if(!(claction[tmp->jobindex][tmp->findex].flags&AFLAG_EVADE && evaded(targets[num_t],type,dir,base_hit)))
 					tmp->f(tmp->origin,targets[num_t]);
 				react(tmp->origin,targets,num_t);
@@ -456,6 +439,7 @@ void ct_resolution(struct battle_char **blist, int *num){
 				bi--;
 				continue;
 			}
+			set_map_moves(blist[bi]->x,blist[bi]->y,blist[bi]->move,blist[bi]->jump,clmovement[blist[bi]->ch->movement_class][blist[bi]->ch->movement_class].flags);
 
 			flags=0;
 			if(STATUS_SET(blist[bi],STATUS_NOMOVE))

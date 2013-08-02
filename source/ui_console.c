@@ -15,7 +15,13 @@ const char terrain_char[]={
 	' ',
 	'w',
 	'r',
+	'g',
+	'b',
+	'd',
+	'p',
 	's',
+	'*',
+	't',
 };
 /*
 terrain  | height
@@ -30,12 +36,12 @@ void print_map(struct battle_char **blist, int bi, int num){
 
 	fprintf(stderr,"num: %d\n",num);
 
-	for(j=0;j<2;j++){
+	for(j=0;j<3;j++){
 		printf("   ");
 		for(i=0;i<MAP_WIDTH;i++){
 			printf("%d ",i);
 		}
-		if(j==0)printf(" | ");
+		if(j<2)printf(" | ");
 	}
 	printf("\n");
 
@@ -56,6 +62,16 @@ void print_map(struct battle_char **blist, int bi, int num){
 			else
 				printf("%d ",get_map_height(i,j));
 		}
+
+		printf(" | ");
+
+		printf("%02d ",j);
+		for(i=0;i<MAP_WIDTH;i++){
+			if(move_valid(i,j))
+				printf("x ");
+			else
+				printf("  ");
+		}
 		printf("\n");
 	}
 	printf("\n");
@@ -67,6 +83,7 @@ void print_info(struct battle_char *bc){
 	printf("UID: %d | DIR: %d | FOF: %d\n",bc->index,bc->dir,bc->fof);
 	printf("HP: %d | MP: %d | CT: %d\n",bc->hp,bc->mp,bc->ct);
 	printf("PA: %d | MA: %d | WP: %d\n",bc->pa,bc->ma,bc->wp);
+	printf("JUMP: %d | MOVE: %d\n",bc->jump,bc->move);
 	for(i=0;i<NUM_STATUS;i++)
 		printf("%02d ",i);
 	printf("\n");
@@ -94,7 +111,7 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 			case 1:
 				if(!(*flags&ACTED_FLAG)){
 					tl=get_targets(blist,num,x,y,1,1,0);
-					fast_action(blist[bi],tl[0],,0,0);
+					fast_action(blist[bi],tl[0],0,0);
 					free(tl);
 					*flags|=ACTED_FLAG;
 				}

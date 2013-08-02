@@ -1277,7 +1277,7 @@ static void attack(struct battle_char *s, struct battle_char *d){
 }
 
 
-const uint8_t num_action[]={1};
+const uint8_t num_action[]={1,0,7,0,0,7,11,8,0,10,0,8,0,14,15,10,4,16,8,12,16};
 // Sorry this is so ugly... it's perl's fault :P
 const struct ability claction[NUM_CLASS][NUM_ACTION_PER_ABILITY]={
 {{.f.af=attack,0,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,0,0,2,AFLAG_MOD_XA,0,{RANGE_WEAPON,0,1,0,0}}}, // Generic

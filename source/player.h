@@ -124,7 +124,8 @@ struct character{
 	uint8_t reaction_class;
 	uint8_t reaction_index;
 	uint8_t reaction_trigger;
-	movementf movement;
+	uint8_t movement_class;
+	uint8_t movement_index;
 	uint32_t raw[NUM_STATS];
 	uint8_t faith;
 	uint8_t brave;

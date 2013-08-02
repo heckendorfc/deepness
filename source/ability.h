@@ -146,10 +146,13 @@ uint8_t mod4(struct battle_char *origin, struct battle_char *target, uint8_t var
 int16_t mod5(struct battle_char *origin, struct battle_char *target, uint8_t var, uint8_t success);
 uint8_t mod6(struct battle_char *origin, struct battle_char *target, uint8_t var);
 
+extern const uint8_t num_ability[];
 extern const struct ability claction[NUM_CLASS][NUM_ACTION_PER_ABILITY];
 extern const uint8_t num_support[];
 extern const struct support_ability clsupport[NUM_CLASS][NUM_SUPPORT_PER_ABILITY];
 extern const uint8_t num_reaction[];
 extern const struct reaction_ability clreaction[NUM_CLASS][NUM_REACTION_PER_ABILITY];
+extern const uint8_t num_movement[];
+extern const struct movement_ability clmovement[NUM_CLASS][NUM_MOVEMENT_PER_ABILITY];
 
 #endif
