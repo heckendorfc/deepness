@@ -1,8 +1,8 @@
 #ifndef MAP_H
 #define MAP_H
 
-#define MAP_WIDTH 10
-#define MAP_HEIGHT 16
+#define MAP_WIDTH 15
+#define MAP_HEIGHT 11
 
 #define MAP_FRIEND_START 1
 #define MAP_FOE_START 2
