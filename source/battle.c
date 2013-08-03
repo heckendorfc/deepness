@@ -5,9 +5,7 @@
 #include "equipment.h"
 #include "util.h"
 
-#ifndef RELEASE_MODE
-#include "ui_console.h"
-#endif
+#include "ui_common.h"
 
 int sign_compat(struct character *a, struct character *b){
 	if(a->sign==SIGN_SERPENTARIUS)
@@ -372,6 +370,7 @@ void fast_action(struct battle_char *source, struct battle_char *target, int job
 	thisact.target.width=a->ra.aoe;
 	thisact.target.vertical=a->ra.aoe_vertical;
 	thisact.target.dir=AOE_DIR(a->ra.dir);
+	last_action.damage=NO_DAMAGE;
 
 	if(!(claction[jobindex][findex].flags&AFLAG_EVADE && evaded(target,type,thisact.target.dir,get_base_hit(source,target,jobindex,findex))))
 		a->f.af(source,target);
@@ -407,6 +406,7 @@ void slow_action_resolution(struct battle_char **blist, int num){
 			targets=get_targets(blist,num,tmp->target.x,tmp->target.y,tmp->target.width,tmp->target.vertical,tmp->target.dir);
 			last_action.preresolve=tmp;
 			for(num_t=0;targets[num_t];num_t++){
+				last_action.damage=NO_DAMAGE;
 				dir=get_attack_dir(blist[bi],targets[num_t]);
 				base_hit=get_base_hit(blist[bi],targets[num_t],tmp->jobindex,tmp->findex);
 				if(!(claction[tmp->jobindex][tmp->findex].flags&AFLAG_EVADE && evaded(targets[num_t],type,dir,base_hit)))
@@ -433,6 +433,8 @@ void ct_resolution(struct battle_char **blist, int *num){
 	
 	for(bi=0;bi<*num;bi++){
 		if(blist[bi]->ct>=100){
+			if(STATUS_SET(blist[bi],STATUS_DEAD))
+				blist[bi]->status[STATUS_DEAD]--;
 			if(blist[bi]->hp==0 && blist[bi]->status[STATUS_DEAD]==0){
 				*num-=1;
 				blist[bi]=blist[*num];

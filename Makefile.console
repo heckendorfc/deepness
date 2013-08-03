@@ -1,0 +1,4 @@
+debug:
+	clang -Wall -Wno-unused-function -DCONSOLE_MODE -o deepness source/*.c
+release:
+	cc -Wall -DRELEASE_MODE -DCONSOLE_MODE -o deepness source/*.c

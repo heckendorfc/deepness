@@ -7,6 +7,8 @@
 #include "battle.h"
 #include "map.h"
 
+#include "ui_common.h"
+
 int main(void) {
 	int i;
 	struct character foe;
@@ -16,6 +18,9 @@ int main(void) {
 	create_character(pdata.chars[0]);
 	create_character(&foe);
 	gen_random_map();
+
+	init_ui();
+
 	while(1){
 		start_battle(pdata.chars,&foe,1);
 	}

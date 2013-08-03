@@ -140,9 +140,9 @@ int16_t mod5(struct battle_char *origin, struct battle_char *target, uint8_t var
 // TODO strengthen here
 	if(STATUS_SET(origin,STATUS_ATTACKUP))
 		ma=ma*4/3;
-	if(STATUS_SET(target,STATUS_DEFENSEUP))
+	if(target->fof!=origin->fof && STATUS_SET(target,STATUS_DEFENSEUP))
 		ma=ma*2/3;
-	if(STATUS_SET(target,STATUS_SHELL))
+	if(target->fof!=origin->fof && STATUS_SET(target,STATUS_SHELL))
 		ma=ma*2/3;
 	
 	if(compat==SIGN_COMPAT_GOOD)
@@ -178,7 +178,7 @@ int16_t mod5(struct battle_char *origin, struct battle_char *target, uint8_t var
 
 /* Magic success */
 uint8_t mod6(struct battle_char *origin, struct battle_char *target, uint8_t var){
-	uint8_t ma=origin->ma;
+	uint16_t ma=origin->ma;
 	uint8_t tfa=target->faith, cfa=origin->faith;
 	uint8_t compat=sign_compat(origin->ch,target->ch);
 
@@ -195,9 +195,9 @@ uint8_t mod6(struct battle_char *origin, struct battle_char *target, uint8_t var
 // TODO strengthen here
 	if(STATUS_SET(origin,STATUS_ATTACKUP))
 		ma=ma*4/3;
-	if(STATUS_SET(target,STATUS_DEFENSEUP))
+	if(origin->fof!=target->fof && STATUS_SET(target,STATUS_DEFENSEUP))
 		ma=ma*2/3;
-	if(STATUS_SET(target,STATUS_SHELL))
+	if(origin->fof!=target->fof && STATUS_SET(target,STATUS_SHELL))
 		ma=ma*2/3;
 
 	if(compat==SIGN_COMPAT_GOOD)
@@ -213,49 +213,111 @@ uint8_t mod6(struct battle_char *origin, struct battle_char *target, uint8_t var
 }
 
 static void cure(struct battle_char *origin, struct battle_char *target){
+	int16_t var=mod5(origin,target,14,100);
+	deal_damage(target,-var);
+	last_action.damage=-var;
 }
 
 static void cure2(struct battle_char *origin, struct battle_char *target){
+	int16_t var=mod5(origin,target,20,100);
+	deal_damage(target,-var);
+	last_action.damage=-var;
 }
 
 static void cure3(struct battle_char *origin, struct battle_char *target){
+	int16_t var=mod5(origin,target,30,100);
+	deal_damage(target,-var);
+	last_action.damage=-var;
 }
 
 static void cure4(struct battle_char *origin, struct battle_char *target){
+	int16_t var=mod5(origin,target,40,100);
+	deal_damage(target,-var);
+	last_action.damage=-var;
 }
 
 static void raise(struct battle_char *origin, struct battle_char *target){
+	int8_t var=target->hp_max/2;
+	if(get_random(0,100)>=mod6(origin,target,180))
+		return;
+	if(STATUS_SET(target,STATUS_DEAD) && !STATUS_SET(target,STATUS_UNDEAD)){
+		remove_status(target,STATUS_DEAD);
+		deal_damage(target,-var);
+	}
+	else if(STATUS_SET(target,STATUS_UNDEAD)){
+		deal_damage(target,var);
+	}
 }
 
 static void raise2(struct battle_char *origin, struct battle_char *target){
+	int8_t var=target->hp_max/2;
+	if(get_random(0,100)>=mod6(origin,target,160))
+		return;
+	if(STATUS_SET(target,STATUS_DEAD) && !STATUS_SET(target,STATUS_UNDEAD)){
+		remove_status(target,STATUS_DEAD);
+		deal_damage(target,-var);
+	}
+	else if(STATUS_SET(target,STATUS_UNDEAD)){
+		deal_damage(target,var);
+	}
 }
 
 static void reraise(struct battle_char *origin, struct battle_char *target){
+	if(!STATUS_SET(target,STATUS_UNDEAD) && get_random(0,100)<mod6(origin,target,140))
+		add_status(target,STATUS_RERAISE);
 }
 
 static void regen(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,170))
+		add_status(target,STATUS_REGEN);
 }
 
 static void protect(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,200))
+		add_status(target,STATUS_PROTECT);
 }
 
 static void protect2(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,120))
+		add_status(target,STATUS_PROTECT);
 }
 
 static void shell(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,200))
+		add_status(target,STATUS_SHELL);
 }
 
 static void shell2(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,120))
+		add_status(target,STATUS_SHELL);
 }
 
 static void wall(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,140)){
+		add_status(target,STATUS_SHELL);
+		add_status(target,STATUS_PROTECT);
+	}
 }
 
 static void esuna(struct battle_char *origin, struct battle_char *target){
-	uint8_t success = mod6(origin,target,190);
+	if(get_random(0,100)<mod6(origin,target,190)){
+		remove_status(target,STATUS_PETRIFY);
+		remove_status(target,STATUS_DARKNESS);
+		remove_status(target,STATUS_CONFUSION);
+		remove_status(target,STATUS_SILENCE);
+		remove_status(target,STATUS_BERSERK);
+		remove_status(target,STATUS_POLYMORPH);
+		remove_status(target,STATUS_POISON);
+		remove_status(target,STATUS_SLEEPING);
+		remove_status(target,STATUS_NOMOVE);
+		remove_status(target,STATUS_NOACT);
+	}
 }
 
 static void holy(struct battle_char *origin, struct battle_char *target){
+	uint16_t dmg = mod5(origin,target,50,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void fire(struct battle_char *origin, struct battle_char *target){
@@ -283,165 +345,369 @@ static void fire4(struct battle_char *origin, struct battle_char *target){
 }
 
 static void bolt(struct battle_char *origin, struct battle_char *target){
+	uint16_t dmg = mod5(origin,target,14,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void bolt2(struct battle_char *origin, struct battle_char *target){
+	uint16_t dmg = mod5(origin,target,18,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void bolt3(struct battle_char *origin, struct battle_char *target){
+	uint16_t dmg = mod5(origin,target,24,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void bolt4(struct battle_char *origin, struct battle_char *target){
+	uint16_t dmg = mod5(origin,target,32,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void ice(struct battle_char *origin, struct battle_char *target){
+	uint16_t dmg = mod5(origin,target,14,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void ice2(struct battle_char *origin, struct battle_char *target){
+	uint16_t dmg = mod5(origin,target,18,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void ice3(struct battle_char *origin, struct battle_char *target){
+	uint16_t dmg = mod5(origin,target,24,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void ice4(struct battle_char *origin, struct battle_char *target){
+	uint16_t dmg = mod5(origin,target,32,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void poison(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,160))
+		add_status(target,STATUS_POISON);
 }
 
 static void frog(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,120))
+		add_status(target,STATUS_POLYMORPH);
 }
 
 static void death(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,100)){
+		if(STATUS_SET(target,STATUS_UNDEAD)){
+			deal_damage(target,-target->hp_max);
+			last_action.damage=-target->hp_max;
+		}
+		else{
+			deal_damage(target,target->hp_max);
+			last_action.damage=target->hp_max;
+		}
+	}
 }
 
 static void flare(struct battle_char *origin, struct battle_char *target){
+	uint16_t dmg = mod5(origin,target,46,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void haste(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,180)){
+		add_status(target,STATUS_HASTE);
+	}
 }
 
 static void haste2(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,240)){
+		add_status(target,STATUS_HASTE);
+	}
 }
 
 static void slow(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,180)){
+		add_status(target,STATUS_SLOW);
+	}
 }
 
 static void slow2(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,240)){
+		add_status(target,STATUS_SLOW);
+	}
 }
 
 static void stop(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,110)){
+		add_status(target,STATUS_STOP);
+	}
 }
 
 static void dont_move(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,190)){
+		add_status(target,STATUS_NOMOVE);
+	}
 }
 
 static void magic_float(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,140)){
+		add_status(target,STATUS_FLOAT);
+	}
 }
 
 static void reflect(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,180)){
+		add_status(target,STATUS_REFLECT);
+	}
 }
 
 static void quick(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,140)){
+		add_status(target,STATUS_QUICK);
+	}
 }
 
 static void demi(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,190)){
+		last_action.damage=target->hp_max/4;
+		deal_damage(target,target->hp_max/4);
+	}
 }
 
 static void demi2(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,120)){
+		last_action.damage=target->hp_max/2;
+		deal_damage(target,target->hp_max/2);
+	}
 }
 
 static void meteor(struct battle_char *origin, struct battle_char *target){
+	uint16_t dmg = mod5(origin,target,60,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void blind_yin(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,200)){
+		add_status(target,STATUS_DARKNESS);
+	}
 }
 
 static void spell_absorb(struct battle_char *origin, struct battle_char *target){
+	uint16_t drained;
+	if(get_random(0,100)<mod6(origin,target,160)){
+		drained=target->mp_max/3;
+		if(target->mp<drained)
+			drained=target->mp;
+		target->mp-=drained;
+		origin->mp+=drained;
+		if(origin->mp>origin->mp_max)
+			origin->mp=origin->mp_max;
+	}
 }
 
 static void life_drain(struct battle_char *origin, struct battle_char *target){
+	int16_t drained;
+	if(get_random(0,100)<mod6(origin,target,160)){
+		drained=target->hp_max/4;
+		if(drained>target->hp)
+			drained=target->hp;
+
+		if(STATUS_SET(target,STATUS_UNDEAD)){
+			deal_damage(target,-drained);
+			deal_damage(origin,drained);
+			last_action.damage=-drained;
+		}
+		else{
+			deal_damage(target,drained);
+			deal_damage(origin,-drained);
+			last_action.damage=drained;
+		}
+	}
 }
 
 static void pray_faith(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,150)){
+		add_status(target,STATUS_FAITH);
+	}
 }
 
 static void doubt_faith(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,150)){
+		add_status(target,STATUS_INNOCENT);
+	}
 }
 
 static void zombie_yin(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,100)){
+		add_status(target,STATUS_UNDEAD);
+	}
 }
 
 static void silence_song(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,180)){
+		add_status(target,STATUS_SILENCE);
+	}
 }
 
 static void blind_rage(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,120)){
+		add_status(target,STATUS_BERSERK);
+	}
 }
 
 static void foxbird(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,140)){
+		if(target->brave>30)
+			target->brave-=30;
+		else
+			target->brave=0; // TODO: <5 br penalties?
+	}
 }
 
 static void confusion_song(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,130)){
+		add_status(target,STATUS_CONFUSION);
+	}
 }
 
 static void dispel_magic(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,200)){
+		remove_status(target,STATUS_PROTECT);
+		remove_status(target,STATUS_SHELL);
+		remove_status(target,STATUS_HASTE);
+		remove_status(target,STATUS_FLOAT);
+		remove_status(target,STATUS_REGEN);
+		remove_status(target,STATUS_RERAISE);
+		remove_status(target,STATUS_TRANSPARENT);
+		remove_status(target,STATUS_FAITH);
+		remove_status(target,STATUS_REFLECT);
+	}
 }
 
 static void paralyze(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,185)){
+		add_status(target,STATUS_NOACT);
+	}
 }
 
 static void magic_sleep_yin(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,170)){
+		add_status(target,STATUS_SLEEPING);
+	}
 }
 
 static void petrify(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,120)){
+		add_status(target,STATUS_PETRIFY);
+	}
 }
 
 static void moogle(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod5(origin,target,12,100);
+	if(!STATUS_SET(target,STATUS_UNDEAD))
+		dmg=-dmg;
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void shiva(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod5(origin,target,24,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void ramuh(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod5(origin,target,24,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void ifrit(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod5(origin,target,24,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void titan(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod5(origin,target,28,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
+/*
 static void golem(struct battle_char *origin, struct battle_char *target){
 }
+*/
 
 static void carbunkle(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,150))
+		add_status(target,STATUS_REFLECT);
 }
 
 static void bahamut(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod5(origin,target,46,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void odin(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod5(origin,target,40,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void leviathan(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod5(origin,target,38,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void salamander(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod5(origin,target,38,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void silf(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,150))
+		add_status(target,STATUS_SILENCE);
 }
 
 static void fairy(struct battle_char *origin, struct battle_char *target){
+	int16_t var=mod5(origin,target,24,100);
+	if(!STATUS_SET(target,STATUS_UNDEAD))
+		var=-var;
+
+	deal_damage(target,var);
+	last_action.damage=var;
 }
 
 static void lich(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod6(origin,target,160)){
+		deal_damage(target,target->hp_max/2);
+		last_action.damage=target->hp_max/2;
+	}
 }
 
 static void cyclops(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod5(origin,target,50,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void zodiac(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod5(origin,target,96,100);
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void asura_draw(struct battle_char *origin, struct battle_char *target){
@@ -1277,7 +1543,7 @@ static void attack(struct battle_char *s, struct battle_char *d){
 }
 
 
-const uint8_t num_action[]={1,0,7,0,0,7,11,8,0,10,0,8,0,14,15,10,4,16,8,12,16};
+const uint8_t num_action[]={1,0,7,0,0,7,11,8,0,10,0,8,0,14,15,10,4,15,8,12,16};
 // Sorry this is so ugly... it's perl's fault :P
 const struct ability claction[NUM_CLASS][NUM_ACTION_PER_ABILITY]={
 {{.f.af=attack,0,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,0,0,2,AFLAG_MOD_XA,0,{RANGE_WEAPON,0,1,0,0}}}, // Generic
@@ -1297,7 +1563,7 @@ const struct ability claction[NUM_CLASS][NUM_ACTION_PER_ABILITY]={
 {{.f.af=cure,50,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,5,AFLAG_MOD_MA,6,{4,0,2,1,0}},{.f.af=cure2,180,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,5,AFLAG_MOD_MA,5,10,{4,0,2,1,0}},{.f.af=cure3,400,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,7,5,AFLAG_MOD_MA,16,{4,0,2,2,0}},{.f.af=cure4,700,AFLAG_MAGIC|0,0,10,5,AFLAG_MOD_MA,20,{4,0,2,3,0}},{.f.af=raise,180,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,6,180,10,{4,0,1,0,0}},{.f.af=raise2,500,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,10,6,160,20,{4,0,1,0,0}},{.f.af=reraise,800,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,7,6,140,16,{4,0,1,0,0}},{.f.af=regen,300,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,6,170,8,{3,0,2,0,0}},{.f.af=protect,70,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,6,200,6,{3,0,2,0,0}},{.f.af=protect2,500,AFLAG_MAGIC|0,0,7,6,120,24,{3,0,2,3,0}},{.f.af=shell,70,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,6,200,6,{3,0,2,0,0}},{.f.af=shell2,500,AFLAG_MAGIC|0,0,7,6,120,20,{3,0,2,3,0}},{.f.af=wall,380,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,6,140,24,{3,0,1,0,0}},{.f.af=esuna,280,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,3,6,190,18,{3,0,2,2,0}},{.f.af=holy,600,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|0,ELEM_HOLY,6,5,AFLAG_MOD_MA,56,{5,0,1,0,0}}}, //WHITE MAGIC (Priest)
 {{.f.af=asura_draw,100,AFLAG_MAGIC|0,0,0,5,AFLAG_MOD_MA,0,{0,0,3,3,0}},{.f.af=koutetsu,180,AFLAG_MAGIC|0,0,0,5,AFLAG_MOD_MA,0,{0,0,3,3,0}},{.f.af=bizen_boat,260,AFLAG_MAGIC|0,0,0,5,AFLAG_MOD_MA,0,{0,0,3,3,0}},{.f.af=murasame,340,0,0,0,0,0,0,{0,0,3,3,0}},{.f.af=heavens_cloud,420,AFLAG_MAGIC|0,0,0,5,AFLAG_MOD_MA,0,{0,0,3,3,0}},{.f.af=kiyomori,500,0,0,0,0,0,0,{0,0,3,3,0}},{.f.af=muramasa,580,AFLAG_MAGIC|0,0,0,5,AFLAG_MOD_MA,0,{0,0,3,3,0}},{.f.af=kikuichimoji,660,AFLAG_MAGIC|0,0,0,5,AFLAG_MOD_MA,0,{4,0,8,3,0}},{.f.af=masamune,740,0,0,0,0,0,0,{0,0,3,3,0}},{.f.af=chirijiraden,820,AFLAG_MAGIC|0,0,0,5,AFLAG_MOD_MA,0,{0,0,3,3,0}}}, //DRAW OUT (Samurai)
 {{.f.af=accumulate,300,0,0,0,0,0,0,{0,0,1,0,0}},{.f.af=dash,75,AFLAG_PHYSICAL|0,0,0,2,AFLAG_MOD_XA,0,{1,1,1,0,0}},{.f.af=throw_stone,90,AFLAG_PHYSICAL|AFLAG_EVADE|0,0,0,2,AFLAG_MOD_XA,0,{4,0,1,0,0}},{.f.af=heal,150,0,0,0,0,0,0,{1,2,1,0,0}}}, //BASIC SKILL (Squire)
-{{.f.af=moogle,110,AFLAG_MAGIC|0,0,2,5,AFLAG_MOD_MA,8,{4,0,3,2,0}},{.f.af=shiva,200,AFLAG_MAGIC|0,ELEM_ICE,4,5,AFLAG_MOD_MA,24,{4,0,3,2,0}},{.f.af=ramuh,200,AFLAG_MAGIC|0,ELEM_LIGHTNING,4,5,AFLAG_MOD_MA,24,{4,0,3,2,0}},{.f.af=ifrit,200,AFLAG_MAGIC|0,ELEM_FIRE,4,5,AFLAG_MOD_MA,24,{4,0,3,2,0}},{.f.af=titan,220,AFLAG_MAGIC|0,ELEM_EARTH,5,5,AFLAG_MOD_MA,30,{4,0,3,2,0}},{.f.af=golem,500,AFLAG_MAGIC|0,0,3,8,200,40,{0,0,1,0,0}},{.f.af=carbunkle,350,AFLAG_MAGIC|0,0,4,6,150,30,{4,0,3,2,0}},{.f.af=bahamut,1200,AFLAG_MAGIC|0,0,10,5,AFLAG_MOD_MA,60,{4,0,4,3,0}},{.f.af=odin,900,AFLAG_MAGIC|0,0,9,5,AFLAG_MOD_MA,50,{4,0,4,3,0}},{.f.af=leviathan,850,AFLAG_MAGIC|0,ELEM_WATER,9,5,AFLAG_MOD_MA,48,{4,0,4,3,0}},{.f.af=salamander,820,AFLAG_MAGIC|0,ELEM_FIRE,9,5,AFLAG_MOD_MA,48,{4,0,3,2,0}},{.f.af=silf,400,AFLAG_MAGIC|0,0,5,6,150,26,{4,0,3,2,0}},{.f.af=fairy,400,AFLAG_MAGIC|0,0,4,5,AFLAG_MOD_MA,28,{4,0,3,2,0}},{.f.af=lich,600,AFLAG_MAGIC|0,ELEM_DARK,9,6,160,40,{4,0,3,2,0}},{.f.af=cyclops,1000,AFLAG_MAGIC|0,0,9,5,AFLAG_MOD_MA,62,{4,0,3,2,0}},{.f.af=zodiac,1000,AFLAG_MAGIC|0,0,10,5,AFLAG_MOD_MA,99,{4,0,4,3,0}}}, //SUMMON MAGIC (Summoner)
+{{.f.af=moogle,110,AFLAG_MAGIC|0,0,2,5,AFLAG_MOD_MA,8,{4,0,3,2,0}},{.f.af=shiva,200,AFLAG_MAGIC|0,ELEM_ICE,4,5,AFLAG_MOD_MA,24,{4,0,3,2,0}},{.f.af=ramuh,200,AFLAG_MAGIC|0,ELEM_LIGHTNING,4,5,AFLAG_MOD_MA,24,{4,0,3,2,0}},{.f.af=ifrit,200,AFLAG_MAGIC|0,ELEM_FIRE,4,5,AFLAG_MOD_MA,24,{4,0,3,2,0}},{.f.af=titan,220,AFLAG_MAGIC|0,ELEM_EARTH,5,5,AFLAG_MOD_MA,30,{4,0,3,2,0}},/*{.f.af=golem,500,AFLAG_MAGIC|0,0,3,8,200,40,{0,0,1,0,0}},*/{.f.af=carbunkle,350,AFLAG_MAGIC|0,0,4,6,150,30,{4,0,3,2,0}},{.f.af=bahamut,1200,AFLAG_MAGIC|0,0,10,5,AFLAG_MOD_MA,60,{4,0,4,3,0}},{.f.af=odin,900,AFLAG_MAGIC|0,0,9,5,AFLAG_MOD_MA,50,{4,0,4,3,0}},{.f.af=leviathan,850,AFLAG_MAGIC|0,ELEM_WATER,9,5,AFLAG_MOD_MA,48,{4,0,4,3,0}},{.f.af=salamander,820,AFLAG_MAGIC|0,ELEM_FIRE,9,5,AFLAG_MOD_MA,48,{4,0,3,2,0}},{.f.af=silf,400,AFLAG_MAGIC|0,0,5,6,150,26,{4,0,3,2,0}},{.f.af=fairy,400,AFLAG_MAGIC|0,0,4,5,AFLAG_MOD_MA,28,{4,0,3,2,0}},{.f.af=lich,600,AFLAG_MAGIC|0,ELEM_DARK,9,6,160,40,{4,0,3,2,0}},{.f.af=cyclops,1000,AFLAG_MAGIC|0,0,9,5,AFLAG_MOD_MA,62,{4,0,3,2,0}},{.f.af=zodiac,1000,AFLAG_MAGIC|0,0,10,5,AFLAG_MOD_MA,99,{4,0,4,3,0}}}, //SUMMON MAGIC (Summoner)
 {{.f.af=gil_taking,10,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,0,0,4,200,0,{1,1,1,0,0}},{.f.af=steal_heart,150,0,0,0,1,50,0,{3,0,1,0,0}},{.f.af=steal_helmet,350,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,0,0,4,50,0,{1,1,1,0,0}},{.f.af=steal_armor,450,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,0,0,4,35,0,{1,1,1,0,0}},{.f.af=steal_shield,350,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,0,0,4,35,0,{1,1,1,0,0}},{.f.af=steal_weapon,600,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,0,0,4,30,0,{1,1,1,0,0}},{.f.af=steal_accessry,500,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,0,0,4,40,0,{1,1,1,0,0}},{.f.af=steal_exp,250,AFLAG_PHYSICAL|0,0,0,4,70,0,{1,1,1,0,0}}}, //STEAL (Thief)
 {{.f.af=haste,100,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,2,6,180,8,{3,0,2,0,0}},{.f.af=haste2,550,AFLAG_MAGIC|0,0,7,6,240,30,{3,0,2,3,0}},{.f.af=slow,80,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,2,6,180,8,{3,0,2,0,0}},{.f.af=slow2,520,AFLAG_MAGIC|AFLAG_COUNTER_MAGIC|AFLAG_EVADE|0,0,7,6,240,30,{3,0,2,3,0}},{.f.af=stop,330,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,7,6,110,14,{3,0,2,0,0}},{.f.af=dont_move,100,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,3,6,190,10,{3,0,2,1,0}},{.f.af=magic_float,200,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,2,6,140,8,{4,0,2,1,0}},{.f.af=reflect,330,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,2,6,180,12,{4,0,1,0,0}},{.f.af=quick,800,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|0,0,4,6,140,24,{4,0,1,0,0}},{.f.af=demi,250,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,6,6,190,24,{4,0,2,1,0}},{.f.af=demi2,550,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,9,6,120,50,{4,0,2,3,0}},{.f.af=meteor,1500,AFLAG_MAGIC|AFLAG_COUNTER_MAGIC|0,0,13,5,AFLAG_MOD_MA,70,{4,0,4,3,0}}}, //TIME MAGIC (Time Mage)
 {{.f.af=fire,50,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,ELEM_FIRE,4,5,AFLAG_MOD_MA,6,{4,0,2,1,0}},{.f.af=fire2,200,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,ELEM_FIRE,5,5,AFLAG_MOD_MA,12,{4,0,2,2,0}},{.f.af=fire3,480,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,ELEM_FIRE,7,5,AFLAG_MOD_MA,24,{4,0,2,3,0}},{.f.af=fire4,850,AFLAG_MAGIC|AFLAG_EVADE|0,ELEM_FIRE,10,5,AFLAG_MOD_MA,48,{4,0,3,3,0}},{.f.af=bolt,50,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,ELEM_LIGHTNING,4,5,AFLAG_MOD_MA,6,{4,0,2,1,0}},{.f.af=bolt2,200,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,ELEM_LIGHTNING,5,5,AFLAG_MOD_MA,10,{4,0,2,2,0}},{.f.af=bolt3,480,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,ELEM_LIGHTNING,7,5,AFLAG_MOD_MA,24,{4,0,2,3,0}},{.f.af=bolt4,850,AFLAG_MAGIC|AFLAG_EVADE|0,ELEM_LIGHTNING,10,5,AFLAG_MOD_MA,48,{4,0,3,3,0}},{.f.af=ice,50,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,ELEM_ICE,4,5,AFLAG_MOD_MA,6,{4,0,2,1,0}},{.f.af=ice2,200,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,ELEM_ICE,5,5,AFLAG_MOD_MA,12,{4,0,2,2,0}},{.f.af=ice3,480,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,ELEM_ICE,7,5,AFLAG_MOD_MA,24,{4,0,2,3,0}},{.f.af=ice4,850,AFLAG_MAGIC|AFLAG_EVADE|0,ELEM_ICE,10,5,AFLAG_MOD_MA,48,{4,0,3,3,0}},{.f.af=poison,150,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,3,6,160,6,{3,0,2,0,0}},{.f.af=frog,500,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,5,6,120,12,{3,0,1,0,0}},{.f.af=death,600,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,10,6,100,24,{3,0,1,0,0}},{.f.af=flare,900,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,7,5,AFLAG_MOD_MA,60,{5,0,1,0,0}}}, //BLACK MAGIC (Wizard)

@@ -1,7 +1,8 @@
-#ifdef CONSOLE_MODE
+#ifdef NDS_MODE
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <nds.h>
 
 #include "ui_common.h"
 #include "util.h"
@@ -24,10 +25,6 @@ const char terrain_char[]={
 	'*',
 	't',
 };
-
-void init_ui(){
-}
-
 /*
 terrain  | height
    0 1 2 |    0 1 2
