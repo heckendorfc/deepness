@@ -25,6 +25,10 @@ const char terrain_char[]={
 	'*',
 	't',
 };
+
+void init_ui(){
+}
+
 /*
 terrain  | height
    0 1 2 |    0 1 2
