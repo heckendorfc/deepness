@@ -12,7 +12,7 @@
 
 #include "maptiles.h"
 #include "heighttiles.h"
-#include "arrowright.h"
+#include "sprites.h"
 
 #define MAP_MODE_HEIGHT 0
 #define MAP_MODE_TERRAIN 1
@@ -21,22 +21,7 @@
 #define CONTROL_MODE_MAP 1
 
 #define GROUP_SIZE 2
-
-const char terrain_char[]={
-	' ',
-	'n',
-	'o',
-	' ',
-	'w',
-	'r',
-	'g',
-	'b',
-	'd',
-	'p',
-	's',
-	'*',
-	't',
-};
+#define NUM_SPRITES 3
 
 u8 *tileMemory;
 u16 *mapMemory;
@@ -44,6 +29,9 @@ u8 mapmode;
 u8 controlmode;
 PrintConsole topScreen;
 PrintConsole bottomScreen;
+u16 *spider_gfx;
+u16 *cursor_gfx;
+u16 *hilight_gfx;
 
 
 void set_tiles(int x, int y, int index){
@@ -56,7 +44,6 @@ void set_tiles(int x, int y, int index){
 				index==0?
 					0:
 					tileindex+j*GROUP_SIZE+i;
-					//((GROUP_SIZE*GROUP_SIZE*(index-1))+1)+(j*GROUP_SIZE)+i;
 		}
 	}
 }
@@ -102,18 +89,30 @@ void display_height(){
 }
 
 void init_ui(){
+	int i;
 	videoSetMode(MODE_0_2D | DISPLAY_BG0_ACTIVE);
 	videoSetModeSub(MODE_0_2D);
 	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
 	vramSetBankC(VRAM_C_SUB_BG);
+	vramSetBankE(VRAM_E_MAIN_SPRITE);
+
+	oamInit(&oamMain,SpriteMapping_1D_128,false);
+	spider_gfx=oamAllocateGfx(&oamMain,SpriteSize_16x16,SpriteColorFormat_16Color);
+	cursor_gfx=oamAllocateGfx(&oamMain,SpriteSize_16x16,SpriteColorFormat_16Color);
+	hilight_gfx=oamAllocateGfx(&oamMain,SpriteSize_16x16,SpriteColorFormat_16Color);
 
 	consoleInit(&bottomScreen, 3, BgType_Text4bpp, BgSize_T_256x256, 31, 0, false, true);
 	
 	tileMemory=(u8*)BG_TILE_RAM(1);
 	mapMemory=(u16*)BG_MAP_RAM(0);
 		
-	REG_BG0CNT = BG_32x32 | BG_COLOR_16 | BG_MAP_BASE(0) | BG_TILE_BASE(1);
-	
+	REG_BG0CNT = BG_32x32 | BG_COLOR_16 | BG_MAP_BASE(0) | BG_TILE_BASE(1) | BG_PRIORITY(3);
+
+	dmaCopy(&spritesTiles[spritesTilesLen/4/NUM_SPRITES*0],spider_gfx,spritesTilesLen/NUM_SPRITES);
+	dmaCopy(&spritesTiles[spritesTilesLen/4/NUM_SPRITES*1],cursor_gfx,spritesTilesLen/NUM_SPRITES);
+	dmaCopy(&spritesTiles[spritesTilesLen/4/NUM_SPRITES*2],hilight_gfx,spritesTilesLen/NUM_SPRITES);
+	dmaCopy(spritesPal,SPRITE_PALETTE,spritesPalLen);
+
 	mapmode=MAP_MODE_TERRAIN;
 	controlmode=CONTROL_MODE_ACTION;
 }
@@ -145,7 +144,6 @@ void print_info(struct battle_char *bc){
 	iprintf("\x1b[7;1HHP: %d | MP: %d | CT: %d",bc->hp,bc->mp,bc->ct);
 	iprintf("\x1b[8;1HPA: %d | MA: %d | WP: %d",bc->pa,bc->ma,bc->wp);
 	iprintf("\x1b[9;1HJUMP: %d | MOVE: %d",bc->jump,bc->move);
-	iprintf("\x1b[10;1H");
 	for(i=0;i<NUM_STATUS;i++){
 		if(STATUS_SET(bc,i)){
 			iprintf("%02d ",i);
@@ -157,6 +155,7 @@ void print_info(struct battle_char *bc){
 				
 		}
 	}
+	iprintf("\x1b[11;1H");
 	printed=printline=0;
 	for(i=0;i<NUM_STATUS;i++){
 		if(STATUS_SET(bc,i)){
@@ -175,81 +174,202 @@ void print_info(struct battle_char *bc){
 }
 
 void handle_input(struct battle_char **blist, int bi, int num){
-	int press = keysUp();
+}
 
-	if(press&(KEY_R|KEY_L)){
-		mapmode=!mapmode;
-		print_map(blist,bi,num);
-	}
-	if(press&(KEY_B)){
-		controlmode=!controlmode;
+void update_sprite_position(struct battle_char *bc){
+	oamSet(&oamMain,bc->index,16*bc->x,16*bc->y,0,0,SpriteSize_16x16,SpriteColorFormat_16Color,spider_gfx,-1,false,false,false,false,false);
+	oamUpdate(&oamMain);
+}
+
+void update_cursor(int num, int x, int y){
+	oamSet(&oamMain,num,16*x,16*y,1,0,SpriteSize_16x16,SpriteColorFormat_16Color,cursor_gfx,-1,false,false,false,false,false);
+	oamUpdate(&oamMain);
+}
+
+void hide_cursor(int num){
+	oamClear(&oamMain,num,1);
+	oamUpdate(&oamMain);
+}
+
+int show_moves(int num){
+	int i,j,index=0;
+		
+	for(j=0;j<MAP_HEIGHT;j++){
+		for(i=0;i<MAP_WIDTH;i++){
+			if(move_valid(i,j)){
+				index++;
+				oamSet(&oamMain,num+index,16*i,16*j,1,0,SpriteSize_16x16,SpriteColorFormat_16Color,hilight_gfx,-1,false,false,false,false,false);
+			}
+		}
 	}
 
+	oamUpdate(&oamMain);
+
+	return index;
+}
+
+void hide_moves(int num, int moves){
+	oamClear(&oamMain,num+1,moves);
+	oamUpdate(&oamMain);
 }
 
 void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
-	char buf[100];
 	struct battle_char **tl;
 	int cmd,x,y;
-	int run;
+	int i;
+	int run=1;
 	int uid;
+	int press;
+	int cursorx=1;
+	int cursory=0;
+	int moves=0;
+
+	controlmode=CONTROL_MODE_ACTION;
+	while(1){
+		cursory++;
+		if(cursory>3)cursory=1;
+		if(!(cursory==1 && *flags&ACTED_FLAG) && !(cursory==2 && *flags&MOVED_FLAG))
+			break;
+	}
+
+	for(i=0;i<num;i++){
+		oamSet(&oamMain,blist[i]->index,16*blist[i]->x,16*blist[i]->y,0,0,SpriteSize_16x16,SpriteColorFormat_16Color,spider_gfx,-1,false,false,false,false,false);
+	}
+	update_cursor(num,blist[bi]->x,blist[bi]->y);
 
 	swiWaitForVBlank();
+
 	print_map(blist,bi,num);
 
-	while(1){
-		iprintf("\x1b[2J\x1b[1;1H%s\x1b[2;1H%s\x1b[3;1HSkip\x1b[4;1H",(*flags&ACTED_FLAG)==0?"Attack":"",(*flags&MOVED_FLAG)==0?"Move":"");
+	while(run){
+		iprintf("\x1b[2J\x1b[1;1H%c%s\x1b[2;1H%c%s\x1b[3;1H%cSkip",
+			(controlmode==CONTROL_MODE_ACTION && cursory==1)?'*':' ',
+			(*flags&ACTED_FLAG)==0?"Attack":"",
+			(controlmode==CONTROL_MODE_ACTION && cursory==2)?'*':' ',
+			(*flags&MOVED_FLAG)==0?"Move":"",
+			(controlmode==CONTROL_MODE_ACTION && cursory==3)?'*':' ');
 		print_info(blist[bi]);
 
 		scanKeys();
+		press=keysDown();
 
-		handle_input(blist,bi,num);
-
+		if(press&(KEY_R|KEY_L)){
+			mapmode=!mapmode;
+			print_map(blist,bi,num);
+		}
+		if(press&(KEY_B)){
+			controlmode=!controlmode;
+			if(controlmode==CONTROL_MODE_ACTION){
+				cursorx=1;
+				cursory=1;
+				//hide_cursor(num);
+				update_cursor(num,blist[bi]->x,blist[bi]->y);
+			}
+			else{
+				cursorx=blist[bi]->x;
+				cursory=blist[bi]->y;
+				update_cursor(num,cursorx,cursory);
+			}
+		}
+		if(press&KEY_UP){
+			if(controlmode==CONTROL_MODE_ACTION){
+				while(1){
+					cursory--;
+					if(cursory<1)cursory=3;
+					if(!(cursory==1 && *flags&ACTED_FLAG) && !(cursory==2 && *flags&MOVED_FLAG))
+						break;
+				}
+			}
+			else{
+				if(cursory>0)cursory--;
+				update_cursor(num,cursorx,cursory);
+			}
+		}
+		if(press&KEY_DOWN){
+			if(controlmode==CONTROL_MODE_ACTION){
+				while(1){
+					cursory++;
+					if(cursory>3)cursory=1;
+					if(!(cursory==1 && *flags&ACTED_FLAG) && !(cursory==2 && *flags&MOVED_FLAG))
+						break;
+				}
+			}
+			else{
+				if(cursory<MAP_HEIGHT)cursory++;
+				update_cursor(num,cursorx,cursory);
+			}
+		}
+		if(press&KEY_LEFT){
+			if(controlmode==CONTROL_MODE_ACTION){
+				cursorx--;
+				if(cursorx<1)cursorx=1;
+			}
+			else{
+				if(cursorx>0)cursorx--;
+				update_cursor(num,cursorx,cursory);
+			}
+		}
+		if(press&KEY_RIGHT){
+			if(controlmode==CONTROL_MODE_ACTION){
+				cursorx++;
+				if(cursorx>1)cursorx=1;
+			}
+			else{
+				if(cursorx<MAP_WIDTH)cursorx++;
+				update_cursor(num,cursorx,cursory);
+			}
+		}
+		if(press&KEY_Y){
+			if(controlmode==CONTROL_MODE_ACTION){
+				if(cursory==3)
+					break;
+				cmd=cursory;
+				controlmode=!controlmode;
+				cursorx=blist[bi]->x;
+				cursory=blist[bi]->y;
+				update_cursor(num,cursorx,cursory);
+				if(cmd==2)
+					moves=show_moves(num);
+			}
+			else{
+				switch(cmd){
+					case 1:
+						if(!(*flags&ACTED_FLAG)){
+							tl=get_targets(blist,num,cursorx,cursory,1,1,0);
+							fast_action(blist[bi],tl[0],0,0);
+							free(tl);
+							*flags|=ACTED_FLAG;
+							run=0;
+						}
+						else
+							run=1;
+						break;
+					case 2:
+						if(!(*flags&MOVED_FLAG)){
+							run=0;
+							if(move(blist[bi],cursorx,cursory)==MOVE_INVALID){
+								controlmode=CONTROL_MODE_ACTION;
+								update_cursor(num,blist[bi]->x,blist[bi]->y);
+								cursory=2;
+								run=1;
+							}
+							else
+								*flags|=MOVED_FLAG;
+						}
+						else{
+							run=1;
+						}
+						hide_moves(num,moves);
+						break;
+					case 3:
+						// no action
+						run=0;
+						break;
+				}
+			}
+		}
+		
 		swiWaitForVBlank();
 	}
-	
-	do{
-		run=0;
-		iprintf("%d | %s, %s, 3:map, 4:info, 5:skip\n:",bi,(*flags&ACTED_FLAG)==0?"1:attack":"",(*flags&MOVED_FLAG)==0?"2:move":"");
-		fgets(buf,100,stdin);
-
-		sscanf(buf,"%d:%d:%d",&cmd,&x,&y);
-
-		switch(cmd){
-			case 1:
-				if(!(*flags&ACTED_FLAG)){
-					tl=get_targets(blist,num,x,y,1,1,0);
-					fast_action(blist[bi],tl[0],0,0);
-					free(tl);
-					*flags|=ACTED_FLAG;
-				}
-				else
-					run=1;
-				break;
-			case 2:
-				if(!(*flags&MOVED_FLAG)){
-					if(move(blist[bi],x,y)==MOVE_INVALID)
-						run=1;
-					else
-						*flags|=MOVED_FLAG;
-				}
-				else
-					run=1;
-				break;
-			case 3:
-				print_map(blist,bi,num);
-				run=1;
-				break;
-			case 4:
-				uid=unit_at(blist,num,x,y);
-				if(uid>=0)
-					print_info(blist[uid]);
-				run=1;
-				break;
-			case 5:
-				// no action
-				break;
-		}
-	}while(run==1);
 }
 #endif
