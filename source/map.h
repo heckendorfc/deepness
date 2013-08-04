@@ -24,6 +24,14 @@
 #define MAP_M_INVALID 1
 #define MAP_M_VALID 2
 
+#define NUM_MAP_THEME 5
+
+#define MAP_THEME_DESERT 0
+#define MAP_THEME_MARSH 1
+#define MAP_THEME_MOUNTAIN 2
+#define MAP_THEME_RUINS 3
+#define MAP_THEME_TOWN 4
+
 #define MAP_INDEX(x,y) (x+(y*MAP_WIDTH))
 
 uint8_t get_map_height(int x,int y);

@@ -7,6 +7,17 @@ uint8_t height[MAP_WIDTH*MAP_HEIGHT];
 uint8_t terrain[MAP_WIDTH*MAP_HEIGHT];
 uint8_t validmove[MAP_WIDTH*MAP_HEIGHT];
 
+const struct map_theme{
+	uint8_t base;
+	uint8_t options[3];
+}themes[]={
+	{MAP_T_SAND,{MAP_T_ROCK,MAP_T_ROCK,MAP_T_STONE}},
+	{MAP_T_SWAMP,{MAP_T_WATER,MAP_T_WOOD,MAP_T_GRASS}},
+	{MAP_T_ROCK,{MAP_T_STONE,MAP_T_GRASS,MAP_T_SNOW}},
+	{MAP_T_STONE,{MAP_T_GRASS,MAP_T_WATER,MAP_T_GRASS}},
+	{MAP_T_BRICK,{MAP_T_GRASS,MAP_T_WOOD,MAP_T_NORMAL}},
+};
+
 uint8_t get_map_height(int x,int y){
 	return height[MAP_INDEX(x,y)];
 }
@@ -20,16 +31,62 @@ uint8_t get_map_terrain(int x,int y){
 }
 
 void gen_random_map(){
-	int i;
+	int i,index;
+	int theme=rand()%NUM_MAP_THEME;
+	int blobs=rand()%3+4;
+	int blobi;
+	int bwidth;
+	int bheight;
+	int offset;
+	int start;
 
 	for(i=0;i<MAP_WIDTH*MAP_HEIGHT;i++){
 		height[i]=rand()%5;
-		terrain[i]=((rand()%12)+1)<<2;
+		//terrain[i]=((rand()%12)+1)<<2;
+		terrain[i]=(themes[theme].base)<<2;
 	}
 
+	while(blobs>0){
+		offset=rand()%(MAP_HEIGHT*MAP_WIDTH);
+		blobi=rand()%3;
+		bheight=rand()%(MAP_HEIGHT*2/3)+2;
+		bwidth=rand()%(MAP_WIDTH/3)+2;
+
+		while(bheight>0){
+			start=offset-((bheight/2)*MAP_WIDTH);
+			if(start<0){
+				bheight--;
+				continue;
+			}
+
+			index=start-(bwidth/2);
+			if(index<0){
+				index=0;
+			}
+			for(i=0;i<bwidth && index<MAP_HEIGHT*MAP_WIDTH;i++){
+				terrain[index]=themes[theme].options[blobi]<<2;
+				index++;
+			}
+
+			if(rand()&1)
+				bwidth+=rand()%3;
+			else
+				bwidth-=rand()%3;
+
+			if(bwidth<0)break;
+
+			bheight--;
+		}
+
+		blobs--;
+	}
+
+	for(blobs=rand()%7+1;blobs>0;blobs--)
+		terrain[rand()%(MAP_HEIGHT*MAP_WIDTH)]=MAP_T_NOSTAND;
+
 	for(i=0;i<5;i++){
-		terrain[i]=(MAP_T_NORMAL<<2)|MAP_FOE_START;
-		terrain[(MAP_WIDTH*MAP_HEIGHT)-(i+1)]=(MAP_T_NORMAL<<2)|MAP_FRIEND_START;
+		terrain[i]=(themes[theme].base<<2)|MAP_FOE_START;
+		terrain[(MAP_WIDTH*MAP_HEIGHT)-(i+1)]=(themes[theme].base<<2)|MAP_FRIEND_START;
 	}
 }
 
