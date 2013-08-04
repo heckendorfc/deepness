@@ -82,7 +82,7 @@ void gen_random_map(){
 	}
 
 	for(blobs=rand()%7+1;blobs>0;blobs--)
-		terrain[rand()%(MAP_HEIGHT*MAP_WIDTH)]=MAP_T_NOSTAND;
+		terrain[rand()%(MAP_HEIGHT*MAP_WIDTH)]=MAP_T_NOSTAND<<2;
 
 	for(i=0;i<5;i++){
 		terrain[i]=(themes[theme].base<<2)|MAP_FOE_START;
