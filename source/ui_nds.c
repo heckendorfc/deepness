@@ -273,7 +273,7 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 				get_map_height(cursorx,cursory),
 				terrain_name[get_map_terrain(cursorx,cursory)]);
 
-			if((i=unit_at(cursorx,cursory))>=0)
+			if((i=unit_at(blist,num,cursorx,cursory))>=0)
 				print_info(blist[i]);
 		}
 
