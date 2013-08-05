@@ -149,4 +149,9 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 		}
 	}while(run==1);
 }
+
+void print_message(char *msg){
+	printf("%s\n",msg);
+}
+
 #endif

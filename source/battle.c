@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "battle.h"
 #include "ability.h"
 #include "map.h"
@@ -180,24 +181,29 @@ int evaded(struct battle_char *target, int type, int dir, int base_hit){
 		switch(dir){
 			case ATTACK_DIR_FRONT:
 				tohit*=(100-class_stats[(int)target->ch->primary].evade);
+				tohit/=100;
 				tohit*=(100-misc_armor[EQ_TYPE(target->ch->eq[EQ_MISC])][target->ch->eq[EQ_MISC]>>6].phys.evade*evademod);
-				if(REACTION(target).flags&RFLAG_WEAPONEVADE)
+				tohit/=100;
+				if(REACTION(target).flags&RFLAG_WEAPONEVADE){
 					tohit*=(100-weapons[EQ_TYPE(target->ch->eq[EQ_WEAPON])][target->ch->eq[EQ_WEAPON]>>6].phys.evade*evademod);
-				if(EQ_TYPE(target->ch->eq[EQ_OFFHAND])==EQO_SHIELD)
+					tohit/=100;
+				}
+				if(EQ_TYPE(target->ch->eq[EQ_OFFHAND])==EQO_SHIELD){
 					tohit*=(100-offhand[target->ch->eq[EQ_OFFHAND]>>6].phys.evade*evademod);
-				else
-					tohit*=100;
-				tohit/=100000000;
+					tohit/=100;
+				}
 				break;
 			case ATTACK_DIR_SIDE:
 				tohit*=(100-misc_armor[EQ_TYPE(target->ch->eq[EQ_MISC])][target->ch->eq[EQ_MISC]>>6].phys.evade*evademod);
-				if(REACTION(target).flags&RFLAG_WEAPONEVADE)
+				tohit/=100;
+				if(REACTION(target).flags&RFLAG_WEAPONEVADE){
 					tohit*=(100-weapons[EQ_TYPE(target->ch->eq[EQ_WEAPON])][target->ch->eq[EQ_WEAPON]>>6].phys.evade*evademod);
-				if(EQ_TYPE(target->ch->eq[EQ_OFFHAND])==EQO_SHIELD)
+					tohit/=100;
+				}
+				if(EQ_TYPE(target->ch->eq[EQ_OFFHAND])==EQO_SHIELD){
 					tohit*=(100-offhand[target->ch->eq[EQ_OFFHAND]>>6].phys.evade*evademod);
-				else
-					tohit*=100;
-				tohit/=1000000;
+					tohit/=100;
+				}
 				break;
 			case ATTACK_DIR_REAR:
 				tohit*=(100-misc_armor[EQ_TYPE(target->ch->eq[EQ_MISC])][target->ch->eq[EQ_MISC]>>6].phys.evade*evademod);
@@ -214,9 +220,12 @@ int evaded(struct battle_char *target, int type, int dir, int base_hit){
 		tohit/=10000;
 	}
 
-	if(get_random(0,100)<tohit)
-		return 1;
-	return 0;
+	if(get_random(0,100)<tohit){
+		return 0;
+	}
+
+	print_message("Evaded!");
+	return 1;
 }
 
 int get_attack_dir(struct battle_char *attacker, struct battle_char *defender){
@@ -252,6 +261,8 @@ int get_attack_dir(struct battle_char *attacker, struct battle_char *defender){
 }
 
 void deal_damage(struct battle_char *bc, int16_t dmg){
+	char msg[20];
+
 	if(dmg>0 && bc->hp<dmg){
 		bc->hp=0;
 		add_status(bc,STATUS_DEAD);
@@ -263,6 +274,9 @@ void deal_damage(struct battle_char *bc, int16_t dmg){
 		bc->hp=bc->hp_max;
 	else if((bc->hp*100)/bc->hp_max<5)
 		add_status(bc,STATUS_CRITICAL);
+
+	sprintf(msg,"%d dmg",dmg);
+	print_message(msg);
 }
 
 void defend(struct battle_char *c){
@@ -372,7 +386,7 @@ void fast_action(struct battle_char *source, struct battle_char *target, int job
 	thisact.target.dir=AOE_DIR(a->ra.dir);
 	last_action.damage=NO_DAMAGE;
 
-	if(!(claction[jobindex][findex].flags&AFLAG_EVADE && evaded(target,type,thisact.target.dir,get_base_hit(source,target,jobindex,findex))))
+	if(!(claction[jobindex][findex].flags&AFLAG_EVADE && evaded(target,type,get_attack_dir(source,target),get_base_hit(source,target,jobindex,findex))))
 		a->f.af(source,target);
 
 	last_action.preresolve=&thisact;

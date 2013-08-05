@@ -1516,9 +1516,6 @@ static void attack(struct battle_char *s, struct battle_char *d){
 	int16_t sdmg=0;
 	int biti;
 
-	if(evaded(d,AFLAG_PHYSICAL,get_attack_dir(s,d),100))
-		return;
-
 	pdmg=weapon_damage[EQ_TYPE(pri)](&weapons[EQ_TYPE(pri)][pri>>6],s,d);
 
 	if(sec==0 && s->ch->support==SFLAG_TWO_HANDS)
