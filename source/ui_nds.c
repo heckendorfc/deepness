@@ -9,6 +9,7 @@
 #include "battle.h"
 #include "map.h"
 #include "ability.h"
+#include "equipment.h"
 
 #include "maptiles.h"
 #include "heighttiles.h"
@@ -32,6 +33,22 @@ PrintConsole bottomScreen;
 u16 *spider_gfx;
 u16 *cursor_gfx;
 u16 *hilight_gfx;
+char last_msg[20];
+
+const char *terrain_name[]={
+	"Normal",
+	"",
+	"",
+	"Water",
+	"Rock",
+	"Grass",
+	"Brick",
+	"Wood",
+	"Swamp",
+	"Sand",
+	"Snow",
+	"Stone",
+};
 
 
 void set_tiles(int x, int y, int index){
@@ -242,13 +259,23 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 	print_map(blist,bi,num);
 
 	while(run){
-		iprintf("\x1b[2J\x1b[1;1H%c%s\x1b[2;1H%c%s\x1b[3;1H%cSkip",
-			(controlmode==CONTROL_MODE_ACTION && cursory==1)?'*':' ',
-			(*flags&ACTED_FLAG)==0?"Attack":"",
-			(controlmode==CONTROL_MODE_ACTION && cursory==2)?'*':' ',
-			(*flags&MOVED_FLAG)==0?"Move":"",
-			(controlmode==CONTROL_MODE_ACTION && cursory==3)?'*':' ');
-		print_info(blist[bi]);
+		if(controlmode==CONTROL_MODE_ACTION){
+			iprintf("\x1b[2J\x1b[1;1H%c%s\x1b[2;1H%c%s\x1b[3;1H%cSkip",
+				(cursory==1)?'*':' ',
+				(*flags&ACTED_FLAG)==0?"Attack":"",
+				(cursory==2)?'*':' ',
+				(*flags&MOVED_FLAG)==0?"Move":"",
+				(cursory==3)?'*':' ');
+			print_info(blist[bi]);
+		}
+		else{
+			iprintf("\x1b[2J\x1b[1;1HHeight: %d\x1b[2;1HTerrain: %s",
+				get_map_height(cursorx,cursory),
+				terrain_name[get_map_terrain(cursorx,cursory)]);
+
+			if((i=unit_at(cursorx,cursory))>=0)
+				print_info(blist[i]);
+		}
 
 		scanKeys();
 		press=keysDown();
@@ -334,9 +361,10 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 			else{
 				switch(cmd){
 					case 1:
-						if(!(*flags&ACTED_FLAG)){
+						if(weapon_can_hit(blist[bi],cursorx,cursory) && !(*flags&ACTED_FLAG)){
 							tl=get_targets(blist,num,cursorx,cursory,1,1,0);
-							fast_action(blist[bi],tl[0],0,0);
+							if(tl[0])
+								fast_action(blist[bi],tl[0],0,0);
 							free(tl);
 							*flags|=ACTED_FLAG;
 							run=0;

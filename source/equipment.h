@@ -5,6 +5,10 @@
 
 #define EQ_TYPE(x) (x&0x3F)
 
+#define WEAP_RANGE(x) (x&0x3F)
+#define WRANGE_HEIGHT 0x80
+#define WRANGE_ALL 0x40
+
 #define EQ_WEAPON 0
 #define EQ_OFFHAND 1
 #define EQ_HEAD 2
@@ -68,6 +72,7 @@
 
 #define EQFLAG_NOFOE BIT(7)
 
+int weapon_can_hit(struct battle_char *bc, int x, int y);
 
 extern const weapon_damagef weapon_damage[];
 extern const struct eq_item weapons[NUM_EQW_TYPES][MAX_EQW_PER_TYPE];

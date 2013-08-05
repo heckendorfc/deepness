@@ -8,6 +8,7 @@
 #include "battle.h"
 #include "map.h"
 #include "ability.h"
+#include "equipment.h"
 
 const char terrain_char[]={
 	' ',
@@ -44,7 +45,7 @@ void print_map(struct battle_char **blist, int bi, int num){
 	for(j=0;j<3;j++){
 		printf("   ");
 		for(i=0;i<MAP_WIDTH;i++){
-			printf("%d ",i);
+			printf("%02d ",i);
 		}
 		if(j<2)printf(" | ");
 	}
@@ -54,18 +55,18 @@ void print_map(struct battle_char **blist, int bi, int num){
 		printf("%02d ",j);
 		for(i=0;i<MAP_WIDTH;i++){
 			if((uid=unit_at(blist,num,i,j))>=0)
-				printf("%d ",uid);
+				printf("%d  ",uid);
 			else
-				printf("%c ",terrain_char[get_map_terrain(i,j)]);
+				printf("%c  ",terrain_char[get_map_terrain(i,j)]);
 		}
 		printf(" | ");
 
 		printf("%02d ",j);
 		for(i=0;i<MAP_WIDTH;i++){
 			if(get_map_terrain(i,j)==MAP_T_NOTARGET)
-				printf("  ");
+				printf("   ");
 			else
-				printf("%d ",get_map_height(i,j));
+				printf("%d  ",get_map_height(i,j));
 		}
 
 		printf(" | ");
@@ -73,9 +74,9 @@ void print_map(struct battle_char **blist, int bi, int num){
 		printf("%02d ",j);
 		for(i=0;i<MAP_WIDTH;i++){
 			if(move_valid(i,j))
-				printf("x ");
+				printf("x  ");
 			else
-				printf("  ");
+				printf("   ");
 		}
 		printf("\n");
 	}
@@ -114,9 +115,10 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 
 		switch(cmd){
 			case 1:
-				if(!(*flags&ACTED_FLAG)){
+				if(weapon_can_hit(blist[bi],x,y) && !(*flags&ACTED_FLAG)){
 					tl=get_targets(blist,num,x,y,1,1,0);
-					fast_action(blist[bi],tl[0],0,0);
+					if(tl[0])
+						fast_action(blist[bi],tl[0],0,0);
 					free(tl);
 					*flags|=ACTED_FLAG;
 				}

@@ -5,6 +5,7 @@
 #include "util.h"
 #include "player.h"
 #include "ability.h"
+#include "map.h"
 
 /* Classes that can equip */
 const int cleqw[] = {
@@ -476,6 +477,27 @@ static void wear_h_bag(struct battle_char *bc){
 
 static void remove_h_bag(struct battle_char *bc){
 	bc->speed-=1;
+}
+
+const uint8_t weapon_range[]={1,1,1,5|WRANGE_HEIGHT,2,4,3,1,8,WRANGE_ALL,3,1,1,1,1,1,2,1,2,1};
+
+int weapon_can_hit(struct battle_char *bc, int x, int y){
+	int pdist,dist;
+	int type=EQ_TYPE(bc->ch->eq[EQ_WEAPON]);
+
+	if(weapon_range[type]&WRANGE_ALL)
+		return 1;
+
+	dist=WEAP_RANGE(weapon_range[type]);
+	if(weapon_range[type]&WRANGE_HEIGHT)
+		dist+=(get_map_height(bc->x,bc->y)-get_map_height(x,y))/2;
+
+	pdist=get_dist(bc,x,y,0,0,0); // TODO: fix 0,0,0 if that function ever changes
+	
+	if(pdist<=dist)
+		return 1;
+
+	return 0;
 }
 
 const struct eq_item weapons[NUM_EQW_TYPES][MAX_EQW_PER_TYPE]={
