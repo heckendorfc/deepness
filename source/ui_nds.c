@@ -264,9 +264,9 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 	print_map(blist,bi,num);
 
 	while(run){
+		iprintf("\x1b[2J %d x %d",cursorx,cursory);
 		if(controlmode==CONTROL_MODE_ACTION){
-			iprintf("\x1b[2J");
-			if(cursorx==1)
+			if(cursorx==1){
 				iprintf("\x1b[1;1H%c%s\x1b[2;1H%c%s\x1b[3;1H%c%s\x1b[4;1H%c%s\x1b[5;1H%cSkip",
 					(cursory==1)?'*':' ',
 					(*flags&ACTED_FLAG)==0?"Attack":"",
@@ -278,9 +278,20 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 					(*flags&MOVED_FLAG)==0?"Move":"",
 					(cursory==5)?'*':' ');
 				print_info(blist[bi]);
+			}
 			else{
-				for(i=offset;i-offset<MENU_ITEMS_PER_PAGE && i<num_ability[cmdgroup];i++)
-					iprintf("\x1b[%d;1H%s",i-offset+1,clability[cmdgroup][i].name); // TODO: Skip unavailable ones
+				if(offset+1<(MENU_ITEMS_PER_PAGE+1)/2){
+					for(i=0;i<((MENU_ITEMS_PER_PAGE+1)/2)+offset && i<num_action[cmdgroup];i++)
+						iprintf("\x1b[%d;1H%c%s",((MENU_ITEMS_PER_PAGE+1)/2)-offset+i,claction[cmdgroup][i].name);
+				}
+				else if(num_action[cmdgroup]-offset<(MENU_ITEMS_PER_PAGE+1)/2){
+					for(i=num_action[cmdgroup]-offset;i<num_action[cmdgroup];i++)
+						iprintf("\x1b[%d;1H%s",((MENU_ITEMS_PER_PAGE+1)/2)-(num_action[cmdgroup]-offset)+i,claction[cmdgroup][i].name);
+				}
+				else{
+					for(i=offset;i-offset<MENU_ITEMS_PER_PAGE && i<num_action[cmdgroup];i++)
+						iprintf("\x1b[%d;1H%s",i-offset+1,claction[cmdgroup][i].name); // TODO: Skip unavailable ones
+				}
 			}
 		}
 		else{
@@ -315,12 +326,16 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 		}
 		if(press&KEY_UP){
 			if(controlmode==CONTROL_MODE_ACTION){
-				while(1){
-					cursory--;
-					if(cursory<1)cursory=5;
-					if(!((cursory==1 || cursory==2 || cursory==3) && *flags&ACTED_FLAG) && !(cursory==2 && *flags&MOVED_FLAG))
-						break;
+				if(cursorx==1){
+					while(1){
+						cursory--;
+						if(cursory<1)cursory=5;
+						if(!((cursory==1 || cursory==2 || cursory==3) && *flags&ACTED_FLAG) && !(cursory==2 && *flags&MOVED_FLAG))
+							break;
+					}
 				}
+				else
+					if(offset>0)offset--;
 			}
 			else{
 				if(cursory>0)cursory--;
@@ -329,12 +344,16 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 		}
 		if(press&KEY_DOWN){
 			if(controlmode==CONTROL_MODE_ACTION){
-				while(1){
-					cursory++;
-					if(cursory>5)cursory=1;
-					if(!((cursory==1 || cursory==2 || cursory==3) && *flags&ACTED_FLAG) && !(cursory==2 && *flags&MOVED_FLAG))
-						break;
+				if(cursorx==1){
+					while(1){
+						cursory++;
+						if(cursory>5)cursory=1;
+						if(!((cursory==1 || cursory==2 || cursory==3) && *flags&ACTED_FLAG) && !(cursory==2 && *flags&MOVED_FLAG))
+							break;
+					}
 				}
+				else
+					if(offset<num_action[cmdgroup]-1)offset++;
 			}
 			else{
 				if(cursory<MAP_HEIGHT)cursory++;
@@ -343,7 +362,7 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 		}
 		if(press&KEY_LEFT){
 			if(controlmode==CONTROL_MODE_ACTION){
-				if(cursorx>0)cursorx--;
+				if(cursorx>1)cursorx--;
 			}
 			else{
 				if(cursorx>0)cursorx--;
@@ -357,9 +376,9 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 					cmd=cursory;
 					offset=0;
 					if(cursory==2)
-						cmdgroup=blist[bi]->primary;
+						cmdgroup=blist[bi]->ch->primary;
 					else if(cursory==3)
-						cmdgroup=blist[bi]->secondary;
+						cmdgroup=blist[bi]->ch->secondary;
 				}
 			}
 			else{
@@ -400,13 +419,13 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 					case 3:
 						if(!(*flags&ACTED_FLAG)){
 							if(claction[cmdgroup][subcmd].ctr==0){
-								tl=get_targets(blist,num,cursorx,cursory,clability[cmdgroup][subcmd].ra.aoe,clability[cmdgroup][subcmd].ra.aoe_vertical,AOE_DIR(clability[cmdgroup][subcmd].ra.dir));
+								tl=get_targets(blist,num,cursorx,cursory,claction[cmdgroup][subcmd].ra.aoe,claction[cmdgroup][subcmd].ra.aoe_vertical,AOE_DIR(claction[cmdgroup][subcmd].ra.dir));
 								for(i=0;i<num && tl[i];i++)
-									fast_action(blist[bi],tl[i],subgroup,subcmd);
+									fast_action(blist[bi],tl[i],cmdgroup,subcmd);
 								free(tl);
 							}
 							else
-								slow_action(blist[bi],cursorx,cursory,subgroup,subcmd);
+								slow_action(blist[bi],cursorx,cursory,cmdgroup,subcmd);
 							*flags|=ACTED_FLAG;
 							run=0;
 						}
