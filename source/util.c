@@ -105,7 +105,8 @@ void create_character(struct character *ch){
 		ch->mastery[i]=0;
 		ch->exp[i]=0;
 	}
-	ch->primary=ch->secondary=CL_SQUIRE;
+	ch->primary=ch->secondary=CL_WIZARD;
+	//ch->primary=ch->secondary=CL_SQUIRE;
 	for(i=0;i<NUM_EQ_SLOTS;i++)
 		ch->eq[i]=0;
 	ch->eq[EQ_WEAPON]=EQW_SWORD; // | 0<<6

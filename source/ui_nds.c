@@ -24,6 +24,8 @@
 #define GROUP_SIZE 2
 #define NUM_SPRITES 3
 
+#define MENU_ITEMS_PER_PAGE 5
+
 u8 *tileMemory;
 u16 *mapMemory;
 u8 mapmode;
@@ -240,12 +242,15 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 	int cursorx=1;
 	int cursory=0;
 	int moves=0;
+	int cmdgroup;
+	int subcmd;
+	int offset;
 
 	controlmode=CONTROL_MODE_ACTION;
 	while(1){
 		cursory++;
 		if(cursory>3)cursory=1;
-		if(!(cursory==1 && *flags&ACTED_FLAG) && !(cursory==2 && *flags&MOVED_FLAG))
+		if(!((cursory==1 || cursory==2 || cursory==3) && *flags&ACTED_FLAG) && !(cursory==2 && *flags&MOVED_FLAG))
 			break;
 	}
 
@@ -260,13 +265,23 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 
 	while(run){
 		if(controlmode==CONTROL_MODE_ACTION){
-			iprintf("\x1b[2J\x1b[1;1H%c%s\x1b[2;1H%c%s\x1b[3;1H%cSkip",
-				(cursory==1)?'*':' ',
-				(*flags&ACTED_FLAG)==0?"Attack":"",
-				(cursory==2)?'*':' ',
-				(*flags&MOVED_FLAG)==0?"Move":"",
-				(cursory==3)?'*':' ');
-			print_info(blist[bi]);
+			iprintf("\x1b[2J");
+			if(cursorx==1)
+				iprintf("\x1b[1;1H%c%s\x1b[2;1H%c%s\x1b[3;1H%c%s\x1b[4;1H%c%s\x1b[5;1H%cSkip",
+					(cursory==1)?'*':' ',
+					(*flags&ACTED_FLAG)==0?"Attack":"",
+					(cursory==2)?'*':' ',
+					(*flags&ACTED_FLAG)==0?"Primary ->":"",
+					(cursory==3)?'*':' ',
+					(*flags&ACTED_FLAG)==0?"Secondary ->":"",
+					(cursory==4)?'*':' ',
+					(*flags&MOVED_FLAG)==0?"Move":"",
+					(cursory==5)?'*':' ');
+				print_info(blist[bi]);
+			else{
+				for(i=offset;i-offset<MENU_ITEMS_PER_PAGE && i<num_ability[cmdgroup];i++)
+					iprintf("\x1b[%d;1H%s",i-offset+1,clability[cmdgroup][i].name); // TODO: Skip unavailable ones
+			}
 		}
 		else{
 			iprintf("\x1b[2J\x1b[1;1HHeight: %d\x1b[2;1HTerrain: %s",
@@ -302,8 +317,8 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 			if(controlmode==CONTROL_MODE_ACTION){
 				while(1){
 					cursory--;
-					if(cursory<1)cursory=3;
-					if(!(cursory==1 && *flags&ACTED_FLAG) && !(cursory==2 && *flags&MOVED_FLAG))
+					if(cursory<1)cursory=5;
+					if(!((cursory==1 || cursory==2 || cursory==3) && *flags&ACTED_FLAG) && !(cursory==2 && *flags&MOVED_FLAG))
 						break;
 				}
 			}
@@ -316,8 +331,8 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 			if(controlmode==CONTROL_MODE_ACTION){
 				while(1){
 					cursory++;
-					if(cursory>3)cursory=1;
-					if(!(cursory==1 && *flags&ACTED_FLAG) && !(cursory==2 && *flags&MOVED_FLAG))
+					if(cursory>5)cursory=1;
+					if(!((cursory==1 || cursory==2 || cursory==3) && *flags&ACTED_FLAG) && !(cursory==2 && *flags&MOVED_FLAG))
 						break;
 				}
 			}
@@ -328,8 +343,7 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 		}
 		if(press&KEY_LEFT){
 			if(controlmode==CONTROL_MODE_ACTION){
-				cursorx--;
-				if(cursorx<1)cursorx=1;
+				if(cursorx>0)cursorx--;
 			}
 			else{
 				if(cursorx>0)cursorx--;
@@ -338,8 +352,15 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 		}
 		if(press&KEY_RIGHT){
 			if(controlmode==CONTROL_MODE_ACTION){
-				cursorx++;
-				if(cursorx>1)cursorx=1;
+				if(cursorx<2){
+					cursorx++;
+					cmd=cursory;
+					offset=0;
+					if(cursory==2)
+						cmdgroup=blist[bi]->primary;
+					else if(cursory==3)
+						cmdgroup=blist[bi]->secondary;
+				}
 			}
 			else{
 				if(cursorx<MAP_WIDTH)cursorx++;
@@ -348,9 +369,12 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 		}
 		if(press&KEY_Y){
 			if(controlmode==CONTROL_MODE_ACTION){
-				if(cursory==3)
+				if(cursory==5)
 					break;
-				cmd=cursory;
+				if(cursorx==1)
+					cmd=cursory;
+				else
+					subcmd=cursory;
 				controlmode=!controlmode;
 				cursorx=blist[bi]->x;
 				cursory=blist[bi]->y;
@@ -373,6 +397,23 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 							run=1;
 						break;
 					case 2:
+					case 3:
+						if(!(*flags&ACTED_FLAG)){
+							if(claction[cmdgroup][subcmd].ctr==0){
+								tl=get_targets(blist,num,cursorx,cursory,clability[cmdgroup][subcmd].ra.aoe,clability[cmdgroup][subcmd].ra.aoe_vertical,AOE_DIR(clability[cmdgroup][subcmd].ra.dir));
+								for(i=0;i<num && tl[i];i++)
+									fast_action(blist[bi],tl[i],subgroup,subcmd);
+								free(tl);
+							}
+							else
+								slow_action(blist[bi],cursorx,cursory,subgroup,subcmd);
+							*flags|=ACTED_FLAG;
+							run=0;
+						}
+						else
+							run=1;
+						break;
+					case 4:
 						if(!(*flags&MOVED_FLAG)){
 							run=0;
 							if(move(blist[bi],cursorx,cursory)==MOVE_INVALID){
@@ -389,7 +430,7 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 						}
 						hide_moves(num,moves);
 						break;
-					case 3:
+					case 5:
 						// no action
 						run=0;
 						break;

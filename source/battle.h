@@ -109,6 +109,7 @@ void deal_damage(struct battle_char *bc, int16_t dmg);
 void react(struct battle_char *attacker, struct battle_char **reacter, int num);
 int should_react(struct battle_char *ch);
 void fast_action(struct battle_char *source, struct battle_char *target, int jobindex, int findex);
+void slow_action(struct battle_char *source, int x, int y, int jobindex, int findex);
 void start_battle(struct character **friends, struct character *foes, int numfoe);
 
 #endif

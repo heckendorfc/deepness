@@ -99,16 +99,51 @@ void print_info(struct battle_char *bc){
 	printf("\n\n");
 }
 
+void print_abilities(int group){
+	int i;
+	
+	for(i=0;i<num_action[group];i++)
+		printf("%d: %s\n",i,claction[group][i].name);
+}
+
+int run_ability(struct battle_char **blist, int bi, int num, int group, int x, int y, uint8_t *flags){
+	struct battle_char **tl;
+	int subcmd;
+	int i;
+	char buf[10];
+
+	print_abilities(group);
+	fgets(buf,10,stdin);
+
+	sscanf(buf,"%d",&subcmd);
+
+	if(!(*flags&ACTED_FLAG)){
+		if(claction[group][subcmd].ctr==0){
+			tl=get_targets(blist,num,x,y,claction[group][subcmd].ra.aoe,claction[group][subcmd].ra.aoe_vertical,AOE_DIR(claction[group][subcmd].ra.dir));
+			for(i=0;i<num && tl[i];i++)
+				fast_action(blist[bi],tl[i],group,subcmd);
+			free(tl);
+		}
+		else
+			slow_action(blist[bi],x,y,group,subcmd);
+		*flags|=ACTED_FLAG;
+		return 0;
+	}
+	else
+		return 1;
+}
+
 void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 	char buf[100];
 	struct battle_char **tl;
 	int cmd,x,y;
 	int run;
 	int uid;
+	int i;
 	
 	do{
 		run=0;
-		printf("%d | %s, %s, 3:map, 4:info, 5:skip\n:",bi,(*flags&ACTED_FLAG)==0?"1:attack":"",(*flags&MOVED_FLAG)==0?"2:move":"");
+		printf("%d | %s, %s, 3:map, 4:info, 5:skip, %s, %s\n:",bi,(*flags&ACTED_FLAG)==0?"1:attack":"",(*flags&MOVED_FLAG)==0?"2:move":"",(*flags&ACTED_FLAG)==0?"6:primary":"",(*flags&ACTED_FLAG)==0?"7:secondary":"");
 		fgets(buf,100,stdin);
 
 		sscanf(buf,"%d:%d:%d",&cmd,&x,&y);
@@ -147,6 +182,12 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 				break;
 			case 5:
 				// no action
+				break;
+			case 6:
+				run=run_ability(blist,bi,num,blist[bi]->ch->primary,x,y,flags);
+				break;
+			case 7:
+				run=run_ability(blist,bi,num,blist[bi]->ch->secondary,x,y,flags);
 				break;
 		}
 	}while(run==1);

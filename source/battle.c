@@ -172,6 +172,7 @@ int move(struct battle_char *bc, int x, int y){
 int evaded(struct battle_char *target, int type, int dir, int base_hit){
 	uint32_t tohit=base_hit;
 	uint8_t evademod=1;
+	char msg[20];
 
 	if(REACTION(target).flags&RFLAG_EVADEMOD && should_react(target))
 		evademod=REACTION(target).rf(target,NULL);
@@ -224,7 +225,8 @@ int evaded(struct battle_char *target, int type, int dir, int base_hit){
 		return 0;
 	}
 
-	print_message("Evaded!");
+	sprintf(msg,"%d Evaded!",target->index);
+	print_message(msg);
 	return 1;
 }
 
@@ -261,7 +263,7 @@ int get_attack_dir(struct battle_char *attacker, struct battle_char *defender){
 }
 
 void deal_damage(struct battle_char *bc, int16_t dmg){
-	char msg[20];
+	char msg[40];
 
 	if(dmg>0 && bc->hp<dmg){
 		bc->hp=0;
@@ -275,7 +277,7 @@ void deal_damage(struct battle_char *bc, int16_t dmg){
 	else if((bc->hp*100)/bc->hp_max<5)
 		add_status(bc,STATUS_CRITICAL);
 
-	sprintf(msg,"%d dmg",dmg);
+	sprintf(msg,"%d took %d dmg",bc->index,dmg);
 	print_message(msg);
 }
 
@@ -398,6 +400,30 @@ void fast_action(struct battle_char *source, struct battle_char *target, int job
 
 }
 
+void slow_action(struct battle_char *source, int x, int y, int jobindex, int findex){
+	struct stored_action *thisact;
+	uint8_t type;
+	const struct ability *a=&claction[jobindex][findex];
+
+	source->slow_act=thisact=malloc(sizeof(*thisact));
+	
+	if(a->flags&AFLAG_PHYSICAL)
+		type=AFLAG_PHYSICAL;
+	else
+		type=AFLAG_MAGIC;
+
+	thisact->ctr=a->ctr;
+	thisact->jobindex=jobindex;
+	thisact->findex=findex;
+	thisact->f=a->f.af;
+	thisact->origin=source;
+	thisact->target.x=x;
+	thisact->target.y=y;
+	thisact->target.width=a->ra.aoe;
+	thisact->target.vertical=a->ra.aoe_vertical;
+	thisact->target.dir=AOE_DIR(a->ra.dir);
+}
+
 void slow_action_resolution(struct battle_char **blist, int num){
 	int i;
 	int bi;
@@ -428,6 +454,8 @@ void slow_action_resolution(struct battle_char **blist, int num){
 				react(tmp->origin,targets,num_t);
 			}
 			free(targets);
+			free(tmp);
+			blist[bi]->slow_act=NULL;
 		}
 	}
 }
