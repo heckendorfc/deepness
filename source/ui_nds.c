@@ -427,7 +427,7 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 						break;
 					case 2:
 					case 3:
-						if(!((*flags)&ACTED_FLAG)){
+						if(!((*flags)&ACTED_FLAG) && check_action_range(blist[bi],cursorx,cursory,cmdgroup,subcmd)){
 							if(claction[cmdgroup][subcmd].ctr==0){
 								tl=get_targets(blist,num,cursorx,cursory,claction[cmdgroup][subcmd].ra.aoe,claction[cmdgroup][subcmd].ra.aoe_vertical,AOE_DIR(claction[cmdgroup][subcmd].ra.dir));
 								for(i=0;i<num && tl[i];i++)

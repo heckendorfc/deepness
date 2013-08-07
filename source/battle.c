@@ -281,6 +281,18 @@ void deal_damage(struct battle_char *bc, int16_t dmg){
 	print_message(msg);
 }
 
+int check_action_range(struct battle_char *bc, int x, int y, int jobindex, int findex){
+	int dist=get_dist(bc,x,y,0,0,0);
+
+	if(claction[jobindex][findex].ra.range==RANGE_WEAPON)
+		return weapon_can_hit(bc,x,y);
+
+	if(dist<=claction[jobindex][findex].ra.range)
+		return 1;
+
+	return 0;
+}
+
 void defend(struct battle_char *c){
 }
 

@@ -117,7 +117,7 @@ int run_ability(struct battle_char **blist, int bi, int num, int group, int x, i
 
 	sscanf(buf,"%d",&subcmd);
 
-	if(!(*flags&ACTED_FLAG)){
+	if(!((*flags)&ACTED_FLAG) && check_action_range(blist[bi],x,y,group,subcmd)){
 		if(claction[group][subcmd].ctr==0){
 			tl=get_targets(blist,num,x,y,claction[group][subcmd].ra.aoe,claction[group][subcmd].ra.aoe_vertical,AOE_DIR(claction[group][subcmd].ra.dir));
 			for(i=0;i<num && tl[i];i++)

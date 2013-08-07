@@ -105,6 +105,7 @@ int sign_compat(struct character*,struct character*);
 int move(struct battle_char *bc, int x, int y);
 int evaded(struct battle_char *target, int type, int dir, int base_hit);
 int get_attack_dir(struct battle_char *attacker, struct battle_char *defender);
+int check_action_range(struct battle_char *bc, int x, int y, int jobindex, int findex);
 void deal_damage(struct battle_char *bc, int16_t dmg);
 void react(struct battle_char *attacker, struct battle_char **reacter, int num);
 int should_react(struct battle_char *ch);
