@@ -103,7 +103,7 @@ void add_status(struct battle_char *bc, int status){
 			bc->status[status]=UNTIMED_STATUS;
 			break;
 		case STATUS_OIL:
-			if(!bc->resist[ELEM_FIRE]&RESIST_WEAK){
+			if(!(bc->resist[ELEM_FIRE]&RESIST_WEAK)){
 				bc->status[status]=UNTIMED_STATUS;
 				bc->resist[ELEM_FIRE]|=RESIST_WEAK;
 			}
@@ -406,6 +406,8 @@ void slow_action(struct battle_char *source, int x, int y, int jobindex, int fin
 	const struct ability *a=&claction[jobindex][findex];
 
 	source->slow_act=thisact=malloc(sizeof(*thisact));
+	if(thisact==NULL)
+		exit(1);
 	
 	if(a->flags&AFLAG_PHYSICAL)
 		type=AFLAG_PHYSICAL;

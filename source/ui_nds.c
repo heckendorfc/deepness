@@ -38,6 +38,7 @@ u16 *hilight_gfx;
 char last_msg[20];
 
 const char *terrain_name[]={
+	"",
 	"Normal",
 	"",
 	"",
@@ -234,7 +235,7 @@ void hide_moves(int num, int moves){
 
 void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 	struct battle_char **tl;
-	int cmd,x,y;
+	int cmd=0,x,y;
 	int i;
 	int run=1;
 	int uid;
@@ -242,15 +243,16 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 	int cursorx=1;
 	int cursory=0;
 	int moves=0;
-	int cmdgroup;
-	int subcmd;
-	int offset;
+	int cmdgroup=0;
+	int subcmd=0;
+	int offset=0;
+	int start,end,line;
 
 	controlmode=CONTROL_MODE_ACTION;
 	while(1){
 		cursory++;
-		if(cursory>3)cursory=1;
-		if(!((cursory==1 || cursory==2 || cursory==3) && *flags&ACTED_FLAG) && !(cursory==2 && *flags&MOVED_FLAG))
+		if(cursory>5)cursory=1;
+		if(!((cursory==1 || cursory==2 || cursory==3) && *flags&ACTED_FLAG) && !(cursory==4 && *flags&MOVED_FLAG))
 			break;
 	}
 
@@ -264,7 +266,7 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 	print_map(blist,bi,num);
 
 	while(run){
-		iprintf("\x1b[2J %d x %d",cursorx,cursory);
+		iprintf("\x1b[2J");
 		if(controlmode==CONTROL_MODE_ACTION){
 			if(cursorx==1){
 				iprintf("\x1b[1;1H%c%s\x1b[2;1H%c%s\x1b[3;1H%c%s\x1b[4;1H%c%s\x1b[5;1H%cSkip",
@@ -281,16 +283,24 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 			}
 			else{
 				if(offset+1<(MENU_ITEMS_PER_PAGE+1)/2){
-					for(i=0;i<((MENU_ITEMS_PER_PAGE+1)/2)+offset && i<num_action[cmdgroup];i++)
-						iprintf("\x1b[%d;1H%c%s",((MENU_ITEMS_PER_PAGE+1)/2)-offset+i,claction[cmdgroup][i].name);
+					start=0;
+					end=((MENU_ITEMS_PER_PAGE+1)/2)+offset;
+					line=((MENU_ITEMS_PER_PAGE+1)/2)-offset;
 				}
 				else if(num_action[cmdgroup]-offset<(MENU_ITEMS_PER_PAGE+1)/2){
-					for(i=num_action[cmdgroup]-offset;i<num_action[cmdgroup];i++)
-						iprintf("\x1b[%d;1H%s",((MENU_ITEMS_PER_PAGE+1)/2)-(num_action[cmdgroup]-offset)+i,claction[cmdgroup][i].name);
+					start=offset+1-((MENU_ITEMS_PER_PAGE+1)/2);
+					end=num_action[cmdgroup];
+					line=1;
 				}
 				else{
-					for(i=offset;i-offset<MENU_ITEMS_PER_PAGE && i<num_action[cmdgroup];i++)
-						iprintf("\x1b[%d;1H%s",i-offset+1,claction[cmdgroup][i].name); // TODO: Skip unavailable ones
+					line=1;
+					start=offset+1-((MENU_ITEMS_PER_PAGE+1)/2);
+					end=start+MENU_ITEMS_PER_PAGE;
+				}
+
+				for(i=start;i<end && i<num_action[cmdgroup];i++){
+					iprintf("\x1b[%d;1H%c%s",line,(line==(MENU_ITEMS_PER_PAGE+1)/2)?'*':' ',claction[cmdgroup][i].name);
+					line++;
 				}
 			}
 		}
@@ -330,7 +340,7 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 					while(1){
 						cursory--;
 						if(cursory<1)cursory=5;
-						if(!((cursory==1 || cursory==2 || cursory==3) && *flags&ACTED_FLAG) && !(cursory==2 && *flags&MOVED_FLAG))
+						if(!((cursory==1 || cursory==2 || cursory==3) && *flags&ACTED_FLAG) && !(cursory==4 && *flags&MOVED_FLAG))
 							break;
 					}
 				}
@@ -348,7 +358,7 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 					while(1){
 						cursory++;
 						if(cursory>5)cursory=1;
-						if(!((cursory==1 || cursory==2 || cursory==3) && *flags&ACTED_FLAG) && !(cursory==2 && *flags&MOVED_FLAG))
+						if(!((cursory==1 || cursory==2 || cursory==3) && *flags&ACTED_FLAG) && !(cursory==4 && *flags&MOVED_FLAG))
 							break;
 					}
 				}
@@ -393,18 +403,18 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 				if(cursorx==1)
 					cmd=cursory;
 				else
-					subcmd=cursory;
+					subcmd=offset;
 				controlmode=!controlmode;
 				cursorx=blist[bi]->x;
 				cursory=blist[bi]->y;
 				update_cursor(num,cursorx,cursory);
-				if(cmd==2)
+				if(cmd==4)
 					moves=show_moves(num);
 			}
 			else{
 				switch(cmd){
 					case 1:
-						if(weapon_can_hit(blist[bi],cursorx,cursory) && !(*flags&ACTED_FLAG)){
+						if(weapon_can_hit(blist[bi],cursorx,cursory) && !((*flags)&ACTED_FLAG)){
 							tl=get_targets(blist,num,cursorx,cursory,1,1,0);
 							if(tl[0])
 								fast_action(blist[bi],tl[0],0,0);
@@ -417,15 +427,16 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 						break;
 					case 2:
 					case 3:
-						if(!(*flags&ACTED_FLAG)){
+						if(!((*flags)&ACTED_FLAG)){
 							if(claction[cmdgroup][subcmd].ctr==0){
 								tl=get_targets(blist,num,cursorx,cursory,claction[cmdgroup][subcmd].ra.aoe,claction[cmdgroup][subcmd].ra.aoe_vertical,AOE_DIR(claction[cmdgroup][subcmd].ra.dir));
 								for(i=0;i<num && tl[i];i++)
 									fast_action(blist[bi],tl[i],cmdgroup,subcmd);
 								free(tl);
 							}
-							else
+							else{
 								slow_action(blist[bi],cursorx,cursory,cmdgroup,subcmd);
+							}
 							*flags|=ACTED_FLAG;
 							run=0;
 						}

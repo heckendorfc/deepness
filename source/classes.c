@@ -1,7 +1,8 @@
 #include "player.h"
 #include "classes.h"
 
-const char class_unlocks[NUM_CLASS][NUM_CLASS+1]={
+const char class_unlocks[NUM_CLASS+1][NUM_CLASS+1]={
+	{},
 	{3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0}, /* Archer */
 	{1,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,4,0,0,0}, /* Bard */
 	{3,0,0,0,0,0,0,0,0,0,0,0,0,0,3,4,0,0,0,3,4}, /* Calculator */
@@ -27,7 +28,8 @@ const char class_unlocks[NUM_CLASS][NUM_CLASS+1]={
 /*
 // hp/mp gain formula: r(10:17)/c[hm]p
 // Speed point gained every speed levels
-const struct class_stats[NUM_CLASS]={
+const struct class_stats[]={
+	{},
 	{3,3,10,4,12,18}, // Archer
 	{3,3,5,10,14,18}, // Bard
 	{3,3,5,8,8,30}, // Calculator
@@ -54,6 +56,7 @@ const struct class_stats[NUM_CLASS]={
 // hp/mp gain formula: r(10:17)/c[hm]p
 // Speed point gained every speed levels
 const struct class_stat class_stats[]={
+	{},
 	{3,3,10,{100,75,100,110,80},{11,16,100,45,50}}, // Archer
 	{3,3,5,{55,50,100,30,115},{20,20,100,80,50}}, // Bard
 	{3,3,5,{65,80,50,50,70},{14,10,100,70,50}}, // Calculator

@@ -98,7 +98,7 @@ static void recursive_move_chart(int x, int y, int prevheight, int moves, int ju
 
 	thisheight=get_map_height(x,y);
 
-	if(validmove[MAP_INDEX(x,y)]!=MAP_M_UNCHARTED)
+	if(validmove[MAP_INDEX(x,y)]==MAP_M_VALID)
 		goto nextsquare;
 
 	t=get_map_terrain(x,y);
