@@ -26,7 +26,7 @@
 
 #define MENU_ITEMS_PER_PAGE 5
 
-u8 *tileMemory;
+u16 *tileMemory;
 u16 *mapMemory;
 u8 mapmode;
 u8 controlmode;
@@ -35,9 +35,9 @@ PrintConsole bottomScreen;
 u16 *spider_gfx;
 u16 *cursor_gfx;
 u16 *hilight_gfx;
-char last_msg[20];
+//char last_msg[20];
 
-const char *terrain_name[]={
+static const char *terrain_name[]={
 	"",
 	"Normal",
 	"",
@@ -52,7 +52,6 @@ const char *terrain_name[]={
 	"Snow",
 	"Stone",
 };
-
 
 void set_tiles(int x, int y, int index){
 	int i,j;
@@ -83,6 +82,7 @@ void display_terrain(){
 		for(i=0;i<32/GROUP_SIZE;i++){
 			if(i<MAP_WIDTH && j<MAP_HEIGHT)
 				set_tiles(i,j,get_map_terrain(i,j));
+			
 			else
 				set_tiles(i,j,0);
 		}
@@ -113,7 +113,7 @@ void init_ui(){
 	videoSetMode(MODE_0_2D | DISPLAY_BG0_ACTIVE);
 	videoSetModeSub(MODE_0_2D);
 	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
-	vramSetBankC(VRAM_C_SUB_BG);
+	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
 	vramSetBankE(VRAM_E_MAIN_SPRITE);
 
 	oamInit(&oamMain,SpriteMapping_1D_128,false);
@@ -122,12 +122,16 @@ void init_ui(){
 	hilight_gfx=oamAllocateGfx(&oamMain,SpriteSize_16x16,SpriteColorFormat_16Color);
 
 	consoleInit(&bottomScreen, 3, BgType_Text4bpp, BgSize_T_256x256, 31, 0, false, true);
-	
-	tileMemory=(u8*)BG_TILE_RAM(1);
-	mapMemory=(u16*)BG_MAP_RAM(0);
-		
-	REG_BG0CNT = BG_32x32 | BG_COLOR_16 | BG_MAP_BASE(0) | BG_TILE_BASE(1) | BG_PRIORITY(3);
 
+	i=bgInit(0,BgType_Text4bpp,BgSize_T_256x256,0,1);
+	mapMemory=bgGetMapPtr(i);
+	tileMemory=bgGetGfxPtr(i);
+	bgSetPriority(i,3);
+/*
+	tileMemory=(u16*)BG_TILE_RAM(1);
+	mapMemory=(u16*)BG_MAP_RAM(0);
+	REG_BG0CNT = BG_32x32 | BG_COLOR_16 | BG_MAP_BASE(0) | BG_TILE_BASE(1) | BG_PRIORITY(3);
+*/
 	dmaCopy(&spritesTiles[spritesTilesLen/4/NUM_SPRITES*0],spider_gfx,spritesTilesLen/NUM_SPRITES);
 	dmaCopy(&spritesTiles[spritesTilesLen/4/NUM_SPRITES*1],cursor_gfx,spritesTilesLen/NUM_SPRITES);
 	dmaCopy(&spritesTiles[spritesTilesLen/4/NUM_SPRITES*2],hilight_gfx,spritesTilesLen/NUM_SPRITES);

@@ -3,9 +3,9 @@
 #include "map.h"
 #include "ability.h"
 
-uint8_t height[MAP_WIDTH*MAP_HEIGHT];
-uint8_t terrain[MAP_WIDTH*MAP_HEIGHT];
-uint8_t validmove[MAP_WIDTH*MAP_HEIGHT];
+static uint8_t height[MAP_WIDTH*MAP_HEIGHT];
+static uint8_t terrain[MAP_WIDTH*MAP_HEIGHT];
+static uint8_t validmove[MAP_WIDTH*MAP_HEIGHT];
 
 const struct map_theme{
 	uint8_t base;
@@ -97,11 +97,10 @@ static void recursive_move_chart(int x, int y, int prevheight, int moves, int ju
 
 
 	thisheight=get_map_height(x,y);
+	t=get_map_terrain(x,y);
 
 	if(validmove[MAP_INDEX(x,y)]==MAP_M_VALID)
 		goto nextsquare;
-
-	t=get_map_terrain(x,y);
 
 	if(t==MAP_T_NOSTAND || t==MAP_T_NOTARGET){
 		validmove[MAP_INDEX(x,y)]=MAP_M_INVALID;
