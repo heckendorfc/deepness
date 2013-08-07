@@ -228,6 +228,44 @@ int show_moves(int num){
 	return index;
 }
 
+int show_action_range(struct battle_char *bc, int num, int group, int subcmd){
+	int i,j,index=0;
+	int width=claction[group][subcmd].ra.range;
+
+	if(width==RANGE_WEAPON){
+		// north
+		for(i=bc->y-1;i>=0 && weapon_can_hit(bc,bc->x,i);i--);
+		i++;
+		oamSet(&oamMain,num+(++index),16*bc->x,16*i,1,0,SpriteSize_16x16,SpriteColorFormat_16Color,hilight_gfx,-1,false,false,false,false,false);
+		// east
+		for(i=bc->x+1;i<MAP_WIDTH && weapon_can_hit(bc,i,bc->y);i++);
+		i--;
+		oamSet(&oamMain,num+(++index),16*i,16*bc->y,1,0,SpriteSize_16x16,SpriteColorFormat_16Color,hilight_gfx,-1,false,false,false,false,false);
+		// south
+		for(i=bc->y+1;i<MAP_HEIGHT && weapon_can_hit(bc,bc->x,i);i++);
+		i--;
+		oamSet(&oamMain,num+(++index),16*bc->x,16*i,1,0,SpriteSize_16x16,SpriteColorFormat_16Color,hilight_gfx,-1,false,false,false,false,false);
+		// west
+		for(i=bc->x-1;i>=0 && weapon_can_hit(bc,i,bc->y);i--);
+		i++;
+		oamSet(&oamMain,num+(++index),16*i,16*bc->y,1,0,SpriteSize_16x16,SpriteColorFormat_16Color,hilight_gfx,-1,false,false,false,false,false);
+	}
+	else{
+		if(bc->y>=width)
+			oamSet(&oamMain,num+(++index),16*bc->x,16*(bc->y-width),1,0,SpriteSize_16x16,SpriteColorFormat_16Color,hilight_gfx,-1,false,false,false,false,false);
+		if(bc->x>=width)
+			oamSet(&oamMain,num+(++index),16*(bc->x-width),16*bc->y,1,0,SpriteSize_16x16,SpriteColorFormat_16Color,hilight_gfx,-1,false,false,false,false,false);
+		if(bc->y+width<MAP_HEIGHT)
+			oamSet(&oamMain,num+(++index),16*bc->x,16*(bc->y+width),1,0,SpriteSize_16x16,SpriteColorFormat_16Color,hilight_gfx,-1,false,false,false,false,false);
+		if(bc->x+width<MAP_WIDTH)
+			oamSet(&oamMain,num+(++index),16*(bc->x+width),16*bc->y,1,0,SpriteSize_16x16,SpriteColorFormat_16Color,hilight_gfx,-1,false,false,false,false,false);
+	}
+
+	oamUpdate(&oamMain);
+
+	return index;
+}
+
 void hide_moves(int num, int moves){
 	oamClear(&oamMain,num+1,moves);
 	oamUpdate(&oamMain);
@@ -235,13 +273,13 @@ void hide_moves(int num, int moves){
 
 void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 	struct battle_char **tl;
-	int cmd=0,x,y;
+	int cmd=5,x,y;
 	int i;
 	int run=1;
 	int uid;
 	int press;
 	int cursorx=1;
-	int cursory=0;
+	int cursory=1;
 	int moves=0;
 	int cmdgroup=0;
 	int subcmd=0;
@@ -400,8 +438,10 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 			if(controlmode==CONTROL_MODE_ACTION){
 				if(cursory==5)
 					break;
-				if(cursorx==1)
+				if(cursorx==1){
 					cmd=cursory;
+					cmdgroup=subcmd=0;
+				}
 				else
 					subcmd=offset;
 				controlmode=!controlmode;
@@ -410,6 +450,8 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 				update_cursor(num,cursorx,cursory);
 				if(cmd==4)
 					moves=show_moves(num);
+				else if(cmd<4)
+					moves=show_action_range(blist[bi],num,cmdgroup,subcmd);
 			}
 			else{
 				switch(cmd){
