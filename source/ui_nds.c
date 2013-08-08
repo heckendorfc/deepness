@@ -26,7 +26,7 @@
 
 #define MENU_ITEMS_PER_PAGE 5
 
-u8 *tileMemory;
+u16 *tileMemory;
 u16 *mapMemory;
 u8 mapmode;
 u8 controlmode;
@@ -35,9 +35,9 @@ PrintConsole bottomScreen;
 u16 *spider_gfx;
 u16 *cursor_gfx;
 u16 *hilight_gfx;
-char last_msg[20];
+//char last_msg[20];
 
-const char *terrain_name[]={
+static const char *terrain_name[]={
 	"",
 	"Normal",
 	"",
@@ -52,7 +52,6 @@ const char *terrain_name[]={
 	"Snow",
 	"Stone",
 };
-
 
 void set_tiles(int x, int y, int index){
 	int i,j;
@@ -83,6 +82,7 @@ void display_terrain(){
 		for(i=0;i<32/GROUP_SIZE;i++){
 			if(i<MAP_WIDTH && j<MAP_HEIGHT)
 				set_tiles(i,j,get_map_terrain(i,j));
+			
 			else
 				set_tiles(i,j,0);
 		}
@@ -113,7 +113,7 @@ void init_ui(){
 	videoSetMode(MODE_0_2D | DISPLAY_BG0_ACTIVE);
 	videoSetModeSub(MODE_0_2D);
 	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
-	vramSetBankC(VRAM_C_SUB_BG);
+	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
 	vramSetBankE(VRAM_E_MAIN_SPRITE);
 
 	oamInit(&oamMain,SpriteMapping_1D_128,false);
@@ -122,12 +122,16 @@ void init_ui(){
 	hilight_gfx=oamAllocateGfx(&oamMain,SpriteSize_16x16,SpriteColorFormat_16Color);
 
 	consoleInit(&bottomScreen, 3, BgType_Text4bpp, BgSize_T_256x256, 31, 0, false, true);
-	
-	tileMemory=(u8*)BG_TILE_RAM(1);
-	mapMemory=(u16*)BG_MAP_RAM(0);
-		
-	REG_BG0CNT = BG_32x32 | BG_COLOR_16 | BG_MAP_BASE(0) | BG_TILE_BASE(1) | BG_PRIORITY(3);
 
+	i=bgInit(0,BgType_Text4bpp,BgSize_T_256x256,0,1);
+	mapMemory=bgGetMapPtr(i);
+	tileMemory=bgGetGfxPtr(i);
+	bgSetPriority(i,3);
+/*
+	tileMemory=(u16*)BG_TILE_RAM(1);
+	mapMemory=(u16*)BG_MAP_RAM(0);
+	REG_BG0CNT = BG_32x32 | BG_COLOR_16 | BG_MAP_BASE(0) | BG_TILE_BASE(1) | BG_PRIORITY(3);
+*/
 	dmaCopy(&spritesTiles[spritesTilesLen/4/NUM_SPRITES*0],spider_gfx,spritesTilesLen/NUM_SPRITES);
 	dmaCopy(&spritesTiles[spritesTilesLen/4/NUM_SPRITES*1],cursor_gfx,spritesTilesLen/NUM_SPRITES);
 	dmaCopy(&spritesTiles[spritesTilesLen/4/NUM_SPRITES*2],hilight_gfx,spritesTilesLen/NUM_SPRITES);
@@ -228,6 +232,44 @@ int show_moves(int num){
 	return index;
 }
 
+int show_action_range(struct battle_char *bc, int num, int group, int subcmd){
+	int i,j,index=0;
+	int width=claction[group][subcmd].ra.range;
+
+	if(width==RANGE_WEAPON){
+		// north
+		for(i=bc->y-1;i>=0 && weapon_can_hit(bc,bc->x,i);i--);
+		i++;
+		oamSet(&oamMain,num+(++index),16*bc->x,16*i,1,0,SpriteSize_16x16,SpriteColorFormat_16Color,hilight_gfx,-1,false,false,false,false,false);
+		// east
+		for(i=bc->x+1;i<MAP_WIDTH && weapon_can_hit(bc,i,bc->y);i++);
+		i--;
+		oamSet(&oamMain,num+(++index),16*i,16*bc->y,1,0,SpriteSize_16x16,SpriteColorFormat_16Color,hilight_gfx,-1,false,false,false,false,false);
+		// south
+		for(i=bc->y+1;i<MAP_HEIGHT && weapon_can_hit(bc,bc->x,i);i++);
+		i--;
+		oamSet(&oamMain,num+(++index),16*bc->x,16*i,1,0,SpriteSize_16x16,SpriteColorFormat_16Color,hilight_gfx,-1,false,false,false,false,false);
+		// west
+		for(i=bc->x-1;i>=0 && weapon_can_hit(bc,i,bc->y);i--);
+		i++;
+		oamSet(&oamMain,num+(++index),16*i,16*bc->y,1,0,SpriteSize_16x16,SpriteColorFormat_16Color,hilight_gfx,-1,false,false,false,false,false);
+	}
+	else{
+		if(bc->y>=width)
+			oamSet(&oamMain,num+(++index),16*bc->x,16*(bc->y-width),1,0,SpriteSize_16x16,SpriteColorFormat_16Color,hilight_gfx,-1,false,false,false,false,false);
+		if(bc->x>=width)
+			oamSet(&oamMain,num+(++index),16*(bc->x-width),16*bc->y,1,0,SpriteSize_16x16,SpriteColorFormat_16Color,hilight_gfx,-1,false,false,false,false,false);
+		if(bc->y+width<MAP_HEIGHT)
+			oamSet(&oamMain,num+(++index),16*bc->x,16*(bc->y+width),1,0,SpriteSize_16x16,SpriteColorFormat_16Color,hilight_gfx,-1,false,false,false,false,false);
+		if(bc->x+width<MAP_WIDTH)
+			oamSet(&oamMain,num+(++index),16*(bc->x+width),16*bc->y,1,0,SpriteSize_16x16,SpriteColorFormat_16Color,hilight_gfx,-1,false,false,false,false,false);
+	}
+
+	oamUpdate(&oamMain);
+
+	return index;
+}
+
 void hide_moves(int num, int moves){
 	oamClear(&oamMain,num+1,moves);
 	oamUpdate(&oamMain);
@@ -235,13 +277,13 @@ void hide_moves(int num, int moves){
 
 void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 	struct battle_char **tl;
-	int cmd=0,x,y;
+	int cmd=5,x,y;
 	int i;
 	int run=1;
 	int uid;
 	int press;
 	int cursorx=1;
-	int cursory=0;
+	int cursory=1;
 	int moves=0;
 	int cmdgroup=0;
 	int subcmd=0;
@@ -400,8 +442,10 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 			if(controlmode==CONTROL_MODE_ACTION){
 				if(cursory==5)
 					break;
-				if(cursorx==1)
+				if(cursorx==1){
 					cmd=cursory;
+					cmdgroup=subcmd=0;
+				}
 				else
 					subcmd=offset;
 				controlmode=!controlmode;
@@ -410,6 +454,8 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 				update_cursor(num,cursorx,cursory);
 				if(cmd==4)
 					moves=show_moves(num);
+				else if(cmd<4)
+					moves=show_action_range(blist[bi],num,cmdgroup,subcmd);
 			}
 			else{
 				switch(cmd){
