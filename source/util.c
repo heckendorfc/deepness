@@ -108,13 +108,13 @@ void set_base_stats(struct character *ch){
 		ch->raw[STAT_HP]=get_random(491520,524287);
 		ch->raw[STAT_MP]=get_random(491520,524287);
 		ch->raw[STAT_PA]=81920;
-		ch->raw[STAT_PA]=65536;
+		ch->raw[STAT_MA]=65536;
 	}
 	else{
 		ch->raw[STAT_HP]=get_random(458752,491519);
 		ch->raw[STAT_MP]=get_random(458752,491519);
 		ch->raw[STAT_PA]=65536;
-		ch->raw[STAT_PA]=81920;
+		ch->raw[STAT_MA]=81920;
 	}
 
 	ch->raw[STAT_SP]=98304;
