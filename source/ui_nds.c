@@ -415,7 +415,7 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 				switch(cmd){
 					case 1:
 						if(weapon_can_hit(blist[bi],cursorx,cursory) && !((*flags)&ACTED_FLAG)){
-							tl=get_targets(blist,num,cursorx,cursory,1,1,0);
+							tl=get_targets(blist,bi,num,cursorx,cursory,1,1,0);
 							if(tl[0])
 								fast_action(blist[bi],tl[0],0,0);
 							free(tl);
@@ -429,7 +429,7 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 					case 3:
 						if(!((*flags)&ACTED_FLAG) && check_action_range(blist[bi],cursorx,cursory,cmdgroup,subcmd)){
 							if(claction[cmdgroup][subcmd].ctr==0){
-								tl=get_targets(blist,num,cursorx,cursory,claction[cmdgroup][subcmd].ra.aoe,claction[cmdgroup][subcmd].ra.aoe_vertical,AOE_DIR(claction[cmdgroup][subcmd].ra.dir));
+								tl=get_targets(blist,bi,num,cursorx,cursory,claction[cmdgroup][subcmd].ra.aoe,claction[cmdgroup][subcmd].ra.aoe_vertical,AOE_DIR(claction[cmdgroup][subcmd].ra.dir));
 								for(i=0;i<num && tl[i];i++)
 									fast_action(blist[bi],tl[i],cmdgroup,subcmd);
 								free(tl);

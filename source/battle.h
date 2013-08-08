@@ -61,14 +61,14 @@
 #define MOVED_FLAG BIT(0)
 #define ACTED_FLAG BIT(1)
 
-#define ATTACK_DIR_FRONT 1
-#define ATTACK_DIR_SIDE 2
-#define ATTACK_DIR_REAR 3
+#define ATTACK_DIR_FRONT 0
+#define ATTACK_DIR_SIDE 1
+#define ATTACK_DIR_REAR 2
 
 #define DIR_NORTH 1
 #define DIR_EAST 2
-#define DIR_SOUTH 3
-#define DIR_WEST 4
+#define DIR_SOUTH 4
+#define DIR_WEST 8
 
 #define SIGN_ARIES 0
 #define SIGN_TAURUS 1
@@ -106,6 +106,8 @@ int move(struct battle_char *bc, int x, int y);
 int evaded(struct battle_char *target, int type, int dir, int base_hit);
 int get_attack_dir(struct battle_char *attacker, struct battle_char *defender);
 int check_action_range(struct battle_char *bc, int x, int y, int jobindex, int findex);
+void restore_mp(struct battle_char *bc, int16_t var);
+void restore_hp(struct battle_char *bc, int16_t var);
 void deal_damage(struct battle_char *bc, int16_t dmg);
 void react(struct battle_char *attacker, struct battle_char **reacter, int num);
 int should_react(struct battle_char *ch);

@@ -262,6 +262,32 @@ int get_attack_dir(struct battle_char *attacker, struct battle_char *defender){
 	return ATTACK_DIR_FRONT;
 }
 
+void restore_hp(struct battle_char *bc, int16_t var){
+	char msg[40];
+
+	if(!STATUS_SET(bc,STATUS_DEAD)){
+		if(bc->hp+var>bc->hp_max)
+			bc->hp=bc->hp_max;
+		else
+			bc->hp+=var;
+
+		sprintf(msg,"%d restored %d hp",bc->index,var);
+		print_message(msg);
+
+		if((bc->hp*100)/bc->hp_max<5)
+			remove_status(bc,STATUS_CRITICAL);
+	}
+}
+
+void restore_mp(struct battle_char *bc, int16_t var){
+	if(!STATUS_SET(bc,STATUS_DEAD)){
+		if(bc->mp+var>bc->mp_max)
+			bc->mp=bc->mp_max;
+		else
+			bc->mp+=var;
+	}
+}
+
 void deal_damage(struct battle_char *bc, int16_t dmg){
 	char msg[40];
 
@@ -457,7 +483,7 @@ void slow_action_resolution(struct battle_char **blist, int num){
 				type=AFLAG_MAGIC;
 
 			//prereact(tmp->origin,tmp->target,tmp->num_target); // for hamedo
-			targets=get_targets(blist,num,tmp->target.x,tmp->target.y,tmp->target.width,tmp->target.vertical,tmp->target.dir);
+			targets=get_targets(blist,bi,num,tmp->target.x,tmp->target.y,tmp->target.width,tmp->target.vertical,tmp->target.dir);
 			last_action.preresolve=tmp;
 			for(num_t=0;targets[num_t];num_t++){
 				last_action.damage=NO_DAMAGE;

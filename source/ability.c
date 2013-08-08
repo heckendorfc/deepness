@@ -65,6 +65,22 @@ uint16_t mod2(struct battle_char *attacker, struct battle_char *defender, uint16
 	return xa;
 }
 
+int16_t mod2_elem(struct battle_char *attacker, struct battle_char *defender, uint16_t dmg){
+	uint8_t elem=claction[last_action.preresolve->jobindex][last_action.preresolve->findex].elem;
+
+	if(elem==ELEM_WEAPON)
+		elem=weapons[EQ_TYPE(attacker->ch->eq[EQ_WEAPON])][attacker->ch->eq[EQ_WEAPON]>>6].elem;
+
+	if(defender->resist[elem]&RESIST_WEAK)
+		dmg*=2;
+	if(defender->resist[elem]&RESIST_HALF)
+		dmg/=2;
+	if(defender->resist[elem]&RESIST_ABSORB)
+		dmg=-dmg;
+
+	return dmg;
+}
+
 /* Physical success */
 uint8_t mod3(struct battle_char *attacker, struct battle_char *defender, uint8_t var){
 	uint8_t compat=sign_compat(attacker->ch,defender->ch);
@@ -741,69 +757,199 @@ static void chirijiraden(struct battle_char *origin, struct battle_char *target)
 }
 
 static void angel_song(struct battle_char *origin, struct battle_char *target){
+	int16_t var=origin->ma+20;
+	if(origin->fof==target->fof && !STATUS_SET(target,STATUS_SLEEP)){
+		if(target->mp_max-target->mp<var)
+			target->mp=target->mp_max;
+		else
+			target->mp+=var;
+	}
 }
 
 static void life_song(struct battle_char *origin, struct battle_char *target){
+	if(origin->fof==target->fof && !STATUS_SET(target,STATUS_SLEEP))
+		deal_damage(target,-(origin->ma+10));
 }
 
 static void cheer_song(struct battle_char *origin, struct battle_char *target){
+	if(origin->fof==target->fof && !STATUS_SET(target,STATUS_SLEEP) && get_random(0,2)==0)
+		target->speed+=1;
 }
 
 static void battle_song(struct battle_char *origin, struct battle_char *target){
+	if(origin->fof==target->fof && !STATUS_SET(target,STATUS_SLEEP) && get_random(0,2)==0)
+		target->pa+=1;
 }
 
 static void magic_song(struct battle_char *origin, struct battle_char *target){
+	if(origin->fof==target->fof && !STATUS_SET(target,STATUS_SLEEP) && get_random(0,2)==0)
+		target->ma+=1;
 }
 
 static void nameless_song(struct battle_char *origin, struct battle_char *target){
+	int r=get_random(0,5);
+	if(origin->fof==target->fof && !STATUS_SET(target,STATUS_SLEEP) && get_random(0,2)==0){
+		switch(r){
+			case 0:
+				add_status(target,STATUS_RERAISE);
+				break;
+			case 1:
+				add_status(target,STATUS_REGEN);
+				break;
+			case 2:
+				add_status(target,STATUS_PROTECT);
+				break;
+			case 3:
+				add_status(target,STATUS_SHELL);
+				break;
+			case 4:
+				add_status(target,STATUS_REFLECT);
+				break;
+		}
+	}
 }
 
 static void last_song(struct battle_char *origin, struct battle_char *target){
+	if(origin->fof==target->fof && !STATUS_SET(target,STATUS_SLEEP) && get_random(0,2)==0)
+		add_status(target,STATUS_QUICK);
 }
 
 static void witch_hunt(struct battle_char *origin, struct battle_char *target){
+	int16_t var=origin->pa+((origin->pa*origin->brave)/100);
+	if(origin->fof!=target->fof && !STATUS_SET(target,STATUS_SLEEP)){
+		if(target->mp<var)
+			target->mp=0;
+		else
+			target->mp-=var;
+	}
+
 }
 
 static void wiznaibus(struct battle_char *origin, struct battle_char *target){
+	int16_t var=origin->pa+((origin->pa*origin->brave)/100);
+	if(origin->fof!=target->fof && !STATUS_SET(target,STATUS_SLEEP)){
+		deal_damage(target,var);
+		last_action.damage=var;
+	}
 }
 
 static void slow_dance(struct battle_char *origin, struct battle_char *target){
+	if(origin->fof!=target->fof && !STATUS_SET(target,STATUS_SLEEP) && get_random(0,2)==0)
+		if(target->speed>0)target->speed-=1;
 }
 
 static void polka_polka(struct battle_char *origin, struct battle_char *target){
+	if(origin->fof!=target->fof && !STATUS_SET(target,STATUS_SLEEP) && get_random(0,2)==0)
+		if(target->pa>0)target->pa-=1;
 }
 
 static void disillusion(struct battle_char *origin, struct battle_char *target){
+	if(origin->fof!=target->fof && !STATUS_SET(target,STATUS_SLEEP) && get_random(0,2)==0)
+		if(target->ma>0)target->ma-=1;
 }
 
 static void nameless_dance(struct battle_char *origin, struct battle_char *target){
+	int r=get_random(0,8);
+	if(origin->fof==target->fof && !STATUS_SET(target,STATUS_SLEEP) && get_random(0,2)==0){
+		switch(r){
+			case 0:
+				add_status(target,STATUS_DARKNESS);
+				break;
+			case 1:
+				add_status(target,STATUS_CONFUSION);
+				break;
+			case 2:
+				add_status(target,STATUS_SILENCE);
+				break;
+			case 3:
+				add_status(target,STATUS_POLYMORPH);
+				break;
+			case 4:
+				add_status(target,STATUS_POISON);
+				break;
+			case 5:
+				add_status(target,STATUS_SLOW);
+				break;
+			case 6:
+				add_status(target,STATUS_STOP);
+				break;
+			case 7:
+				add_status(target,STATUS_SLEEP);
+				break;
+		}
+	}
 }
 
 static void last_dance(struct battle_char *origin, struct battle_char *target){
+	if(origin->fof==target->fof && !STATUS_SET(target,STATUS_SLEEP) && get_random(0,3)==0)
+		target->ct=0;
 }
 
 static void spin_fist(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod2(origin,target,origin->pa)*(origin->pa/2);
+	if(origin==target)
+		return;
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void repeating_fist(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = get_random(1,10)*(mod2(origin,target,origin->pa)*(origin->pa/2));
+	if(origin==target)
+		return;
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void wave_fist(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod2(origin,target,origin->pa)*(origin->pa+(origin->pa/2));
+	if(origin==target)
+		return;
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void earth_slash(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod2(origin,target,origin->pa)*(origin->pa/2);
+	if(origin==target)
+		return;
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void secret_fist(struct battle_char *origin, struct battle_char *target){
+	if(origin==target || get_random(0,100)>=mod3(origin,target,origin->ma)+50)
+		return;
+	add_status(target,STATUS_DEATHSENTENCE);
 }
 
 static void stigma_magic(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod3(origin,target,origin->ma)+50){
+		remove_status(target,STATUS_PETRIFY);
+		remove_status(target,STATUS_DARKNESS);
+		remove_status(target,STATUS_CONFUSION);
+		remove_status(target,STATUS_POLYMORPH);
+		remove_status(target,STATUS_SILENCE);
+		remove_status(target,STATUS_BERSERK);
+		remove_status(target,STATUS_POISON);
+		remove_status(target,STATUS_SLEEP);
+		remove_status(target,STATUS_NOACT);
+		remove_status(target,STATUS_NOMOVE);
+	}
 }
 
 static void chakra(struct battle_char *origin, struct battle_char *target){
+	int var = mod2(origin,target,origin->pa);
+
+	restore_hp(target,var*5);
+	restore_mp(target,var*5/2);
 }
 
 static void revive(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod3(origin,target,origin->pa)+70){
+		remove_status(target,STATUS_DEAD);
+		restore_hp(target,target->hp_max/5);
+	}
 }
 
 static void gil_taking(struct battle_char *origin, struct battle_char *target){
@@ -1554,7 +1700,7 @@ const struct ability claction[NUM_CLASS][NUM_ACTION_PER_ABILITY]={
 {}, //JUMP (Lancer)
 {{"Invitation",.f.af=invitation,100,0,0,0,1,20,0,{3,3,1,0,0}},{"Persuade",.f.af=persuade,100,0,0,0,1,30,0,{3,3,1,0,0}},{"Praise",.f.af=praise,200,0,0,0,1,50,0,{3,3,1,0,0}},{"Threaten",.f.af=threaten,200,0,0,0,1,90,0,{3,3,1,0,0}},{"Preach",.f.af=preach,200,0,0,0,1,50,0,{3,3,1,0,0}},{"Solution",.f.af=solution,200,0,0,0,1,90,0,{3,3,1,0,0}},{"Death Sentence",.f.af=death_sentence,500,0,0,0,1,30,0,{3,3,1,0,0}},{"Negotiate",.f.af=negotiate,100,0,0,0,1,90,0,{3,3,1,0,0}},{"Insult",.f.af=insult,300,0,0,0,1,40,0,{3,3,1,0,0}},{"Mimic Daravon",.f.af=mimic_daravon,300,0,0,0,1,40,0,{3,3,2,3,0}}}, //TALK SKILL (Mediator)
 {}, // MIMICRY (Mime)
-{{"Spin Fist",.f.af=spin_fist,150,AFLAG_PHYSICAL|AFLAG_EVADE|0,0,0,2,AFLAG_MOD_XA,0,{0,0,2,0,0}},{"Repeating Fist",.f.af=repeating_fist,300,AFLAG_PHYSICAL|AFLAG_EVADE|0,0,0,2,AFLAG_MOD_XA,0,{1,1,1,0,0}},{"Wave Fist",.f.af=wave_fist,300,AFLAG_PHYSICAL|AFLAG_EVADE|0,0,0,2,AFLAG_MOD_XA,0,{3,3,1,0,0}},{"Earth Slash",.f.af=earth_slash,600,AFLAG_PHYSICAL|0,ELEM_EARTH,0,2,AFLAG_MOD_XA,0,{4,0,8,2,0}},{"Secret Fist",.f.af=secret_fist,300,AFLAG_PHYSICAL|0,0,0,3,50,0,{1,0,1,0,0}},{"Stigma Magic",.f.af=stigma_magic,200,AFLAG_PHYSICAL|0,0,0,3,120,0,{0,0,2,0,0}},{"Chakra",.f.af=chakra,350,AFLAG_PHYSICAL|0,0,0,2,AFLAG_MOD_XA,0,{0,0,2,0,0}},{.f.af=revive,500,AFLAG_PHYSICAL|0,0,0,3,70,0,{1,0,1,0,0}}}, //PUNCH ART (Monk)
+{{"Spin Fist",.f.af=spin_fist,150,AFLAG_PHYSICAL|AFLAG_EVADE|0,0,0,2,AFLAG_MOD_XA,0,{0,0,2,0,0}},{"Repeating Fist",.f.af=repeating_fist,300,AFLAG_PHYSICAL|AFLAG_EVADE|0,0,0,2,AFLAG_MOD_XA,0,{1,1,1,0,0}},{"Wave Fist",.f.af=wave_fist,300,AFLAG_PHYSICAL|AFLAG_EVADE|0,0,0,2,AFLAG_MOD_XA,0,{3,3,1,0,0}},{"Earth Slash",.f.af=earth_slash,600,AFLAG_PHYSICAL|0,ELEM_EARTH,0,2,AFLAG_MOD_XA,0,{1,0,8,2,BIT(ATTACK_DIR_FRONT)}},{"Secret Fist",.f.af=secret_fist,300,AFLAG_PHYSICAL|0,0,0,3,50,0,{1,0,1,0,0}},{"Stigma Magic",.f.af=stigma_magic,200,AFLAG_PHYSICAL|0,0,0,3,120,0,{0,0,2,0,0}},{"Chakra",.f.af=chakra,350,AFLAG_PHYSICAL|0,0,0,2,AFLAG_MOD_XA,0,{0,0,2,0,0}},{.f.af=revive,500,AFLAG_PHYSICAL|0,0,0,3,70,0,{1,0,1,0,0}}}, //PUNCH ART (Monk)
 {}, //THROW (Ninja)
 {{"Blind Yin",.f.af=blind_yin,100,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,2,6,200,4,{4,0,2,1,0}},{"Spell Absorb",.f.af=spell_absorb,200,AFLAG_MAGIC|AFLAG_COUNTER_MAGIC|0,0,2,6,160,2,{4,0,1,0,0}},{"Life Drain",.f.af=life_drain,350,AFLAG_MAGIC|AFLAG_COUNTER_MAGIC|0,0,2,6,160,16,{4,0,1,0,0}},{"Pray Faith",.f.af=pray_faith,400,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,6,150,6,{4,0,1,0,0}},{"Doubt Faith",.f.af=doubt_faith,400,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,6,150,6,{4,0,1,0,0}},{"Zombie",.f.af=zombie_yin,300,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,5,6,100,20,{4,0,1,0,0}},{"Silence Song",.f.af=silence_song,170,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,3,6,180,16,{4,0,2,1,0}},{"Blind Rage",.f.af=blind_rage,400,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,5,6,120,16,{4,0,1,0,0}},{"Foxbird",.f.af=foxbird,200,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,4,6,140,20,{4,0,1,0,0}},{"Confusion Song",.f.af=confusion_song,400,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,5,6,130,20,{4,0,1,0,0}},{"Dispel Magic",.f.af=dispel_magic,700,AFLAG_MAGIC|AFLAG_COUNTER_MAGIC|AFLAG_MATH|0,0,3,6,200,34,{4,0,1,0,0}},{"Paralyze",.f.af=paralyze,100,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,5,6,185,10,{4,0,2,0,0}},{"Magic Sleep",.f.af=magic_sleep_yin,350,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,6,170,6,24,{4,0,2,1,0}},{"Petrify",.f.af=petrify,580,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,9,6,120,16,{4,0,1,0,0}}}, //YIN-YANG MAGIC (Oracle)
 {{"Cure",.f.af=cure,50,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,5,AFLAG_MOD_MA,6,{4,0,2,1,0}},{"Cure2",.f.af=cure2,180,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,5,AFLAG_MOD_MA,5,10,{4,0,2,1,0}},{"Cure 3",.f.af=cure3,400,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,7,5,AFLAG_MOD_MA,16,{4,0,2,2,0}},{"Cure 4",.f.af=cure4,700,AFLAG_MAGIC|0,0,10,5,AFLAG_MOD_MA,20,{4,0,2,3,0}},{"Raise",.f.af=raise,180,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,6,180,10,{4,0,1,0,0}},{"Raise 2",.f.af=raise2,500,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,10,6,160,20,{4,0,1,0,0}},{"Reraise",.f.af=reraise,800,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,7,6,140,16,{4,0,1,0,0}},{"Regen",.f.af=regen,300,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,6,170,8,{3,0,2,0,0}},{"Protect",.f.af=protect,70,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,6,200,6,{3,0,2,0,0}},{"Protect 2",.f.af=protect2,500,AFLAG_MAGIC|0,0,7,6,120,24,{3,0,2,3,0}},{"Shell",.f.af=shell,70,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,6,200,6,{3,0,2,0,0}},{"Shell 2",.f.af=shell2,500,AFLAG_MAGIC|0,0,7,6,120,20,{3,0,2,3,0}},{"Wall",.f.af=wall,380,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,6,140,24,{3,0,1,0,0}},{"Esuna",.f.af=esuna,280,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,3,6,190,18,{3,0,2,2,0}},{"Holy",.f.af=holy,600,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|0,ELEM_HOLY,6,5,AFLAG_MOD_MA,56,{5,0,1,0,0}}}, //WHITE MAGIC (Priest)
@@ -1819,10 +1965,10 @@ static reactret mp_switch(struct battle_char *reacter, struct battle_char *attac
 	if(reacter->mp>0){
 		if(reacter->mp>last_action.damage){
 			reacter->mp-=last_action.damage;
-			reacter->hp+=last_action.damage;
+			restore_hp(reacter,last_action.damage);
 		}
 		else{
-			reacter->hp+=reacter->mp;
+			restore_hp(reacter,reacter->mp);
 			reacter->mp=0;
 		}
 	}
@@ -1959,17 +2105,13 @@ static moveret mfind_item(struct battle_char *bc, int dist){
 
 static moveret mhp_up(struct battle_char *bc, int dist){
 	if(dist>=0)
-		bc->hp+=bc->hp_max/10;
-	if(bc->hp>bc->hp_max)
-		bc->hp=bc->hp_max;
+		restore_hp(bc,bc->hp_max/10);
 	return 1;
 }
 
 static moveret mmp_up(struct battle_char *bc, int dist){
 	if(dist>=0)
-		bc->mp+=bc->mp_max/10;
-	if(bc->mp>bc->mp_max)
-		bc->mp=bc->mp_max;
+		restore_mp(bc,bc->mp_max/10);
 	return 1;
 }
 

@@ -2,6 +2,7 @@
 #include "util.h"
 #include "player.h"
 #include "equipment.h"
+#include "battle.h"
 
 int get_random(int min, int max){
 	return (rand()%(max-min))+min;
@@ -19,16 +20,71 @@ int get_dist(struct battle_char *bc, int x, int y, int w, int v, int d){
 	return xd+yd;
 }
 
-struct battle_char** get_targets(struct battle_char **blist, int num, int x, int y, int w, int v, int d){
+static int get_directionality(struct battle_char *bc, int x, int y, int d){
+	int front;
+	int side;
+	int ret=0;
+
+	if(abs(bc->x-x)<abs(bc->y-y)){
+		side=BIT(DIR_EAST)|BIT(DIR_WEST);
+		if(bc->y<y)
+			front=BIT(DIR_NORTH);
+		else
+			front=BIT(DIR_SOUTH);
+	}
+	else{
+		side=BIT(DIR_NORTH)|BIT(DIR_SOUTH);
+		if(bc->x<x)
+			front=BIT(DIR_EAST);
+		else
+			front=BIT(DIR_WEST);
+	}
+
+	if(d&BIT(ATTACK_DIR_FRONT))
+		ret|=front;
+	if(d&BIT(ATTACK_DIR_SIDE))
+		ret|=side;
+
+	return ret;
+}
+
+struct battle_char** get_targets(struct battle_char **blist, int sourcei, int num, int x, int y, int w, int v, int d){
 	struct battle_char **ret;
 	int i;
 	int bi=0;
+	int dir;
 
 	ret=malloc(sizeof(*ret)*num);
 
-	for(i=0;i<num;i++){
-		if(get_dist(blist[i],x,y,w,v,d)<w)
-			ret[bi++]=blist[i];
+	if(d==0){
+		for(i=0;i<num;i++){
+			if(get_dist(blist[i],x,y,w,v,d)<w)
+				ret[bi++]=blist[i];
+		}
+	}
+	else if(d==(BIT(ATTACK_DIR_FRONT)|BIT(ATTACK_DIR_SIDE)|BIT(ATTACK_DIR_REAR))){
+		for(i=0;i<num;i++)
+			if((blist[bi]->x==x || blist[bi]->y==y) && get_dist(blist[i],x,y,w,v,d)<w)
+				ret[bi++]=blist[i];
+	}
+	else{
+		dir=get_directionality(blist[sourcei],x,y,d);
+		if(dir&DIR_NORTH)
+			for(i=0;i<num;i++)
+				if(blist[bi]->y>=y && get_dist(blist[i],x,y,w,v,d)<w)
+					ret[bi++]=blist[i];
+		if(dir&DIR_EAST)
+			for(i=0;i<num;i++)
+				if(blist[bi]->x>=x && get_dist(blist[i],x,y,w,v,d)<w)
+					ret[bi++]=blist[i];
+		if(dir&DIR_SOUTH)
+			for(i=0;i<num;i++)
+				if(blist[bi]->y<=y && get_dist(blist[i],x,y,w,v,d)<w)
+					ret[bi++]=blist[i];
+		if(dir&DIR_WEST)
+			for(i=0;i<num;i++)
+				if(blist[bi]->x<=x && get_dist(blist[i],x,y,w,v,d)<w)
+					ret[bi++]=blist[i];
 	}
 
 	if(bi<num)ret[bi]=NULL;
