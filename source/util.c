@@ -163,6 +163,8 @@ void create_character(struct character *ch){
 	}
 	ch->primary=ch->secondary=CL_WIZARD;
 	//ch->primary=ch->secondary=CL_SQUIRE;
+	for(i=0;i<NUM_ACTION_PER_ABILITY;i++)
+		ch->mastery[ch->primary]|=BIT(i);
 	for(i=0;i<NUM_EQ_SLOTS;i++)
 		ch->eq[i]=0;
 	ch->eq[EQ_WEAPON]=EQW_SWORD; // | 0<<6

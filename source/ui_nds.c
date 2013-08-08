@@ -275,7 +275,75 @@ void hide_moves(int num, int moves){
 	oamUpdate(&oamMain);
 }
 
+struct action_data{
+	struct battle_char *bc;
+	uint8_t group;
+};
+
+static int next_action(void *arg, int i){
+	struct action_data *ad=(struct action_data*)arg;
+	do{
+		if(i==NUM_ACTION_PER_ABILITY-1)
+			i=0;
+		else
+			i++;
+	}while((ad->bc->ch->mastery[ad->group]&BIT(i))==0);
+	return i;
+}
+
+static int prev_action(void *arg, int i){
+	struct action_data *ad=(struct action_data*)arg;
+	do{
+		if(i==0)
+			i=NUM_ACTION_PER_ABILITY-1;
+		else
+			i--;
+	}while((ad->bc->ch->mastery[ad->group]&BIT(i))==0);
+	return i;
+}
+
+static char* action_name_cb(int *avail, int i, void *arg){
+	struct action_data *ad=(struct action_data*)arg;
+	
+	*avail=ad->bc->ch->mastery[ad->group]&BIT(i);
+
+	return claction[ad->group][i].name;
+}
+
+static void scroll_menu(int offset, int num, char*(*get_menu_item_name)(int*,int,void*),void *arg){
+	int i;
+	int start=0,end,line=1;
+	int avail;
+	char *s;
+
+	if(offset+1<(MENU_ITEMS_PER_PAGE+1)/2){
+		start=0;
+		end=((MENU_ITEMS_PER_PAGE+1)/2)+offset;
+		line=((MENU_ITEMS_PER_PAGE+1)/2)-offset;
+	}
+	else if(num-offset<(MENU_ITEMS_PER_PAGE+1)/2){
+		start=offset+1-((MENU_ITEMS_PER_PAGE+1)/2);
+		end=num-start;
+		line=1;
+	}
+	else{
+		line=1;
+		start=offset+1-((MENU_ITEMS_PER_PAGE+1)/2);
+		end=MENU_ITEMS_PER_PAGE;
+	}
+
+	for(i=start;i-start<end;i++){
+		s=get_menu_item_name(&avail,i,arg);
+		if(avail)
+			iprintf("\x1b[%d;1H%c%s",line,(line==(MENU_ITEMS_PER_PAGE+1)/2)?'*':' ',s);
+		else
+			iprintf("\x1b[%d;1H [%s]",line,s);
+		line++;
+	}
+}
+
 void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
+	struct action_data ad;
 	struct battle_char **tl;
 	int cmd=5,x,y;
 	int i;
@@ -288,7 +356,9 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 	int cmdgroup=0;
 	int subcmd=0;
 	int offset=0;
-	int start,end,line;
+
+	ad.bc=blist[bi];
+	ad.group=0;
 
 	controlmode=CONTROL_MODE_ACTION;
 	while(1){
@@ -324,26 +394,7 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 				print_info(blist[bi]);
 			}
 			else{
-				if(offset+1<(MENU_ITEMS_PER_PAGE+1)/2){
-					start=0;
-					end=((MENU_ITEMS_PER_PAGE+1)/2)+offset;
-					line=((MENU_ITEMS_PER_PAGE+1)/2)-offset;
-				}
-				else if(num_action[cmdgroup]-offset<(MENU_ITEMS_PER_PAGE+1)/2){
-					start=offset+1-((MENU_ITEMS_PER_PAGE+1)/2);
-					end=num_action[cmdgroup];
-					line=1;
-				}
-				else{
-					line=1;
-					start=offset+1-((MENU_ITEMS_PER_PAGE+1)/2);
-					end=start+MENU_ITEMS_PER_PAGE;
-				}
-
-				for(i=start;i<end && i<num_action[cmdgroup];i++){
-					iprintf("\x1b[%d;1H%c%s",line,(line==(MENU_ITEMS_PER_PAGE+1)/2)?'*':' ',claction[cmdgroup][i].name);
-					line++;
-				}
+				scroll_menu(offset,num_action[cmdgroup],action_name_cb,&ad);
 			}
 		}
 		else{
@@ -387,7 +438,7 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 					}
 				}
 				else
-					if(offset>0)offset--;
+					if(offset>0)offset=prev_action(&ad,offset);
 			}
 			else{
 				if(cursory>0)cursory--;
@@ -405,7 +456,7 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 					}
 				}
 				else
-					if(offset<num_action[cmdgroup]-1)offset++;
+					if(offset<num_action[cmdgroup]-1)offset=next_action(&ad,offset);
 			}
 			else{
 				if(cursory<MAP_HEIGHT)cursory++;
@@ -427,10 +478,12 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 					cursorx++;
 					cmd=cursory;
 					offset=0;
-					if(cursory==2)
-						cmdgroup=blist[bi]->ch->primary;
-					else if(cursory==3)
-						cmdgroup=blist[bi]->ch->secondary;
+					if(cursory==2){
+						ad.group=cmdgroup=blist[bi]->ch->primary;
+					}
+					else if(cursory==3){
+						ad.group=cmdgroup=blist[bi]->ch->secondary;
+					}
 				}
 			}
 			else{
