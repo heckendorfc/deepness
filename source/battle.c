@@ -229,7 +229,7 @@ int evaded(struct battle_char *target, int type, int dir, int base_hit){
 	if(target->fof==FOF_FOE)
 		sprintf(msg,"%02d%d Evaded!",target->ch->primary,target->index);
 	else
-		sprintf(msg,"%d Evaded!",target->index);
+		sprintf(msg,"%s Evaded!",target->ch->name);
 	print_message(msg);
 	return 1;
 }
@@ -278,7 +278,7 @@ void restore_hp(struct battle_char *bc, int16_t var){
 		if(bc->fof==FOF_FOE)
 			sprintf(msg,"%02d%d restored %d hp",bc->ch->primary,bc->index,var);
 		else
-			sprintf(msg,"%d restored %d hp",bc->index,var);
+			sprintf(msg,"%s restored %d hp",bc->ch->name,var);
 		print_message(msg);
 
 		if((bc->hp*100)/bc->hp_max<5)
@@ -313,7 +313,7 @@ void deal_damage(struct battle_char *bc, int16_t dmg){
 	if(bc->fof==FOF_FOE)
 		sprintf(msg,"%02d%d <- %d dmg",bc->ch->primary,bc->index,dmg);
 	else
-		sprintf(msg,"%d <- %d dmg",bc->index,dmg);
+		sprintf(msg,"%s <- %d dmg",bc->ch->name,dmg);
 	print_message(msg);
 }
 
@@ -433,7 +433,7 @@ void fast_action(struct battle_char *source, struct battle_char *target, int job
 	if(source->fof==FOF_FOE)
 		sprintf(msg,"%02d%d used %s",source->ch->primary,source->index,a->name);
 	else
-		sprintf(msg,"%d used %s",source->index,a->name);
+		sprintf(msg,"%s used %s",source->ch->name,a->name);
 	print_message(msg);
 
 	thisact.ctr=0;
@@ -512,7 +512,7 @@ void slow_action_resolution(struct battle_char **blist, int num){
 			if(blist[bi]->fof==FOF_FOE)
 				sprintf(msg,"%02d%d used %s",blist[bi]->ch->primary,blist[bi]->index,claction[tmp->jobindex][tmp->findex].name);
 			else
-				sprintf(msg,"%d used %s",blist[bi]->index,claction[tmp->jobindex][tmp->findex].name);
+				sprintf(msg,"%s used %s",blist[bi]->ch->name,claction[tmp->jobindex][tmp->findex].name);
 			print_message(msg);
 
 			//prereact(tmp->origin,tmp->target,tmp->num_target); // for hamedo
@@ -728,7 +728,12 @@ void start_battle(struct character **friends, struct character *foes, int numfoe
 		slow_action_resolution(pblist,pi);
 		ct_charge(pblist,pi);
 		ct_resolution(pblist,&pi);
-		if(battle_ended(pblist,pi)>=0)
+		if((i=battle_ended(pblist,pi))>=0){
+			if(i==FOF_FRIEND)
+				print_message("Victory!");
+			else
+				print_message("You have been defeated.");
 			break;
+		}
 	}
 }

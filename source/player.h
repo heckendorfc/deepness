@@ -112,6 +112,7 @@ typedef moveret (*movementf)(struct battle_char*,int);
 typedef int (*weapon_damagef)(const struct eq_item*,struct battle_char*,struct battle_char*);
 
 struct character{
+	char name[5];
 	uint8_t gender;
 	uint8_t battleready;
 	uint8_t sign;
