@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <nds.h>
 
 #include "ui_common.h"
@@ -20,11 +21,15 @@
 
 #define CONTROL_MODE_ACTION 0
 #define CONTROL_MODE_MAP 1
+#define CONTROL_MODE_MSG 2
 
 #define GROUP_SIZE 2
 #define NUM_SPRITES 3
 
 #define MENU_ITEMS_PER_PAGE 5
+
+#define NUM_MSG 10
+#define MAX_MSG_LEN 30
 
 u16 *tileMemory;
 u16 *mapMemory;
@@ -35,7 +40,8 @@ PrintConsole bottomScreen;
 u16 *spider_gfx;
 u16 *cursor_gfx;
 u16 *hilight_gfx;
-//char last_msg[20];
+char *last_msg[NUM_MSG];
+uint8_t msg_i;
 
 static const char *terrain_name[]={
 	"",
@@ -139,6 +145,13 @@ void init_ui(){
 
 	mapmode=MAP_MODE_TERRAIN;
 	controlmode=CONTROL_MODE_ACTION;
+	
+	for(i=0;i<NUM_MSG;i++){
+		last_msg[i]=malloc(MAX_MSG_LEN);
+		if(last_msg[i]==NULL)exit(1);
+		*last_msg[i]=0;
+	}
+	msg_i=0;
 }
 
 /*
@@ -342,6 +355,21 @@ static void scroll_menu(int offset, int num, char*(*get_menu_item_name)(int*,int
 	}
 }
 
+void print_message_list(){
+	int i;
+	int temp=msg_i;
+
+	for(i=0;i<NUM_MSG;i++){
+		if(msg_i==NUM_MSG-1)
+			msg_i=0;
+		else
+			msg_i++;
+		iprintf("\x1b[%d;0H%s",i,last_msg[msg_i]);
+	}
+
+	msg_i=temp;
+}
+
 void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 	struct action_data ad;
 	struct battle_char **tl;
@@ -379,8 +407,13 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 
 	while(run){
 		iprintf("\x1b[2J");
-		if(controlmode==CONTROL_MODE_ACTION){
+		if(controlmode==CONTROL_MODE_MSG){
+			print_message_list();
+		}
+		else if(controlmode==CONTROL_MODE_ACTION){
 			if(cursorx==1){
+				if(last_msg[msg_i][0])
+					iprintf("\x1b[0;0HLast: %s",last_msg[msg_i]);
 				iprintf("\x1b[1;1H%c%s\x1b[2;1H%c%s\x1b[3;1H%c%s\x1b[4;1H%c%s\x1b[5;1H%cSkip",
 					(cursory==1)?'*':' ',
 					(*flags&ACTED_FLAG)==0?"Attack":"",
@@ -491,6 +524,18 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 				update_cursor(num,cursorx,cursory);
 			}
 		}
+		if(press&KEY_X){
+			if(controlmode!=CONTROL_MODE_MSG){
+				controlmode=CONTROL_MODE_MSG;
+			}
+			else{
+				controlmode=CONTROL_MODE_ACTION;
+				cursorx=1;
+				cursory=1;
+				update_cursor(num,blist[bi]->x,blist[bi]->y);
+			}
+
+		}
 		if(press&KEY_Y){
 			if(controlmode==CONTROL_MODE_ACTION){
 				if(cursory==5)
@@ -573,8 +618,11 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 
 void print_message(char *msg){
 	//  TODO: Should we sleep here? Keep a message log?
-	iprintf("\x1b[0;0H%s",msg);
-	swiWaitForVBlank();
+	msg_i++;
+	if(msg_i>=NUM_MSG)msg_i=0;
+	strncpy(last_msg[msg_i],msg,MAX_MSG_LEN);
+	//snprintf(msg[msg_i],MAX_MSG_LEN,"%s",msg);
+	//swiWaitForVBlank();
 }
 
 #endif

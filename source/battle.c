@@ -226,7 +226,10 @@ int evaded(struct battle_char *target, int type, int dir, int base_hit){
 		return 0;
 	}
 
-	sprintf(msg,"%d Evaded!",target->index);
+	if(target->fof==FOF_FOE)
+		sprintf(msg,"%02d%d Evaded!",target->ch->primary,target->index);
+	else
+		sprintf(msg,"%d Evaded!",target->index);
 	print_message(msg);
 	return 1;
 }
@@ -272,7 +275,10 @@ void restore_hp(struct battle_char *bc, int16_t var){
 		else
 			bc->hp+=var;
 
-		sprintf(msg,"%d restored %d hp",bc->index,var);
+		if(bc->fof==FOF_FOE)
+			sprintf(msg,"%02d%d restored %d hp",bc->ch->primary,bc->index,var);
+		else
+			sprintf(msg,"%d restored %d hp",bc->index,var);
 		print_message(msg);
 
 		if((bc->hp*100)/bc->hp_max<5)
@@ -304,7 +310,10 @@ void deal_damage(struct battle_char *bc, int16_t dmg){
 	else if((bc->hp*100)/bc->hp_max<5)
 		add_status(bc,STATUS_CRITICAL);
 
-	sprintf(msg,"%d took %d dmg",bc->index,dmg);
+	if(bc->fof==FOF_FOE)
+		sprintf(msg,"%02d%d <- %d dmg",bc->ch->primary,bc->index,dmg);
+	else
+		sprintf(msg,"%d <- %d dmg",bc->index,dmg);
 	print_message(msg);
 }
 
@@ -421,7 +430,10 @@ void fast_action(struct battle_char *source, struct battle_char *target, int job
 
 	source->mp-=source->ch->support==SFLAG_HALFMP?source->mp<a->mp/2:a->mp;
 	
-	sprintf(msg,"%d used %s",source->index,a->name);
+	if(source->fof==FOF_FOE)
+		sprintf(msg,"%02d%d used %s",source->ch->primary,source->index,a->name);
+	else
+		sprintf(msg,"%d used %s",source->index,a->name);
 	print_message(msg);
 
 	thisact.ctr=0;
@@ -497,7 +509,10 @@ void slow_action_resolution(struct battle_char **blist, int num){
 			else
 				type=AFLAG_MAGIC;
 
-			sprintf(msg,"%d used %s",blist[bi]->index,claction[tmp->jobindex][tmp->findex].name);
+			if(blist[bi]->fof==FOF_FOE)
+				sprintf(msg,"%02d%d used %s",blist[bi]->ch->primary,blist[bi]->index,claction[tmp->jobindex][tmp->findex].name);
+			else
+				sprintf(msg,"%d used %s",blist[bi]->index,claction[tmp->jobindex][tmp->findex].name);
 			print_message(msg);
 
 			//prereact(tmp->origin,tmp->target,tmp->num_target); // for hamedo
