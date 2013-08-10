@@ -228,6 +228,48 @@ uint8_t mod6(struct battle_char *origin, struct battle_char *target, uint8_t var
 	return cfa*tfa*(ma+var) / 10000;
 }
 
+static int8_t elem_weapon_dmg(int16_t dmg, int elem, struct battle_char *d){
+	if(d->resist[elem]&RESIST_ABSORB)
+		return -dmg;
+	else {
+		if(d->resist[elem]&RESIST_WEAK)
+			return dmg*2;
+		if(d->resist[elem]&RESIST_HALF)
+			return dmg/2;
+	}
+	return dmg;
+}
+
+static void attack(struct battle_char *s, struct battle_char *d){
+	uint16_t pri=s->ch->eq[EQ_WEAPON];
+	uint16_t sec=s->ch->eq[EQ_OFFHAND];
+	int16_t pdmg=0;
+	int16_t sdmg=0;
+	int biti;
+
+	pdmg=weapon_damage[EQ_TYPE(pri)](&weapons[EQ_TYPE(pri)][pri>>6],s,d);
+
+	if(sec==0 && s->ch->support==SFLAG_TWO_HANDS)
+		pdmg*=2;
+	else if(sec>0 && EQ_TYPE(sec)!=EQO_SHIELD){ // Implied SFLAG_TWO_SWORDS. check it?
+		//sdmg+=weapon_damage[EQ_TYPE(sec)](&weapons[EQ_TYPE(sec)][sec>>6],s,d);
+		sdmg=elem_weapon_dmg(sdmg,weapons[EQ_TYPE(sec)][sec>>6].elem,d);
+	}
+
+	pdmg=elem_weapon_dmg(pdmg,weapons[EQ_TYPE(pri)][pri>>6].elem,d);
+	
+	deal_damage(d,pdmg+sdmg);
+
+	if(s->add_status>0 && get_random(0,4)==0){
+		for(biti=0;biti<NUM_ADD_STATUS;biti++)
+			if(s->add_status&BIT(biti))
+				add_status(d,biti);
+
+	}
+
+	last_action.damage=pdmg+sdmg;
+}
+
 static void cure(struct battle_char *origin, struct battle_char *target){
 	int16_t var=mod5(origin,target,14,100);
 	deal_damage(target,-var);
@@ -1007,72 +1049,218 @@ static void mimic_daravon(struct battle_char *origin, struct battle_char *target
 }
 
 static void pitfall(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod5(origin,target,origin->ma,100)*((origin->pa+2)/2);
+	if(get_map_terrain(target->x,target->y)==MAP_T_NORMAL){
+		deal_damage(target,dmg);
+		last_action.damage=dmg;
+		if(get_random(0,5)==0)
+			add_status(target,STATUS_NOMOVE);
+	}
 }
 
 static void water_ball(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod5(origin,target,origin->ma,100)*((origin->pa+2)/2);
+	if(get_map_terrain(target->x,target->y)==MAP_T_WATER){
+		deal_damage(target,dmg);
+		last_action.damage=dmg;
+		if(get_random(0,5)==0)
+			add_status(target,STATUS_POLYMORPH);
+	}
 }
 
 static void hell_ivy(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod5(origin,target,origin->ma,100)*((origin->pa+2)/2);
+	if(get_map_terrain(target->x,target->y)==MAP_T_GRASS){
+		deal_damage(target,dmg);
+		last_action.damage=dmg;
+		if(get_random(0,5)==0)
+			add_status(target,STATUS_STOP);
+	}
 }
 
 static void carve_model(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod5(origin,target,origin->ma,100)*((origin->pa+2)/2);
+	if(get_map_terrain(target->x,target->y)==MAP_T_STONE){
+		deal_damage(target,dmg);
+		last_action.damage=dmg;
+		if(get_random(0,5)==0)
+			add_status(target,STATUS_PETRIFY);
+	}
 }
 
 static void local_quake(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod5(origin,target,origin->ma,100)*((origin->pa+2)/2);
+	if(get_map_terrain(target->x,target->y)==MAP_T_ROCK){
+		deal_damage(target,dmg);
+		last_action.damage=dmg;
+		if(get_random(0,5)==0)
+			add_status(target,STATUS_CONFUSION);
+	}
 }
 
 static void kamaitachi(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod5(origin,target,origin->ma,100)*((origin->pa+2)/2);
+	if(get_map_terrain(target->x,target->y)==MAP_T_BRICK){
+		deal_damage(target,dmg);
+		last_action.damage=dmg;
+		if(get_random(0,5)==0)
+			add_status(target,STATUS_NOACT);
+	}
 }
 
 static void demon_fire(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod5(origin,target,origin->ma,100)*((origin->pa+2)/2);
+	if(get_map_terrain(target->x,target->y)==MAP_T_WOOD){
+		deal_damage(target,dmg);
+		last_action.damage=dmg;
+		if(get_random(0,5)==0)
+			add_status(target,STATUS_SLEEP);
+	}
 }
 
 static void quicksand(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod5(origin,target,origin->ma,100)*((origin->pa+2)/2);
+	if(get_map_terrain(target->x,target->y)==MAP_T_SWAMP){
+		deal_damage(target,dmg);
+		last_action.damage=dmg;
+		if(get_random(0,5)==0)
+			add_status(target,STATUS_DEATHSENTENCE);
+	}
 }
 
 static void blizzard(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg = mod5(origin,target,origin->ma,100)*((origin->pa+2)/2);
+	if(get_map_terrain(target->x,target->y)==MAP_T_SNOW){
+		deal_damage(target,dmg);
+		last_action.damage=dmg;
+		if(get_random(0,5)==0)
+		add_status(target,STATUS_SILENCE);
+	}
 }
-
 static void gusty_wind(struct battle_char *origin, struct battle_char *target){
+/*
+	int16_t dmg = mod5(origin,target,origin->ma,100)*((origin->pa+2)/2);
+	if(get_map_terrain(target->x,target->y)==MAP_T_SKY){
+		deal_damage(target,dmg);
+		last_action.damage=dmg;
+		if(get_random(0,5)==0)
+			add_status(target,STATUS_PETRIFY);
+	}
+*/
 }
 
 static void lava_ball(struct battle_char *origin, struct battle_char *target){
+/*
+	int16_t dmg = mod5(origin,target,origin->ma,100)*((origin->pa+2)/2);
+	if(get_map_terrain(target->x,target->y)==MAP_T_LAVA){
+		deal_damage(target,dmg);
+		last_action.damage=dmg;
+		if(get_random(0,5)==0)
+			add_status(target,STATUS_PETRIFY);
+	}
+*/
 }
 
 static void head_break(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod3(origin,target,origin->wp)+origin->wp+45){
+		if(target->ch->eq[EQ_HEAD]!=0)
+			target->ch->eq[EQ_HEAD]=0;
+		else
+			attack(origin,target);
+	} 
 }
 
 static void armor_break(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod3(origin,target,origin->wp)+origin->wp+40){
+		if(target->ch->eq[EQ_BODY]!=0)
+			target->ch->eq[EQ_BODY]=0;
+		else
+			attack(origin,target);
+	} 
 }
 
 static void shield_break(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod3(origin,target,origin->wp)+origin->wp+55){
+		if(target->ch->eq[EQ_OFFHAND]!=0 && EQ_TYPE(target->ch->eq[EQ_OFFHAND])==EQO_SHIELD)
+			target->ch->eq[EQ_OFFHAND]=0;
+		else
+			attack(origin,target);
+	} 
 }
 
 static void weapon_break(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod3(origin,target,origin->wp)+origin->wp+30){
+		if(target->ch->eq[EQ_WEAPON]!=0)
+			target->ch->eq[EQ_WEAPON]=0;
+		else
+			attack(origin,target);
+	} 
 }
 
 static void magic_break(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg=target->mp_max/2;;
+	if(get_random(0,100)<mod3(origin,target,origin->wp)+50){
+		if(target->mp<dmg)
+			target->mp=0;
+		else
+			target->mp-=dmg;
+	}
 }
 
+
 static void speed_break(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod3(origin,target,origin->wp)+origin->wp+50){
+		if(target->speed>2)
+			target->speed-=2;
+		else
+			target->speed=0;
+	}
 }
 
 static void power_break(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod3(origin,target,origin->wp)+origin->wp+50){
+		if(target->pa>3)
+			target->pa-=3;
+		else
+			target->pa=0;
+	}
 }
 
 static void mind_break(struct battle_char *origin, struct battle_char *target){
+	if(get_random(0,100)<mod3(origin,target,origin->wp)+origin->wp+50){
+		if(target->ma>3)
+			target->ma-=3;
+		else
+			target->ma=0;
+	}
 }
 
 static void accumulate(struct battle_char *origin, struct battle_char *target){
+	target->pa+=1;
 }
 
 static void dash(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg=mod2(origin,target,origin->pa)*get_random(1,5);
+	if(get_random(0,2)==0){
+		// TODO knockback
+	}
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void throw_stone(struct battle_char *origin, struct battle_char *target){
+	int16_t dmg=mod2(origin,target,origin->pa)*get_random(1,3);
+	if(get_random(0,2)==0){
+		// TODO knockback
+	}
+	deal_damage(target,dmg);
+	last_action.damage=dmg;
 }
 
 static void heal(struct battle_char *origin, struct battle_char *target){
+	remove_status(target,STATUS_DARKNESS);
+	remove_status(target,STATUS_SILENCE);
+	remove_status(target,STATUS_POISON);
 }
 
 static void yell(struct battle_char *origin, struct battle_char *target){
@@ -1643,73 +1831,32 @@ static void energy(struct battle_char *origin, struct battle_char *target){
 static void parasite(struct battle_char *origin, struct battle_char *target){
 }
 
-static int8_t elem_weapon_dmg(int16_t dmg, int elem, struct battle_char *d){
-	if(d->resist[elem]&RESIST_ABSORB)
-		return -dmg;
-	else {
-		if(d->resist[elem]&RESIST_WEAK)
-			return dmg*2;
-		if(d->resist[elem]&RESIST_HALF)
-			return dmg/2;
-	}
-	return dmg;
-}
-
-static void attack(struct battle_char *s, struct battle_char *d){
-	uint16_t pri=s->ch->eq[EQ_WEAPON];
-	uint16_t sec=s->ch->eq[EQ_OFFHAND];
-	int16_t pdmg=0;
-	int16_t sdmg=0;
-	int biti;
-
-	pdmg=weapon_damage[EQ_TYPE(pri)](&weapons[EQ_TYPE(pri)][pri>>6],s,d);
-
-	if(sec==0 && s->ch->support==SFLAG_TWO_HANDS)
-		pdmg*=2;
-	else if(sec>0 && EQ_TYPE(sec)!=EQO_SHIELD){ // Implied SFLAG_TWO_SWORDS. check it?
-		//sdmg+=weapon_damage[EQ_TYPE(sec)](&weapons[EQ_TYPE(sec)][sec>>6],s,d);
-		sdmg=elem_weapon_dmg(sdmg,weapons[EQ_TYPE(sec)][sec>>6].elem,d);
-	}
-
-	pdmg=elem_weapon_dmg(pdmg,weapons[EQ_TYPE(pri)][pri>>6].elem,d);
-	
-	deal_damage(d,pdmg+sdmg);
-
-	if(s->add_status>0 && get_random(0,4)==0){
-		for(biti=0;biti<NUM_ADD_STATUS;biti++)
-			if(s->add_status&BIT(biti))
-				add_status(d,biti);
-
-	}
-
-	last_action.damage=pdmg+sdmg;
-}
 
 
 const uint8_t num_action[]={1,0,7,0,0,7,11,8,0,10,0,8,0,14,15,10,4,15,8,12,16};
 // Sorry this is so ugly... it's perl's fault :P
 const struct ability claction[NUM_CLASS][NUM_ACTION_PER_ABILITY]={
-{{"Attack",.f.af=attack,0,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,0,0,2,AFLAG_MOD_XA,0,{RANGE_WEAPON,0,1,0,0}}}, // Generic
+{{"Attack",.f.af=attack,0,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|AFLAG_DAMAGE|0,0,0,2,AFLAG_MOD_XA,0,{RANGE_WEAPON,0,1,0,0}}}, // Generic
 {},//CHARGE (Archer)
-{{"Angel Song",.f.af=angel_song,100,0,0,6,0,0,0,{0,0,0,0,0}},{"Life Song",.f.af=life_song,100,0,0,6,0,0,0,{0,0,0,0,0}},{"Cheer Song",.f.af=cheer_song,100,0,0,8,0,0,0,{0,0,0,0,0}},{"Battle Song",.f.af=battle_song,100,0,0,8,0,0,0,{0,0,0,0,0}},{"Magic Song",.f.af=magic_song,100,0,0,10,0,0,0,{0,0,0,0,0}},{"Nameless Song",.f.af=nameless_song,100,0,0,10,0,0,0,{0,0,0,0,0}},{"Last Song",.f.af=last_song,100,0,0,20,0,0,0,{0,0,0,0,0}}}, //SING (Bard)
+{{"Angel Song",.f.af=angel_song,100,AFLAG_RESTORE_MP|AFLAG_REPEAT|0,0,6,0,0,0,{0,0,0,0,0}},{"Life Song",.f.af=life_song,100,AFLAG_RESTORE_HP|AFLAG_REPEAT|0,0,6,0,0,0,{0,0,0,0,0}},{"Cheer Song",.f.af=cheer_song,100,AFLAG_BUFF|AFLAG_REPEAT|0,0,8,0,0,0,{0,0,0,0,0}},{"Battle Song",.f.af=battle_song,100,AFLAG_BUFF|AFLAG_REPEAT|0,0,8,0,0,0,{0,0,0,0,0}},{"Magic Song",.f.af=magic_song,100,AFLAG_BUFF|AFLAG_REPEAT|0,0,10,0,0,0,{0,0,0,0,0}},{"Nameless Song",.f.af=nameless_song,100,AFLAG_BUFF|AFLAG_REPEAT|0,0,10,0,0,0,{0,0,0,0,0}},{"Last Song",.f.af=last_song,100,AFLAG_BUFF|AFLAG_REPEAT|0,0,20,0,0,0,{0,0,0,0,0}}}, //SING (Bard)
 {},//MATH SKILL (Calculator)
 {},//ITEM (Chemist)
-{{"Witch Hunt",.f.af=witch_hunt,100,0,0,6,0,0,0,{0,0,0,0,0}},{"Wiznaibus",.f.af=wiznaibus,100,0,0,6,0,0,0,{0,0,0,0,0}},{"Slow Dance",.f.af=slow_dance,100,0,0,8,0,0,0,{0,0,0,0,0}},{"Polka Polka",.f.af=polka_polka,100,0,0,8,0,0,0,{0,0,0,0,0}},{"Dillusion",.f.af=disillusion,100,0,0,8,0,0,0,{0,0,0,0,0}},{"Nameless Dance",.f.af=nameless_dance,100,0,0,10,0,0,0,{0,0,0,0,0}},{"Last Dance",.f.af=last_dance,100,0,0,20,0,0,0,{0,0,0,0,0}}}, //DANCE  (Dancer)
-{{"Pitfall",.f.af=pitfall,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|0,0,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}},{"Water Ball",.f.af=water_ball,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|0,ELEM_WATER,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}},{"Hell Ivy",.f.af=hell_ivy,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|0,0,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}},{"Carve Model",.f.af=carve_model,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|0,0,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}},{"Local Quake",.f.af=local_quake,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|0,ELEM_EARTH,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}},{"Kamaitachi",.f.af=kamaitachi,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|0,ELEM_WIND,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}},{"Demon Fire",.f.af=demon_fire,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|0,ELEM_FIRE,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}},{"Quicksand",.f.af=quicksand,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|0,ELEM_WATER,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}},{"Blizzard",.f.af=blizzard,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|0,ELEM_ICE,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}},{"Gusty Wind",.f.af=gusty_wind,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|0,ELEM_WATER,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}},{"Lava Ball",.f.af=lava_ball,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|0,ELEM_FIRE,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}}}, //ELEMENTAL (Geomancer)
-{{"Head break",.f.af=head_break,300,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,ELEM_WEAPON,0,3,45,0,{RANGE_WEAPON,0,1,0,0}},{"Armor Break",.f.af=armor_break,400,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,ELEM_WEAPON,0,3,40,0,{RANGE_WEAPON,0,1,0,0}},{"Shield Break",.f.af=shield_break,300,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,ELEM_WEAPON,0,3,55,0,{RANGE_WEAPON,0,1,0,0}},{"Weapon Break",.f.af=weapon_break,400,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,ELEM_WEAPON,0,3,30,0,{RANGE_WEAPON,0,1,0,0}},{"Magic Break",.f.af=magic_break,250,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,ELEM_WEAPON,0,3,50,0,{RANGE_WEAPON,0,1,0,0}},{"Speed Break",.f.af=speed_break,250,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,ELEM_WEAPON,0,3,50,0,{RANGE_WEAPON,0,1,0,0}},{"Power Break",.f.af=power_break,250,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,ELEM_WEAPON,0,3,50,0,{RANGE_WEAPON,0,1,0,0}},{"Mind Break",.f.af=mind_break,250,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,ELEM_WEAPON,0,3,50,0,{RANGE_WEAPON,0,1,0,0}}}, //BATTLE SKILL (Knight)
+{{"Witch Hunt",.f.af=witch_hunt,100,AFLAG_DAMAGE|AFLAG_REPEAT|0,0,6,0,0,0,{0,0,0,0,0}},{"Wiznaibus",.f.af=wiznaibus,100,AFLAG_DAMAGE|AFLAG_REPEAT|0,0,6,0,0,0,{0,0,0,0,0}},{"Slow Dance",.f.af=slow_dance,100,AFLAG_DEBUFF|AFLAG_REPEAT|0,0,8,0,0,0,{0,0,0,0,0}},{"Polka Polka",.f.af=polka_polka,100,AFLAG_DEBUFF|AFLAG_REPEAT|0,0,8,0,0,0,{0,0,0,0,0}},{"Dillusion",.f.af=disillusion,100,AFLAG_DEBUFF|AFLAG_REPEAT|0,0,8,0,0,0,{0,0,0,0,0}},{"Nameless Dance",.f.af=nameless_dance,100,AFLAG_DEBUFF|AFLAG_REPEAT|0,0,10,0,0,0,{0,0,0,0,0}},{"Last Dance",.f.af=last_dance,100,AFLAG_DEBUFF|AFLAG_REPEAT|0,0,20,0,0,0,{0,0,0,0,0}}}, //DANCE  (Dancer)
+{{"Pitfall",.f.af=pitfall,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|AFLAG_DAMAGE|AFLAG_DEBUFF|0,0,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}},{"Water Ball",.f.af=water_ball,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|AFLAG_DAMAGE|AFLAG_DEBUFF|0,ELEM_WATER,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}},{"Hell Ivy",.f.af=hell_ivy,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|AFLAG_DAMAGE|AFLAG_DEBUFF|0,0,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}},{"Carve Model",.f.af=carve_model,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|AFLAG_DAMAGE|AFLAG_DEBUFF|0,0,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}},{"Local Quake",.f.af=local_quake,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|AFLAG_DAMAGE|AFLAG_DEBUFF|0,ELEM_EARTH,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}},{"Kamaitachi",.f.af=kamaitachi,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|AFLAG_DAMAGE|AFLAG_DEBUFF|0,ELEM_WIND,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}},{"Demon Fire",.f.af=demon_fire,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|AFLAG_DAMAGE|AFLAG_DEBUFF|0,ELEM_FIRE,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}},{"Quicksand",.f.af=quicksand,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|AFLAG_DAMAGE|AFLAG_DEBUFF|0,ELEM_WATER,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}},{"Blizzard",.f.af=blizzard,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|AFLAG_DAMAGE|AFLAG_DEBUFF|0,ELEM_ICE,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}},{"Gusty Wind",.f.af=gusty_wind,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|AFLAG_DAMAGE|AFLAG_DEBUFF|0,ELEM_WATER,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}},{"Lava Ball",.f.af=lava_ball,150,AFLAG_MAGIC|AFLAG_COUNTER_FLOOD|AFLAG_DAMAGE|AFLAG_DEBUFF|0,ELEM_FIRE,0,5,AFLAG_MOD_MA,0,{5,0,2,0,0}}}, //ELEMENTAL (Geomancer)
+{{"Head break",.f.af=head_break,300,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|AFLAG_DEBUFF|0,ELEM_WEAPON,0,3,45,0,{RANGE_WEAPON,0,1,0,0}},{"Armor Break",.f.af=armor_break,400,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|AFLAG_DEBUFF|0,ELEM_WEAPON,0,3,40,0,{RANGE_WEAPON,0,1,0,0}},{"Shield Break",.f.af=shield_break,300,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|AFLAG_DEBUFF|0,ELEM_WEAPON,0,3,55,0,{RANGE_WEAPON,0,1,0,0}},{"Weapon Break",.f.af=weapon_break,400,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|AFLAG_DEBUFF|0,ELEM_WEAPON,0,3,30,0,{RANGE_WEAPON,0,1,0,0}},{"Magic Break",.f.af=magic_break,250,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|AFLAG_DEBUFF|0,ELEM_WEAPON,0,3,50,0,{RANGE_WEAPON,0,1,0,0}},{"Speed Break",.f.af=speed_break,250,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|AFLAG_DEBUFF|0,ELEM_WEAPON,0,3,50,0,{RANGE_WEAPON,0,1,0,0}},{"Power Break",.f.af=power_break,250,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|AFLAG_DEBUFF|0,ELEM_WEAPON,0,3,50,0,{RANGE_WEAPON,0,1,0,0}},{"Mind Break",.f.af=mind_break,250,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|AFLAG_DEBUFF|0,ELEM_WEAPON,0,3,50,0,{RANGE_WEAPON,0,1,0,0}}}, //BATTLE SKILL (Knight)
 {}, //JUMP (Lancer)
 {{"Invitation",.f.af=invitation,100,0,0,0,1,20,0,{3,3,1,0,0}},{"Persuade",.f.af=persuade,100,0,0,0,1,30,0,{3,3,1,0,0}},{"Praise",.f.af=praise,200,0,0,0,1,50,0,{3,3,1,0,0}},{"Threaten",.f.af=threaten,200,0,0,0,1,90,0,{3,3,1,0,0}},{"Preach",.f.af=preach,200,0,0,0,1,50,0,{3,3,1,0,0}},{"Solution",.f.af=solution,200,0,0,0,1,90,0,{3,3,1,0,0}},{"Death Sentence",.f.af=death_sentence,500,0,0,0,1,30,0,{3,3,1,0,0}},{"Negotiate",.f.af=negotiate,100,0,0,0,1,90,0,{3,3,1,0,0}},{"Insult",.f.af=insult,300,0,0,0,1,40,0,{3,3,1,0,0}},{"Mimic Daravon",.f.af=mimic_daravon,300,0,0,0,1,40,0,{3,3,2,3,0}}}, //TALK SKILL (Mediator)
 {}, // MIMICRY (Mime)
-{{"Spin Fist",.f.af=spin_fist,150,AFLAG_PHYSICAL|AFLAG_EVADE|0,0,0,2,AFLAG_MOD_XA,0,{0,0,2,0,0}},{"Repeating Fist",.f.af=repeating_fist,300,AFLAG_PHYSICAL|AFLAG_EVADE|0,0,0,2,AFLAG_MOD_XA,0,{1,1,1,0,0}},{"Wave Fist",.f.af=wave_fist,300,AFLAG_PHYSICAL|AFLAG_EVADE|0,0,0,2,AFLAG_MOD_XA,0,{3,3,1,0,0}},{"Earth Slash",.f.af=earth_slash,600,AFLAG_PHYSICAL|0,ELEM_EARTH,0,2,AFLAG_MOD_XA,0,{1,0,8,2,BIT(ATTACK_DIR_FRONT)}},{"Secret Fist",.f.af=secret_fist,300,AFLAG_PHYSICAL|0,0,0,3,50,0,{1,0,1,0,0}},{"Stigma Magic",.f.af=stigma_magic,200,AFLAG_PHYSICAL|0,0,0,3,120,0,{0,0,2,0,0}},{"Chakra",.f.af=chakra,350,AFLAG_PHYSICAL|0,0,0,2,AFLAG_MOD_XA,0,{0,0,2,0,0}},{.f.af=revive,500,AFLAG_PHYSICAL|0,0,0,3,70,0,{1,0,1,0,0}}}, //PUNCH ART (Monk)
+{{"Spin Fist",.f.af=spin_fist,150,AFLAG_PHYSICAL|AFLAG_EVADE|AFLAG_DAMAGE|0,0,0,2,AFLAG_MOD_XA,0,{0,0,2,0,0}},{"Repeating Fist",.f.af=repeating_fist,300,AFLAG_PHYSICAL|AFLAG_EVADE|AFLAG_DAMAGE|0,0,0,2,AFLAG_MOD_XA,0,{1,1,1,0,0}},{"Wave Fist",.f.af=wave_fist,300,AFLAG_PHYSICAL|AFLAG_EVADE|AFLAG_DAMAGE|0,0,0,2,AFLAG_MOD_XA,0,{3,3,1,0,0}},{"Earth Slash",.f.af=earth_slash,600,AFLAG_PHYSICAL|AFLAG_DAMAGE|0,ELEM_EARTH,0,2,AFLAG_MOD_XA,0,{1,0,8,2,BIT(ATTACK_DIR_FRONT)}},{"Secret Fist",.f.af=secret_fist,300,AFLAG_PHYSICAL|AFLAG_DEBUFF|0,0,0,3,50,0,{1,0,1,0,0}},{"Stigma Magic",.f.af=stigma_magic,200,AFLAG_PHYSICAL|AFLAG_BUFF|0,0,0,3,120,0,{0,0,2,0,0}},{"Chakra",.f.af=chakra,350,AFLAG_PHYSICAL|AFLAG_RESTORE_HP|AFLAG_RESTORE_MP|0,0,0,2,AFLAG_MOD_XA,0,{0,0,2,0,0}},{"Revive",.f.af=revive,500,AFLAG_PHYSICAL|AFLAG_RESTORE_LIFE|0,0,0,3,70,0,{1,0,1,0,0}}}, //PUNCH ART (Monk)
 {}, //THROW (Ninja)
-{{"Blind Yin",.f.af=blind_yin,100,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,2,6,200,4,{4,0,2,1,0}},{"Spell Absorb",.f.af=spell_absorb,200,AFLAG_MAGIC|AFLAG_COUNTER_MAGIC|0,0,2,6,160,2,{4,0,1,0,0}},{"Life Drain",.f.af=life_drain,350,AFLAG_MAGIC|AFLAG_COUNTER_MAGIC|0,0,2,6,160,16,{4,0,1,0,0}},{"Pray Faith",.f.af=pray_faith,400,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,6,150,6,{4,0,1,0,0}},{"Doubt Faith",.f.af=doubt_faith,400,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,6,150,6,{4,0,1,0,0}},{"Zombie",.f.af=zombie_yin,300,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,5,6,100,20,{4,0,1,0,0}},{"Silence Song",.f.af=silence_song,170,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,3,6,180,16,{4,0,2,1,0}},{"Blind Rage",.f.af=blind_rage,400,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,5,6,120,16,{4,0,1,0,0}},{"Foxbird",.f.af=foxbird,200,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,4,6,140,20,{4,0,1,0,0}},{"Confusion Song",.f.af=confusion_song,400,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,5,6,130,20,{4,0,1,0,0}},{"Dispel Magic",.f.af=dispel_magic,700,AFLAG_MAGIC|AFLAG_COUNTER_MAGIC|AFLAG_MATH|0,0,3,6,200,34,{4,0,1,0,0}},{"Paralyze",.f.af=paralyze,100,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,5,6,185,10,{4,0,2,0,0}},{"Magic Sleep",.f.af=magic_sleep_yin,350,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,6,170,6,24,{4,0,2,1,0}},{"Petrify",.f.af=petrify,580,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,9,6,120,16,{4,0,1,0,0}}}, //YIN-YANG MAGIC (Oracle)
-{{"Cure",.f.af=cure,50,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,5,AFLAG_MOD_MA,6,{4,0,2,1,0}},{"Cure2",.f.af=cure2,180,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,5,AFLAG_MOD_MA,5,10,{4,0,2,1,0}},{"Cure 3",.f.af=cure3,400,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,7,5,AFLAG_MOD_MA,16,{4,0,2,2,0}},{"Cure 4",.f.af=cure4,700,AFLAG_MAGIC|0,0,10,5,AFLAG_MOD_MA,20,{4,0,2,3,0}},{"Raise",.f.af=raise,180,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,6,180,10,{4,0,1,0,0}},{"Raise 2",.f.af=raise2,500,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,10,6,160,20,{4,0,1,0,0}},{"Reraise",.f.af=reraise,800,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,7,6,140,16,{4,0,1,0,0}},{"Regen",.f.af=regen,300,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,6,170,8,{3,0,2,0,0}},{"Protect",.f.af=protect,70,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,6,200,6,{3,0,2,0,0}},{"Protect 2",.f.af=protect2,500,AFLAG_MAGIC|0,0,7,6,120,24,{3,0,2,3,0}},{"Shell",.f.af=shell,70,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,6,200,6,{3,0,2,0,0}},{"Shell 2",.f.af=shell2,500,AFLAG_MAGIC|0,0,7,6,120,20,{3,0,2,3,0}},{"Wall",.f.af=wall,380,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,4,6,140,24,{3,0,1,0,0}},{"Esuna",.f.af=esuna,280,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,3,6,190,18,{3,0,2,2,0}},{"Holy",.f.af=holy,600,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|0,ELEM_HOLY,6,5,AFLAG_MOD_MA,56,{5,0,1,0,0}}}, //WHITE MAGIC (Priest)
-{{"Asura",.f.af=asura_draw,100,AFLAG_MAGIC|0,0,0,5,AFLAG_MOD_MA,0,{0,0,3,3,0}},{"Koutetsu",.f.af=koutetsu,180,AFLAG_MAGIC|0,0,0,5,AFLAG_MOD_MA,0,{0,0,3,3,0}},{"Bizen Boat",.f.af=bizen_boat,260,AFLAG_MAGIC|0,0,0,5,AFLAG_MOD_MA,0,{0,0,3,3,0}},{"Murasame",.f.af=murasame,340,0,0,0,0,0,0,{0,0,3,3,0}},{"Heaven's Cloud",.f.af=heavens_cloud,420,AFLAG_MAGIC|0,0,0,5,AFLAG_MOD_MA,0,{0,0,3,3,0}},{"kiyomori",.f.af=kiyomori,500,0,0,0,0,0,0,{0,0,3,3,0}},{"Muramasa",.f.af=muramasa,580,AFLAG_MAGIC|0,0,0,5,AFLAG_MOD_MA,0,{0,0,3,3,0}},{"Kikuichimoji",.f.af=kikuichimoji,660,AFLAG_MAGIC|0,0,0,5,AFLAG_MOD_MA,0,{4,0,8,3,0}},{"Masamune",.f.af=masamune,740,0,0,0,0,0,0,{0,0,3,3,0}},{"Chirijiraden",.f.af=chirijiraden,820,AFLAG_MAGIC|0,0,0,5,AFLAG_MOD_MA,0,{0,0,3,3,0}}}, //DRAW OUT (Samurai)
-{{"Accumulate",.f.af=accumulate,300,0,0,0,0,0,0,{0,0,1,0,0}},{"Dash",.f.af=dash,75,AFLAG_PHYSICAL|0,0,0,2,AFLAG_MOD_XA,0,{1,1,1,0,0}},{"Throw Stone",.f.af=throw_stone,90,AFLAG_PHYSICAL|AFLAG_EVADE|0,0,0,2,AFLAG_MOD_XA,0,{4,0,1,0,0}},{"Heal",.f.af=heal,150,0,0,0,0,0,0,{1,2,1,0,0}}}, //BASIC SKILL (Squire)
-{{"Moogle",.f.af=moogle,110,AFLAG_MAGIC|0,0,2,5,AFLAG_MOD_MA,8,{4,0,3,2,0}},{"Shiva",.f.af=shiva,200,AFLAG_MAGIC|0,ELEM_ICE,4,5,AFLAG_MOD_MA,24,{4,0,3,2,0}},{"Ramuh",.f.af=ramuh,200,AFLAG_MAGIC|0,ELEM_LIGHTNING,4,5,AFLAG_MOD_MA,24,{4,0,3,2,0}},{"Ifrit",.f.af=ifrit,200,AFLAG_MAGIC|0,ELEM_FIRE,4,5,AFLAG_MOD_MA,24,{4,0,3,2,0}},{"Titan",.f.af=titan,220,AFLAG_MAGIC|0,ELEM_EARTH,5,5,AFLAG_MOD_MA,30,{4,0,3,2,0}},/*{.f.af=golem,500,AFLAG_MAGIC|0,0,3,8,200,40,{0,0,1,0,0}},*/{"Carbunkle",.f.af=carbunkle,350,AFLAG_MAGIC|0,0,4,6,150,30,{4,0,3,2,0}},{"Bahamut",.f.af=bahamut,1200,AFLAG_MAGIC|0,0,10,5,AFLAG_MOD_MA,60,{4,0,4,3,0}},{"Odin",.f.af=odin,900,AFLAG_MAGIC|0,0,9,5,AFLAG_MOD_MA,50,{4,0,4,3,0}},{"Leviathan",.f.af=leviathan,850,AFLAG_MAGIC|0,ELEM_WATER,9,5,AFLAG_MOD_MA,48,{4,0,4,3,0}},{"Salamander",.f.af=salamander,820,AFLAG_MAGIC|0,ELEM_FIRE,9,5,AFLAG_MOD_MA,48,{4,0,3,2,0}},{"Silf",.f.af=silf,400,AFLAG_MAGIC|0,0,5,6,150,26,{4,0,3,2,0}},{"Fairy",.f.af=fairy,400,AFLAG_MAGIC|0,0,4,5,AFLAG_MOD_MA,28,{4,0,3,2,0}},{"Lich",.f.af=lich,600,AFLAG_MAGIC|0,ELEM_DARK,9,6,160,40,{4,0,3,2,0}},{"Cyclops",.f.af=cyclops,1000,AFLAG_MAGIC|0,0,9,5,AFLAG_MOD_MA,62,{4,0,3,2,0}},{"Zodiac",.f.af=zodiac,1000,AFLAG_MAGIC|0,0,10,5,AFLAG_MOD_MA,99,{4,0,4,3,0}}}, //SUMMON MAGIC (Summoner)
+{{"Blind Yin",.f.af=blind_yin,100,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DEBUFF|0,0,2,6,200,4,{4,0,2,1,0}},{"Spell Absorb",.f.af=spell_absorb,200,AFLAG_MAGIC|AFLAG_COUNTER_MAGIC|0,0,2,6,160,2,{4,0,1,0,0}},{"Life Drain",.f.af=life_drain,350,AFLAG_MAGIC|AFLAG_COUNTER_MAGIC|AFLAG_DAMAGE|0,0,2,6,160,16,{4,0,1,0,0}},{"Pray Faith",.f.af=pray_faith,400,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|AFLAG_BUFF|0,0,4,6,150,6,{4,0,1,0,0}},{"Doubt Faith",.f.af=doubt_faith,400,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|AFLAG_DEBUFF|0,0,4,6,150,6,{4,0,1,0,0}},{"Zombie",.f.af=zombie_yin,300,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DEBUFF|0,0,5,6,100,20,{4,0,1,0,0}},{"Silence Song",.f.af=silence_song,170,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DEBUFF|0,0,3,6,180,16,{4,0,2,1,0}},{"Blind Rage",.f.af=blind_rage,400,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DEBUFF|0,0,5,6,120,16,{4,0,1,0,0}},{"Foxbird",.f.af=foxbird,200,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DEBUFF|0,0,4,6,140,20,{4,0,1,0,0}},{"Confusion Song",.f.af=confusion_song,400,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DEBUFF|0,0,5,6,130,20,{4,0,1,0,0}},{"Dispel Magic",.f.af=dispel_magic,700,AFLAG_MAGIC|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_BUFF|0,0,3,6,200,34,{4,0,1,0,0}},{"Paralyze",.f.af=paralyze,100,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DEBUFF|0,0,5,6,185,10,{4,0,2,0,0}},{"Magic Sleep",.f.af=magic_sleep_yin,350,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DEBUFF|0,0,6,170,6,24,{4,0,2,1,0}},{"Petrify",.f.af=petrify,580,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DEBUFF|0,0,9,6,120,16,{4,0,1,0,0}}}, //YIN-YANG MAGIC (Oracle)
+{{"Cure",.f.af=cure,50,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|AFLAG_RESTORE_HP|0,0,4,5,AFLAG_MOD_MA,6,{4,0,2,1,0}},{"Cure2",.f.af=cure2,180,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|AFLAG_RESTORE_HP|0,0,5,AFLAG_MOD_MA,5,10,{4,0,2,1,0}},{"Cure 3",.f.af=cure3,400,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|AFLAG_RESTORE_HP|0,0,7,5,AFLAG_MOD_MA,16,{4,0,2,2,0}},{"Cure 4",.f.af=cure4,700,AFLAG_MAGIC|AFLAG_RESTORE_HP|0,0,10,5,AFLAG_MOD_MA,20,{4,0,2,3,0}},{"Raise",.f.af=raise,180,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|AFLAG_RESTORE_LIFE|0,0,4,6,180,10,{4,0,1,0,0}},{"Raise 2",.f.af=raise2,500,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|AFLAG_RESTORE_LIFE|0,0,10,6,160,20,{4,0,1,0,0}},{"Reraise",.f.af=reraise,800,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|AFLAG_BUFF|0,0,7,6,140,16,{4,0,1,0,0}},{"Regen",.f.af=regen,300,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|AFLAG_BUFF|0,0,4,6,170,8,{3,0,2,0,0}},{"Protect",.f.af=protect,70,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|AFLAG_BUFF|0,0,4,6,200,6,{3,0,2,0,0}},{"Protect 2",.f.af=protect2,500,AFLAG_MAGIC|AFLAG_BUFF|0,0,7,6,120,24,{3,0,2,3,0}},{"Shell",.f.af=shell,70,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|AFLAG_BUFF|0,0,4,6,200,6,{3,0,2,0,0}},{"Shell 2",.f.af=shell2,500,AFLAG_MAGIC|AFLAG_BUFF|0,0,7,6,120,20,{3,0,2,3,0}},{"Wall",.f.af=wall,380,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|AFLAG_BUFF|0,0,4,6,140,24,{3,0,1,0,0}},{"Esuna",.f.af=esuna,280,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|AFLAG_BUFF|0,0,3,6,190,18,{3,0,2,2,0}},{"Holy",.f.af=holy,600,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_DAMAGE|0,ELEM_HOLY,6,5,AFLAG_MOD_MA,56,{5,0,1,0,0}}}, //WHITE MAGIC (Priest)
+{{"Asura",.f.af=asura_draw,100,AFLAG_MAGIC|AFLAG_DAMAGE|0,0,0,5,AFLAG_MOD_MA,0,{0,0,3,3,0}},{"Koutetsu",.f.af=koutetsu,180,AFLAG_MAGIC|AFLAG_DAMAGE|0,0,0,5,AFLAG_MOD_MA,0,{0,0,3,3,0}},{"Bizen Boat",.f.af=bizen_boat,260,AFLAG_MAGIC|AFLAG_DAMAGE|0,0,0,5,AFLAG_MOD_MA,0,{0,0,3,3,0}},{"Murasame",.f.af=murasame,340,AFLAG_RESTORE_HP|0,0,0,0,0,0,{0,0,3,3,0}},{"Heaven's Cloud",.f.af=heavens_cloud,420,AFLAG_MAGIC|AFLAG_DAMAGE|AFLAG_DEBUFF|0,0,0,5,AFLAG_MOD_MA,0,{0,0,3,3,0}},{"kiyomori",.f.af=kiyomori,500,AFLAG_BUFF|0,0,0,0,0,0,{0,0,3,3,0}},{"Muramasa",.f.af=muramasa,580,AFLAG_MAGIC|AFLAG_DAMAGE|AFLAG_DEBUFF|0,0,0,5,AFLAG_MOD_MA,0,{0,0,3,3,0}},{"Kikuichimoji",.f.af=kikuichimoji,660,AFLAG_MAGIC|AFLAG_DAMAGE|0,0,0,5,AFLAG_MOD_MA,0,{4,0,8,3,0}},{"Masamune",.f.af=masamune,740,AFLAG_BUFF|0,0,0,0,0,0,{0,0,3,3,0}},{"Chirijiraden",.f.af=chirijiraden,820,AFLAG_MAGIC|AFLAG_DAMAGE|0,0,0,5,AFLAG_MOD_MA,0,{0,0,3,3,0}}}, //DRAW OUT (Samurai)
+{{"Accumulate",.f.af=accumulate,300,AFLAG_BUFF|0,0,0,0,0,0,{0,0,1,0,0}},{"Dash",.f.af=dash,75,AFLAG_PHYSICAL|AFLAG_DAMAGE|0,0,0,2,AFLAG_MOD_XA,0,{1,1,1,0,0}},{"Throw Stone",.f.af=throw_stone,90,AFLAG_PHYSICAL|AFLAG_EVADE|AFLAG_DAMAGE|0,0,0,2,AFLAG_MOD_XA,0,{4,0,1,0,0}},{"Heal",.f.af=heal,150,0,0,0,0,0,0,{1,2,1,0,0}}}, //BASIC SKILL (Squire)
+{{"Moogle",.f.af=moogle,110,AFLAG_MAGIC|AFLAG_RESTORE_HP|0,0,2,5,AFLAG_MOD_MA,8,{4,0,3,2,0}},{"Shiva",.f.af=shiva,200,AFLAG_MAGIC|AFLAG_DAMAGE|0,ELEM_ICE,4,5,AFLAG_MOD_MA,24,{4,0,3,2,0}},{"Ramuh",.f.af=ramuh,200,AFLAG_MAGIC|AFLAG_DAMAGE|0,ELEM_LIGHTNING,4,5,AFLAG_MOD_MA,24,{4,0,3,2,0}},{"Ifrit",.f.af=ifrit,200,AFLAG_MAGIC|AFLAG_DAMAGE|0,ELEM_FIRE,4,5,AFLAG_MOD_MA,24,{4,0,3,2,0}},{"Titan",.f.af=titan,220,AFLAG_MAGIC|AFLAG_DAMAGE|0,ELEM_EARTH,5,5,AFLAG_MOD_MA,30,{4,0,3,2,0}},/*{.f.af=golem,500,AFLAG_MAGIC|AFLAG_DAMAGE|0,0,3,8,200,40,{0,0,1,0,0}},*/{"Carbunkle",.f.af=carbunkle,350,AFLAG_MAGIC|AFLAG_BUFF|0,0,4,6,150,30,{4,0,3,2,0}},{"Bahamut",.f.af=bahamut,1200,AFLAG_MAGIC|AFLAG_DAMAGE|0,0,10,5,AFLAG_MOD_MA,60,{4,0,4,3,0}},{"Odin",.f.af=odin,900,AFLAG_MAGIC|AFLAG_DAMAGE|0,0,9,5,AFLAG_MOD_MA,50,{4,0,4,3,0}},{"Leviathan",.f.af=leviathan,850,AFLAG_MAGIC|AFLAG_DAMAGE|0,ELEM_WATER,9,5,AFLAG_MOD_MA,48,{4,0,4,3,0}},{"Salamander",.f.af=salamander,820,AFLAG_MAGIC|AFLAG_DAMAGE|0,ELEM_FIRE,9,5,AFLAG_MOD_MA,48,{4,0,3,2,0}},{"Silf",.f.af=silf,400,AFLAG_MAGIC|AFLAG_DEBUFF|0,0,5,6,150,26,{4,0,3,2,0}},{"Fairy",.f.af=fairy,400,AFLAG_MAGIC|AFLAG_RESTORE_HP|0,0,4,5,AFLAG_MOD_MA,28,{4,0,3,2,0}},{"Lich",.f.af=lich,600,AFLAG_MAGIC|AFLAG_DAMAGE|0,ELEM_DARK,9,6,160,40,{4,0,3,2,0}},{"Cyclops",.f.af=cyclops,1000,AFLAG_MAGIC|AFLAG_DAMAGE|0,0,9,5,AFLAG_MOD_MA,62,{4,0,3,2,0}},{"Zodiac",.f.af=zodiac,1000,AFLAG_MAGIC|AFLAG_DAMAGE|0,0,10,5,AFLAG_MOD_MA,99,{4,0,4,3,0}}}, //SUMMON MAGIC (Summoner)
 {{"Gil Taking",.f.af=gil_taking,10,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,0,0,4,200,0,{1,1,1,0,0}},{"Steal Heart",.f.af=steal_heart,150,0,0,0,1,50,0,{3,0,1,0,0}},{"Seal Helmet",.f.af=steal_helmet,350,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,0,0,4,50,0,{1,1,1,0,0}},{"Steal Armor",.f.af=steal_armor,450,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,0,0,4,35,0,{1,1,1,0,0}},{"Steal Shield",.f.af=steal_shield,350,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,0,0,4,35,0,{1,1,1,0,0}},{"Steal Weapon",.f.af=steal_weapon,600,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,0,0,4,30,0,{1,1,1,0,0}},{"Steal Accessory",.f.af=steal_accessry,500,AFLAG_PHYSICAL|AFLAG_COUNTER|AFLAG_EVADE|0,0,0,4,40,0,{1,1,1,0,0}},{"Steal Exp",.f.af=steal_exp,250,AFLAG_PHYSICAL|0,0,0,4,70,0,{1,1,1,0,0}}}, //STEAL (Thief)
-{{"Haste",.f.af=haste,100,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,2,6,180,8,{3,0,2,0,0}},{"Haste 2",.f.af=haste2,550,AFLAG_MAGIC|0,0,7,6,240,30,{3,0,2,3,0}},{"Slow",.f.af=slow,80,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,2,6,180,8,{3,0,2,0,0}},{"Slow 2",.f.af=slow2,520,AFLAG_MAGIC|AFLAG_COUNTER_MAGIC|AFLAG_EVADE|0,0,7,6,240,30,{3,0,2,3,0}},{"Stop",.f.af=stop,330,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,7,6,110,14,{3,0,2,0,0}},{"Don't Move",.f.af=dont_move,100,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,3,6,190,10,{3,0,2,1,0}},{"Float",.f.af=magic_float,200,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,2,6,140,8,{4,0,2,1,0}},{"Reflect",.f.af=reflect,330,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|0,0,2,6,180,12,{4,0,1,0,0}},{"Quick",.f.af=quick,800,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|0,0,4,6,140,24,{4,0,1,0,0}},{"Demi",.f.af=demi,250,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,6,6,190,24,{4,0,2,1,0}},{"Demi 2",.f.af=demi2,550,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,9,6,120,50,{4,0,2,3,0}},{"Meteor",.f.af=meteor,1500,AFLAG_MAGIC|AFLAG_COUNTER_MAGIC|0,0,13,5,AFLAG_MOD_MA,70,{4,0,4,3,0}}}, //TIME MAGIC (Time Mage)
-{{"Fire",.f.af=fire,50,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,ELEM_FIRE,4,5,AFLAG_MOD_MA,6,{4,0,2,1,0}},{"Fire 2",.f.af=fire2,200,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,ELEM_FIRE,5,5,AFLAG_MOD_MA,12,{4,0,2,2,0}},{"Fire 3",.f.af=fire3,480,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,ELEM_FIRE,7,5,AFLAG_MOD_MA,24,{4,0,2,3,0}},{"Fire 4",.f.af=fire4,850,AFLAG_MAGIC|AFLAG_EVADE|0,ELEM_FIRE,10,5,AFLAG_MOD_MA,48,{4,0,3,3,0}},{"Bolt",.f.af=bolt,50,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,ELEM_LIGHTNING,4,5,AFLAG_MOD_MA,6,{4,0,2,1,0}},{"Bolt 2",.f.af=bolt2,200,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,ELEM_LIGHTNING,5,5,AFLAG_MOD_MA,10,{4,0,2,2,0}},{"Bolt 3",.f.af=bolt3,480,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,ELEM_LIGHTNING,7,5,AFLAG_MOD_MA,24,{4,0,2,3,0}},{"Bolt 4",.f.af=bolt4,850,AFLAG_MAGIC|AFLAG_EVADE|0,ELEM_LIGHTNING,10,5,AFLAG_MOD_MA,48,{4,0,3,3,0}},{"Ice",.f.af=ice,50,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,ELEM_ICE,4,5,AFLAG_MOD_MA,6,{4,0,2,1,0}},{"Ice 2",.f.af=ice2,200,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,ELEM_ICE,5,5,AFLAG_MOD_MA,12,{4,0,2,2,0}},{"Ice 3",.f.af=ice3,480,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,ELEM_ICE,7,5,AFLAG_MOD_MA,24,{4,0,2,3,0}},{"Ice 4",.f.af=ice4,850,AFLAG_MAGIC|AFLAG_EVADE|0,ELEM_ICE,10,5,AFLAG_MOD_MA,48,{4,0,3,3,0}},{"Poison",.f.af=poison,150,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,3,6,160,6,{3,0,2,0,0}},{"Frog",.f.af=frog,500,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,5,6,120,12,{3,0,1,0,0}},{"Death",.f.af=death,600,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,10,6,100,24,{3,0,1,0,0}},{"Flare",.f.af=flare,900,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|0,0,7,5,AFLAG_MOD_MA,60,{5,0,1,0,0}}}, //BLACK MAGIC (Wizard)
+{{"Haste",.f.af=haste,100,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|AFLAG_BUFF|0,0,2,6,180,8,{3,0,2,0,0}},{"Haste 2",.f.af=haste2,550,AFLAG_MAGIC|AFLAG_BUFF|0,0,7,6,240,30,{3,0,2,3,0}},{"Slow",.f.af=slow,80,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DEBUFF|0,0,2,6,180,8,{3,0,2,0,0}},{"Slow 2",.f.af=slow2,520,AFLAG_MAGIC|AFLAG_COUNTER_MAGIC|AFLAG_EVADE|AFLAG_DEBUFF|0,0,7,6,240,30,{3,0,2,3,0}},{"Stop",.f.af=stop,330,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DEBUFF|0,0,7,6,110,14,{3,0,2,0,0}},{"Don't Move",.f.af=dont_move,100,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DEBUFF|0,0,3,6,190,10,{3,0,2,1,0}},{"Float",.f.af=magic_float,200,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|AFLAG_BUFF|0,0,2,6,140,8,{4,0,2,1,0}},{"Reflect",.f.af=reflect,330,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_MATH|AFLAG_BUFF|0,0,2,6,180,12,{4,0,1,0,0}},{"Quick",.f.af=quick,800,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_BUFF|0,0,4,6,140,24,{4,0,1,0,0}},{"Demi",.f.af=demi,250,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DAMAGE|0,0,6,6,190,24,{4,0,2,1,0}},{"Demi 2",.f.af=demi2,550,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DAMAGE|0,0,9,6,120,50,{4,0,2,3,0}},{"Meteor",.f.af=meteor,1500,AFLAG_MAGIC|AFLAG_COUNTER_MAGIC|AFLAG_DAMAGE|0,0,13,5,AFLAG_MOD_MA,70,{4,0,4,3,0}}}, //TIME MAGIC (Time Mage)
+{{"Fire",.f.af=fire,50,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DAMAGE|0,ELEM_FIRE,4,5,AFLAG_MOD_MA,6,{4,0,2,1,0}},{"Fire 2",.f.af=fire2,200,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DAMAGE|0,ELEM_FIRE,5,5,AFLAG_MOD_MA,12,{4,0,2,2,0}},{"Fire 3",.f.af=fire3,480,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DAMAGE|0,ELEM_FIRE,7,5,AFLAG_MOD_MA,24,{4,0,2,3,0}},{"Fire 4",.f.af=fire4,850,AFLAG_MAGIC|AFLAG_EVADE|AFLAG_DAMAGE|0,ELEM_FIRE,10,5,AFLAG_MOD_MA,48,{4,0,3,3,0}},{"Bolt",.f.af=bolt,50,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DAMAGE|0,ELEM_LIGHTNING,4,5,AFLAG_MOD_MA,6,{4,0,2,1,0}},{"Bolt 2",.f.af=bolt2,200,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DAMAGE|0,ELEM_LIGHTNING,5,5,AFLAG_MOD_MA,10,{4,0,2,2,0}},{"Bolt 3",.f.af=bolt3,480,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DAMAGE|0,ELEM_LIGHTNING,7,5,AFLAG_MOD_MA,24,{4,0,2,3,0}},{"Bolt 4",.f.af=bolt4,850,AFLAG_MAGIC|AFLAG_EVADE|AFLAG_DAMAGE|0,ELEM_LIGHTNING,10,5,AFLAG_MOD_MA,48,{4,0,3,3,0}},{"Ice",.f.af=ice,50,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DAMAGE|0,ELEM_ICE,4,5,AFLAG_MOD_MA,6,{4,0,2,1,0}},{"Ice 2",.f.af=ice2,200,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DAMAGE|0,ELEM_ICE,5,5,AFLAG_MOD_MA,12,{4,0,2,2,0}},{"Ice 3",.f.af=ice3,480,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DAMAGE|0,ELEM_ICE,7,5,AFLAG_MOD_MA,24,{4,0,2,3,0}},{"Ice 4",.f.af=ice4,850,AFLAG_MAGIC|AFLAG_EVADE|AFLAG_DAMAGE|0,ELEM_ICE,10,5,AFLAG_MOD_MA,48,{4,0,3,3,0}},{"Poison",.f.af=poison,150,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DEBUFF|0,0,3,6,160,6,{3,0,2,0,0}},{"Frog",.f.af=frog,500,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DEBUFF|0,0,5,6,120,12,{3,0,1,0,0}},{"Death",.f.af=death,600,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DEBUFF|0,0,10,6,100,24,{3,0,1,0,0}},{"Flare",.f.af=flare,900,AFLAG_MAGIC|AFLAG_REFLECT|AFLAG_COUNTER_MAGIC|AFLAG_MATH|AFLAG_EVADE|AFLAG_DAMAGE|0,0,7,5,AFLAG_MOD_MA,60,{5,0,1,0,0}}}, //BLACK MAGIC (Wizard)
 };
 /*
 //NON-JOB ABILITIES: 

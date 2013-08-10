@@ -5,6 +5,7 @@
 #include "map.h"
 #include "equipment.h"
 #include "util.h"
+#include "ai.h"
 
 #include "ui_common.h"
 
@@ -160,7 +161,7 @@ void add_status(struct battle_char *bc, int status){
 }
 
 int move(struct battle_char *bc, int x, int y){
-	if(move_valid(x,y)){
+	if(!(bc->x==x && bc->y==y) && move_valid(x,y)){
 		bc->x=x;
 		bc->y=y;
 		return MOVE_SUCCESS;
@@ -465,7 +466,6 @@ void slow_action(struct battle_char *source, int x, int y, int jobindex, int fin
 }
 
 void slow_action_resolution(struct battle_char **blist, int num){
-	int i;
 	int bi;
 	struct stored_action *tmp;
 	struct battle_char **targets;
@@ -524,6 +524,7 @@ void ct_resolution(struct battle_char **blist, int *num){
 				continue;
 			}
 			set_map_moves(blist[bi]->x,blist[bi]->y,blist[bi]->move,blist[bi]->jump,clmovement[blist[bi]->ch->movement_class][blist[bi]->ch->movement_class].flags);
+			ai_unit_init(blist[bi]);
 
 			flags=0;
 			if(STATUS_SET(blist[bi],STATUS_NOMOVE))
@@ -532,12 +533,20 @@ void ct_resolution(struct battle_char **blist, int *num){
 				flags|=ACTED_FLAG;
 
 			// Select new actions
-			if(flags==0)
-				battle_orders(blist,bi,*num,&flags);
+			if(flags==0){
+				if(blist[bi]->fof==FOF_FRIEND)
+					battle_orders(blist,bi,*num,&flags);
+				else
+					ai_battle_orders(blist,bi,*num,&flags);
+			}
 
 			// Select other action
-			if(flags!=0 && flags!=(ACTED_FLAG|MOVED_FLAG))
-				battle_orders(blist,bi,*num,&flags);
+			if(flags!=0 && flags!=(ACTED_FLAG|MOVED_FLAG)){
+				if(blist[bi]->fof==FOF_FRIEND)
+					battle_orders(blist,bi,*num,&flags);
+				else
+					ai_battle_orders(blist,bi,*num,&flags);
+			}
 
 			// Update CT
 			if(flags==0)
@@ -655,6 +664,8 @@ void start_battle(struct character **friends, struct character *foes, int numfoe
 	foe_placed=place_units(blist+(bi-numfoe),numfoe,MAP_FOE_START);
 	for(i=0;i<foe_placed;pi++)
 		pblist[pi]=blist+(bi-numfoe)+(i++);
+
+	ai_init(pblist+bi-numfoe,foe_placed);
 
 	while(1){
 		status_check(pblist,pi);

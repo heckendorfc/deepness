@@ -5,9 +5,9 @@
 #include "player.h"
 
 #define MASTERY_ACTION(x) (x&0xFFFF)
-#define MASTERY_REACTION(x) ((x>>16)&0x4)
-#define MASTERY_SUPPORT(x) ((x>>20)&0x8)
-#define MASTERY_MOVEMENT(x) ((x>>24)&0x2)
+#define MASTERY_REACTION(x) ((x>>16)&0x7)
+#define MASTERY_SUPPORT(x) ((x>>20)&0x7)
+#define MASTERY_MOVEMENT(x) ((x>>24)&0x3)
 
 #define NUM_ACTION_PER_ABILITY 16
 #define NUM_REACTION_PER_ABILITY 3
@@ -22,6 +22,13 @@
 #define AFLAG_MATH BIT(5)
 #define AFLAG_PHYSICAL BIT(6)
 #define AFLAG_MAGIC BIT(7)
+#define AFLAG_BUFF BIT(8)
+#define AFLAG_DEBUFF BIT(9)
+#define AFLAG_DAMAGE BIT(10)
+#define AFLAG_RESTORE_HP BIT(11)
+#define AFLAG_RESTORE_MP BIT(12)
+#define AFLAG_RESTORE_LIFE BIT(13)
+#define AFLAG_REPEAT BIT(14)
 
 #define AFLAG_MOD_PA 0xFF
 #define AFLAG_MOD_MA 0xFE
