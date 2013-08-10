@@ -5,6 +5,7 @@
 #include "battle.h"
 #include "map.h"
 #include "util.h"
+#include "equipment.h"
 
 #define NUM_OPTIONS 10
 #define NO_ACT_GROUP 0xFF
@@ -46,24 +47,51 @@ const uint8_t class_role[]={
 	AI_ROLE_DAMAGE|AI_ROLE_DEBUFF, // Wizard
 };
 
-int estimated_output(int mod, int var, int base){
+int life_percent(struct battle_char *t, int dmg){
+	int ret;
+
+	if(t->hp<1)
+		return 0;
+
+	ret=((abs(t->hp-dmg)*100)/t->hp);
+	ret=100-ret;
+
+	if(dmg<=0)
+		ret=0;
+	else if(ret<=0)
+		ret=1;
+
+	return ret;
+}
+
+int estimated_output(struct battle_char *s, struct battle_char *t, int mod, int var){
+	uint16_t pri=s->ch->eq[EQ_WEAPON];
 	switch(mod){
 		case 0:
 			break;
 		case 1:
 			break;
 		case 2:
+			if(var==AFLAG_MOD_PA)
+				return life_percent(t,mod2(s,t,s->pa));
+			else if(var==AFLAG_MOD_MA)
+				return life_percent(t,mod2(s,t,s->ma));
+			else if(var==AFLAG_MOD_XA)
+				return life_percent(t,weapon_damage[EQ_TYPE(pri)](&weapons[EQ_TYPE(pri)][pri>>6],s,t));
 			break;
 		case 3:
+			return life_percent(t,mod3(s,t,var));
 			break;
 		case 4:
 			break;
 		case 5:
+			return life_percent(t,mod5(s,t,var,100));
 			break;
 		case 6:
+			return life_percent(t,mod6(s,t,var));
 			break;
 	}
-	return 0;
+	return 50;
 }
 
 
@@ -82,6 +110,45 @@ uint16_t sum_ability_flags(struct battle_char *bc){
 			ability_flags|=claction[g][i].flags;
 		
 	return ability_flags;
+}
+
+uint8_t get_roles(uint8_t class_flags, uint16_t ability_flags){
+	if(!(ability_flags&(AI_AFLAG_HEAL)))
+		class_flags&=~AI_ROLE_HEAL;
+
+	if(!(ability_flags&(AI_AFLAG_DAMAGE)))
+		class_flags&=~AI_ROLE_DAMAGE;
+
+	if(!(ability_flags&(AI_AFLAG_BUFF)))
+		class_flags&=~AI_ROLE_BUFF;
+
+	if(!(ability_flags&(AI_AFLAG_DEBUFF)))
+		class_flags&=~AI_ROLE_DEBUFF;
+	
+	return class_flags;
+}
+
+uint16_t filter_ability_by_role(uint8_t role, uint16_t ability_flags, int group){
+	int i;
+	uint16_t filter=0;
+	uint16_t ret=0;
+
+	if(role&AI_ROLE_DAMAGE)
+		filter|=AI_AFLAG_DAMAGE;
+	if(role&AI_ROLE_HEAL)
+		filter|=AI_AFLAG_HEAL;
+	if(role&AI_ROLE_BUFF)
+		filter|=AI_AFLAG_BUFF;
+	if(role&AI_ROLE_DEBUFF)
+		filter|=AI_AFLAG_DEBUFF;
+	//if(role&AI_ROLE_MELEE)
+		//filter|=AI_AFLAG_MELEE;
+	
+	for(i=0;i<num_action[group];i++)
+		if(ability_flags&BIT(i) && claction[group][i].flags&filter)
+			ret|=BIT(i);
+
+	return ret;
 }
 
 int e_gcd(int a, int b){
@@ -191,14 +258,93 @@ int add_action(struct battle_char *bc, int x, int y, int dist, int group, int ac
 	return -1;
 }
 
-int scan_action(struct battle_char *bc, int x, int y, int dist, int group, int flagscan){
-	int i;
+int score_action(struct battle_char *s, struct battle_char *t, int group, int cmd){
+	int score;
+	struct stored_action pr;
 
+	pr.jobindex=group;
+	pr.findex=cmd;
+	last_action.preresolve=&pr;
+	score=estimated_output(s,t,claction[group][cmd].mod,claction[group][cmd].mod_v);
+	if(score==1 && claction[group][cmd].mp>0)
+		score=100-((claction[group][cmd].mp*100)/s->mp);
+
+	return score;
+}
+
+int scan_action(struct battle_char **blist, int bc, int bi, int x, int y, int dist, int group, int flagscan){
+	int i;
+	uint16_t avail=0;
+	uint16_t max=0;
+	uint16_t avail_flag=0;
+	uint8_t role=0;
+	int temp,max_score=0,max_i=0;
+
+	// Select actions that won't automatically fail
 	for(i=0;i<num_action[group];i++)
 		if(claction[group][i].flags&flagscan &&
-		  bc->ch->mastery[group]&BIT(i) &&
-		  dist<=bc->move+claction[group][i].ra.range)
-			return i;
+		  blist[bc]->ch->mastery[group]&BIT(i) &&
+		  dist<=blist[bc]->move+claction[group][i].ra.range && 
+		  (blist[bc]->mp>=claction[group][i].mp || (blist[bc]->ch->support==SFLAG_HALFMP && blist[bc]->mp>=claction[group][i].mp/2))){
+			avail|=BIT(i);
+			avail_flag|=claction[group][i].flags;
+		}
+
+	role=get_roles(blist[bc]->ai_role,avail_flag);
+
+	if(role==0)
+		return -1;
+
+	// Select one of the available roles
+	if(role&AI_ROLE_HEAL)
+		role=AI_ROLE_HEAL;
+	else if(role&AI_ROLE_BUFF)
+		role=AI_ROLE_BUFF;
+
+	if(role&AI_ROLE_DEBUFF && role!=AI_ROLE_DEBUFF && !STATUS_SET(blist[bi],STATUS_CRITICAL) && get_random(0,4)==0)
+		role=AI_ROLE_DEBUFF;
+	else if(role&AI_ROLE_DAMAGE)
+		role=AI_ROLE_DAMAGE;
+	//else
+		//role=AI_ROLE_MELEE;
+
+	// Select actions in that role
+	avail=filter_ability_by_role(role,avail,group);
+
+	if(avail==0)
+		return -1;
+
+	// Find the best action
+	max=max_i=0;
+	for(i=0;i<num_action[group];i++){
+		if(avail&BIT(i)){
+			temp=score_action(blist[bc],blist[bi],group,i);
+			if(temp>max_score){
+				max_score=temp;
+				max_i=1;
+				max=BIT(i);
+			}
+			else if(temp==max_score){
+				max|=BIT(i);
+				max_i++;
+			}
+		}
+	}
+
+	if(max_i>1){
+		temp=get_random(1,max_i+1);
+		for(i=0;i<num_action[group];i++){
+			if(max&BIT(i))
+				temp--;
+			if(temp==0)
+				return i;
+		}
+	}
+	else{
+		for(i=0;i<num_action[group];i++)
+			if(max&BIT(i))
+				return i;
+	}
 
 	return -1;
 }
@@ -243,15 +389,18 @@ void select_action_type(struct battle_char **blist, int bi, int num, uint16_t ab
 			if(blist[bi]->ai_role&AI_ROLE_DEBUFF){
 				flagscan|=AFLAG_DEBUFF;
 			}
+			if(STATUS_SET(blist[i],STATUS_DEAD))
+				flagscan=0;
+
 			score=4;
 		}
 
 		if(flagscan>0){
-			act=scan_action(blist[bi],blist[i]->x,blist[i]->y,dist,blist[bi]->ch->primary,flagscan);
+			act=scan_action(blist,bi,i,blist[i]->x,blist[i]->y,dist,blist[bi]->ch->primary,flagscan);
 			if(act>=0)
 				opi=add_action(blist[bi],blist[i]->x,blist[i]->y,dist,blist[bi]->ch->primary,act,flagscan);
 			else{
-				scan_action(blist[bi],blist[i]->x,blist[i]->y,dist,blist[bi]->ch->secondary,flagscan);
+				scan_action(blist,bi,i,blist[i]->x,blist[i]->y,dist,blist[bi]->ch->secondary,flagscan);
 				if(act>=0)
 					opi=add_action(blist[bi],blist[i]->x,blist[i]->y,dist,blist[bi]->ch->secondary,act,flagscan);
 			}
@@ -362,19 +511,7 @@ void ai_init(struct battle_char **blist, int num){
 		class_flags=class_role[blist[bi]->ch->primary]|class_role[blist[bi]->ch->secondary];
 		ability_flags=sum_ability_flags(blist[bi]);
 
-		if(!(ability_flags&(AFLAG_RESTORE_HP|AFLAG_RESTORE_MP|AFLAG_RESTORE_LIFE)))
-			class_flags&=~AI_ROLE_HEAL;
-
-		if(!(ability_flags&(AFLAG_DAMAGE)))
-			class_flags&=~AI_ROLE_DAMAGE;
-
-		if(!(ability_flags&(AFLAG_BUFF)))
-			class_flags&=~AI_ROLE_BUFF;
-
-		if(!(ability_flags&(AFLAG_DEBUFF)))
-			class_flags&=~AI_ROLE_DEBUFF;
-
-		blist[bi]->ai_role=class_flags;
+		blist[bi]->ai_role=get_roles(class_flags,ability_flags);
 	}
 }
 

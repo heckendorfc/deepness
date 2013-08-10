@@ -409,11 +409,20 @@ void fast_action(struct battle_char *source, struct battle_char *target, int job
 	struct stored_action thisact;
 	uint8_t type;
 	const struct ability *a=&claction[jobindex][findex];
+	char msg[30];
 
 	if(claction[jobindex][findex].flags&AFLAG_PHYSICAL)
 		type=AFLAG_PHYSICAL;
 	else
 		type=AFLAG_MAGIC;
+
+	if(source->mp<a->mp || (source->ch->support==SFLAG_HALFMP && source->mp<a->mp/2))
+		return;
+
+	source->mp-=source->ch->support==SFLAG_HALFMP?source->mp<a->mp/2:a->mp;
+	
+	sprintf(msg,"%d used %s",source->index,a->name);
+	print_message(msg);
 
 	thisact.ctr=0;
 	thisact.jobindex=jobindex;
@@ -444,6 +453,11 @@ void slow_action(struct battle_char *source, int x, int y, int jobindex, int fin
 	uint8_t type;
 	const struct ability *a=&claction[jobindex][findex];
 
+	if(source->mp<a->mp || (source->ch->support==SFLAG_HALFMP && source->mp<a->mp/2))
+		return;
+
+	source->mp-=source->ch->support==SFLAG_HALFMP?source->mp<a->mp/2:a->mp;
+
 	source->slow_act=thisact=malloc(sizeof(*thisact));
 	if(thisact==NULL)
 		exit(1);
@@ -473,6 +487,7 @@ void slow_action_resolution(struct battle_char **blist, int num){
 	int type;
 	int dir;
 	int base_hit;
+	char msg[30];
 
 	for(bi=0;bi<num;bi++){
 		tmp=blist[bi]->slow_act;
@@ -481,6 +496,9 @@ void slow_action_resolution(struct battle_char **blist, int num){
 				type=AFLAG_PHYSICAL;
 			else
 				type=AFLAG_MAGIC;
+
+			sprintf(msg,"%d used %s",blist[bi]->index,claction[tmp->jobindex][tmp->findex].name);
+			print_message(msg);
 
 			//prereact(tmp->origin,tmp->target,tmp->num_target); // for hamedo
 			targets=get_targets(blist,bi,num,tmp->target.x,tmp->target.y,tmp->target.width,tmp->target.vertical,tmp->target.dir);
@@ -515,12 +533,13 @@ void ct_resolution(struct battle_char **blist, int *num){
 	
 	for(bi=0;bi<*num;bi++){
 		if(blist[bi]->ct>=100){
-			if(STATUS_SET(blist[bi],STATUS_DEAD))
+			if(STATUS_SET(blist[bi],STATUS_DEAD)){
 				blist[bi]->status[STATUS_DEAD]--;
-			if(blist[bi]->hp==0 && blist[bi]->status[STATUS_DEAD]==0){
-				*num-=1;
-				blist[bi]=blist[*num];
-				bi--;
+				if(blist[bi]->status[STATUS_DEAD]==0){
+					*num-=1;
+					blist[bi]=blist[*num];
+					bi--;
+				}
 				continue;
 			}
 			set_map_moves(blist[bi]->x,blist[bi]->y,blist[bi]->move,blist[bi]->jump,clmovement[blist[bi]->ch->movement_class][blist[bi]->ch->movement_class].flags);
@@ -626,6 +645,27 @@ int place_units(struct battle_char *team, int num, int type){
 	return bi;
 }
 
+int battle_ended(struct battle_char **blist, int num){
+	int numfriend;
+	int numfoe;
+	int i;
+
+	for(numfriend=numfoe=i=0;i<num;i++){
+		if(blist[i]->fof==FOF_FRIEND)
+			numfriend++;
+		else
+			numfoe++;
+	}
+	
+	if(numfriend==0)
+		return FOF_FOE;
+	if(numfoe==0)
+		return FOF_FRIEND;
+
+	return -1;
+}
+
+
 void start_battle(struct character **friends, struct character *foes, int numfoe){
 	struct battle_char *blist,**pblist;
 	int bi;
@@ -673,5 +713,7 @@ void start_battle(struct character **friends, struct character *foes, int numfoe
 		slow_action_resolution(pblist,pi);
 		ct_charge(pblist,pi);
 		ct_resolution(pblist,&pi);
+		if(battle_ended(pblist,pi)>=0)
+			break;
 	}
 }
