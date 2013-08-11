@@ -26,6 +26,16 @@
 #define GROUP_SIZE 2
 #define NUM_SPRITES 3
 
+#define MENU_MAIN 0
+#define MENU_JOB 1
+#define MENU_SJOB 2
+#define MENU_EQ 3
+#define MENU_JP 4
+#define MENU_JP_ACTION 5
+#define MENU_JP_REACTION 6
+#define MENU_JP_SUPPORT 7
+#define MENU_JP_MOVEMENT 8
+
 #define MENU_ITEMS_PER_PAGE 5
 
 #define NUM_MSG 10
@@ -57,6 +67,11 @@ static const char *terrain_name[]={
 	"Sand",
 	"Snow",
 	"Stone",
+};
+
+struct edit_data{
+	struct character *ch;
+	int group;
 };
 
 void set_tiles(int x, int y, int index){
@@ -181,6 +196,7 @@ void print_info(struct battle_char *bc){
 	iprintf("\x1b[7;1HHP: %d | MP: %d | CT: %d",bc->hp,bc->mp,bc->ct);
 	iprintf("\x1b[8;1HPA: %d | MA: %d | WP: %d",bc->pa,bc->ma,bc->wp);
 	iprintf("\x1b[9;1HJUMP: %d | MOVE: %d",bc->jump,bc->move);
+	iprintf("\x1b[10;1H");
 	for(i=0;i<NUM_STATUS;i++){
 		if(STATUS_SET(bc,i)){
 			iprintf("%02d ",i);
@@ -208,6 +224,12 @@ void print_info(struct battle_char *bc){
 				
 		}
 	}
+
+	if(bc->fof==FOF_FRIEND)
+		iprintf("\x1b[20;1HName: %s",bc->ch->name);
+	else
+		iprintf("\x1b[20;1HName: %02d%d",bc->ch->primary,bc->index);
+	
 }
 
 void handle_input(struct battle_char **blist, int bi, int num){
@@ -315,23 +337,27 @@ static int prev_action(void *arg, int i){
 	return i;
 }
 
-static char* action_name_cb(int *avail, int i, void *arg){
+static char* action_name_cb(int *avail, int *side, int i, void *arg){
 	struct action_data *ad=(struct action_data*)arg;
+	
+	*side=claction[ad->group][i].mp;
 	
 	*avail=ad->bc->ch->mastery[ad->group]&BIT(i);
 
 	return claction[ad->group][i].name;
 }
 
-static void scroll_menu(int offset, int num, char*(*get_menu_item_name)(int*,int,void*),void *arg){
+static void scroll_menu(int offset, int num, char*(*get_menu_item_name)(int*,int*,int,void*),void *arg){
 	int i;
 	int start=0,end,line=1;
 	int avail;
+	int side;
 	char *s;
 
 	if(offset+1<(MENU_ITEMS_PER_PAGE+1)/2){
 		start=0;
 		end=((MENU_ITEMS_PER_PAGE+1)/2)+offset;
+		if(end>num)end=num;
 		line=((MENU_ITEMS_PER_PAGE+1)/2)-offset;
 	}
 	else if(num-offset<(MENU_ITEMS_PER_PAGE+1)/2){
@@ -346,11 +372,14 @@ static void scroll_menu(int offset, int num, char*(*get_menu_item_name)(int*,int
 	}
 
 	for(i=start;i-start<end;i++){
-		s=get_menu_item_name(&avail,i,arg);
+		s=get_menu_item_name(&avail,&side,i,arg);
 		if(avail)
 			iprintf("\x1b[%d;1H%c%s",line,(line==(MENU_ITEMS_PER_PAGE+1)/2)?'*':' ',s);
 		else
 			iprintf("\x1b[%d;1H [%s]",line,s);
+		if(side)
+			iprintf("  %d",side);
+		
 		line++;
 	}
 }
@@ -623,6 +652,279 @@ void print_message(char *msg){
 	strncpy(last_msg[msg_i],msg,MAX_MSG_LEN);
 	//snprintf(msg[msg_i],MAX_MSG_LEN,"%s",msg);
 	//swiWaitForVBlank();
+}
+
+int print_main_menu(int line,int offset){
+	int i=line;
+
+	iprintf("\x1b[%d;1H%cChange Job (will reset JP)",i,offset==i?'*':' '); i++;
+	iprintf("\x1b[%d;1H%cSet Secondary",i,offset==i?'*':' '); i++;
+	iprintf("\x1b[%d;1H%cChange Equipment",i,offset==i?'*':' '); i++;
+	iprintf("\x1b[%d;1H%cSpend JP",i,offset==i?'*':' '); i++;
+
+	return i;
+}
+
+int print_jp_menu(int line,int offset){
+	int i=line;
+
+	iprintf("\x1b[%d;1H%cAction",i,offset==i?'*':' '); i++;
+	iprintf("\x1b[%d;1H%cReaction",i,offset==i?'*':' '); i++;
+	iprintf("\x1b[%d;1H%cSupport",i,offset==i?'*':' '); i++;
+	iprintf("\x1b[%d;1H%cMovement",i,offset==i?'*':' '); i++;
+
+	return i;
+}
+
+int print_char_info(struct character *ch, int line){
+	int i=line;
+	int level;
+	int j;
+
+	for(j=level=0;j<NUM_CLASS;j++)
+		level+=ch->exp[j]/100;
+
+	iprintf("\x1b[%d;0HName: %s (lvl %d)",i,ch->name,level); i++;
+	iprintf("\x1b[%d;0HJob: %s (jlvl %d)",i,class_name[ch->primary],ch->exp[ch->primary]/100); i++;
+	iprintf("\x1b[%d;0HSecondary: %s",i,class_name[ch->secondary]); i++;
+	iprintf("\x1b[%d;0HJP: %d",i,ch->jp); i++;
+	//iprintf("\x1b[%d;0H",i); i++;
+
+	return i;
+}
+
+
+static char* class_name_cb(int *avail, int *side, int i, void *arg){
+	struct edit_data *ed=(struct edit_data*)arg;
+	int j;
+
+	*avail=1;
+	for(j=0;j<NUM_CLASS;j++){
+		if(ed->ch->exp[j]/100<class_unlocks[i][j+1]){
+			*avail=0;
+			break;
+		}
+	}
+
+	*side=0;
+
+	return class_name[i];
+}
+
+static char* ability_action_cb(int *avail, int *side, int i, void *arg){
+	struct edit_data *ed=(struct edit_data*)arg;
+
+	*side=claction[ed->group][i].jp;
+
+	*avail=(!(MASTERY_ACTION(ed->ch->mastery[ed->group])&BIT(i)) && ed->ch->jp>=*side);
+
+	return claction[ed->group][i].name;
+}
+
+static char* ability_reaction_cb(int *avail, int *side, int i, void *arg){
+	struct edit_data *ed=(struct edit_data*)arg;
+
+	*side=clreaction[ed->group][i].jp;
+
+	*avail=(!(MASTERY_REACTION(ed->ch->mastery[ed->group])&BIT(i)) && ed->ch->jp>=*side);
+
+	return clreaction[ed->group][i].name;
+}
+
+static char* ability_support_cb(int *avail, int *side, int i, void *arg){
+	struct edit_data *ed=(struct edit_data*)arg;
+
+	*side=clsupport[ed->group][i].jp;
+
+	*avail=(!(MASTERY_SUPPORT(ed->ch->mastery[ed->group])&BIT(i)) && ed->ch->jp>=*side);
+
+	return clsupport[ed->group][i].name;
+}
+
+static char* ability_movement_cb(int *avail, int *side, int i, void *arg){
+	struct edit_data *ed=(struct edit_data*)arg;
+
+	*side=clmovement[ed->group][i].jp;
+
+	*avail=(!(MASTERY_MOVEMENT(ed->ch->mastery[ed->group])&BIT(i)) && ed->ch->jp>=*side);
+
+	return clmovement[ed->group][i].name;
+}
+
+void edit_menu(struct character **clist, int num){
+	struct edit_data ed;
+	int i;
+	int menu=0;
+	int menu_items;
+	int offset=0;
+	int run=1;
+	int ci=0;
+	int line=0;
+	int press;
+	int avail,side;
+
+	swiWaitForVBlank();
+
+	while(run){
+		ed.ch=clist[ci];
+		iprintf("\x1b[2J");
+		if(menu==MENU_MAIN){
+			menu_items=4;
+			line=print_main_menu(0,offset);
+			line+=2;
+			print_char_info(clist[ci],line);
+		}
+		else if(menu==MENU_JOB || menu==MENU_SJOB){
+			ed.group=offset;
+			line=MENU_ITEMS_PER_PAGE+2;
+			menu_items=NUM_CLASS-1;
+			scroll_menu(offset,NUM_CLASS-1,class_name_cb,&ed);
+			print_char_info(clist[ci],line);
+		}
+		else if(menu==MENU_EQ){
+		}
+		else if(menu==MENU_JP){
+			line=print_jp_menu(0,offset);
+			line+=2;
+			print_char_info(clist[ci],line);
+		}
+		else if(menu==MENU_JP_ACTION){
+			ed.group=clist[ci]->primary;
+			line=MENU_ITEMS_PER_PAGE+2;
+			menu_items=num_action[clist[ci]->primary];
+			scroll_menu(offset,menu_items,ability_action_cb,&ed);
+			print_char_info(clist[ci],line);
+		}
+		else if(menu==MENU_JP_REACTION){
+			ed.group=clist[ci]->primary;
+			line=MENU_ITEMS_PER_PAGE+2;
+			menu_items=num_reaction[clist[ci]->primary];
+			scroll_menu(offset,menu_items,ability_reaction_cb,&ed);
+			print_char_info(clist[ci],line);
+		}
+		else if(menu==MENU_JP_SUPPORT){
+			ed.group=clist[ci]->primary;
+			line=MENU_ITEMS_PER_PAGE+2;
+			menu_items=num_support[clist[ci]->primary];
+			scroll_menu(offset,menu_items,ability_support_cb,&ed);
+			print_char_info(clist[ci],line);
+		}
+		else if(menu==MENU_JP_MOVEMENT){
+			ed.group=clist[ci]->primary;
+			line=MENU_ITEMS_PER_PAGE+2;
+			menu_items=num_movement[clist[ci]->primary];
+			scroll_menu(offset,menu_items,ability_movement_cb,&ed);
+			print_char_info(clist[ci],line);
+		}
+
+		scanKeys();
+		press=keysDown();
+
+		if(press&KEY_R){
+			ci++;
+			if(ci>=num)ci=0;
+		}
+		if(press&KEY_L){
+			ci--;
+			if(ci<0)ci=num-1;
+		}
+		if(press&KEY_UP){
+			offset--;
+			if(offset<0)offset=menu_items-1;
+		}
+		if(press&KEY_DOWN){
+			offset++;
+			if(offset>=menu_items)offset=0;
+		}
+		if(press&KEY_Y){
+			if(menu==MENU_MAIN){
+				switch(offset){
+					case 0:
+						menu=MENU_JOB;
+						break;
+					case 1:
+						menu=MENU_SJOB;
+						break;
+					case 2:
+						menu=MENU_EQ;
+						break;
+					case 3:
+						menu=MENU_JP;
+						break;
+				}
+				offset=0;
+			}
+			else if(menu==MENU_JOB){
+				class_name_cb(&avail,&side,offset,&ed);
+				if(avail){
+					clist[ci]->primary=offset;
+					clist[ci]->jp=0;
+					offset=0;
+					menu=MENU_MAIN;
+				}
+			}
+			else if(menu==MENU_SJOB){
+				class_name_cb(&avail,&side,offset,&ed);
+				if(avail){
+					clist[ci]->secondary=offset;
+					offset=0;
+					menu=MENU_MAIN;
+				}
+			}
+			else if(menu==MENU_JP){
+				switch(offset){
+					case 0:
+						if(num_action[clist[ci]->primary])
+							menu=MENU_JP_ACTION;
+						break;
+					case 1:
+						if(num_reaction[clist[ci]->primary])
+							menu=MENU_JP_REACTION;
+						break;
+					case 2:
+						if(num_support[clist[ci]->primary])
+							menu=MENU_JP_SUPPORT;
+						break;
+					case 3:
+						if(num_movement[clist[ci]->primary])
+							menu=MENU_JP_MOVEMENT;
+						break;
+				}
+				offset=0;
+			}
+			else if(menu==MENU_JP_ACTION){
+				if(!(MASTERY_ACTION(ed.ch->mastery[ed.ch->primary])&BIT(offset)) && ed.ch->jp>=claction[ed.ch->primary][offset].jp){
+					ed.ch->jp-=claction[ed.ch->primary][offset].jp;
+					ed.ch->mastery[ed.ch->primary]|=MASTERY_ACTION_BIT(offset);
+				}
+			}
+			else if(menu==MENU_JP_REACTION){
+				if(!(MASTERY_REACTION(ed.ch->mastery[ed.ch->primary])&BIT(offset)) && ed.ch->jp>=clreaction[ed.ch->primary][offset].jp){
+					ed.ch->jp-=clreaction[ed.ch->primary][offset].jp;
+					ed.ch->mastery[ed.ch->primary]|=MASTERY_REACTION_BIT(offset);
+				}
+			}
+			else if(menu==MENU_JP_SUPPORT){
+				if(!(MASTERY_SUPPORT(ed.ch->mastery[ed.ch->primary])&BIT(offset)) && ed.ch->jp>=clsupport[ed.ch->primary][offset].jp){
+					ed.ch->jp-=clsupport[ed.ch->primary][offset].jp;
+					ed.ch->mastery[ed.ch->primary]|=MASTERY_SUPPORT_BIT(offset);
+				}
+			}
+			else if(menu==MENU_JP_MOVEMENT){
+				if(!(MASTERY_MOVEMENT(ed.ch->mastery[ed.ch->primary])&BIT(offset)) && ed.ch->jp>=clmovement[ed.ch->primary][offset].jp){
+					ed.ch->jp-=clmovement[ed.ch->primary][offset].jp;
+					ed.ch->mastery[ed.ch->primary]|=MASTERY_MOVEMENT_BIT(offset);
+				}
+			}
+		}
+		if(press&KEY_B){
+			menu=MENU_MAIN;
+			offset=0;
+		}
+		
+		
+		swiWaitForVBlank();
+	}
 }
 
 #endif

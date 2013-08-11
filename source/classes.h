@@ -50,6 +50,8 @@ struct class_stat{
 	uint8_t gainmod[NUM_STATS];
 };
 
+extern const uint8_t class_unlocks[NUM_CLASS+1][NUM_CLASS+1];
 extern const struct class_stat class_stats[];
+extern const char *class_name[];
 
 #endif

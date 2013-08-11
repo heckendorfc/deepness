@@ -1916,26 +1916,26 @@ const struct ability claction[NUM_CLASS][NUM_ACTION_PER_ABILITY]={
 const uint8_t num_support[]={0,2,0,1,3,0,1,3,1,3,0,1,1,1,1,2,4,1,1,1,1};
 const struct support_ability clsupport[NUM_CLASS][NUM_SUPPORT_PER_ABILITY]={
 	{}, // Generic
-	{{SFLAG_EQUIP_CROSSBOW,350},{SFLAG_CONCENTRATE,400}}, // Archer
+	{{"Equip Crossbow",SFLAG_EQUIP_CROSSBOW,350},{"Concentrate",SFLAG_CONCENTRATE,400}}, // Archer
 	{}, // Bard
-	{{SFLAG_EXPUP,350}}, // Calculator
-	{{SFLAG_THROW_ITEM,350},{SFLAG_MAINTENANCE,250},{SFLAG_EQUIP_CHANGE,0}}, // Chemist
+	{{"Exp Up",SFLAG_EXPUP,350}}, // Calculator
+	{{"Throw Item",SFLAG_THROW_ITEM,350},{"Maintenance",SFLAG_MAINTENANCE,250},{"Equip Change",SFLAG_EQUIP_CHANGE,0}}, // Chemist
 	{}, // Dancer
-	{{SFLAG_ATTACKUP,400}}, // Geomancer
-	{{SFLAG_EQUIP_ARMOR,500},{SFLAG_EQUIP_SHIELD,250},{SFLAG_EQUIP_SWORD,400}}, // Knight
-	{{SFLAG_EQUIP_SPEAR,400}}, // Lancer
-	{{SFLAG_EQUIP_GUN,750},{SFLAG_TRAIN,450},{SFLAG_MONSTER_TALK,100}}, // Mediator
+	{{"Attack Up",SFLAG_ATTACKUP,400}}, // Geomancer
+	{{"Equip Armor",SFLAG_EQUIP_ARMOR,500},{"Equip Shield",SFLAG_EQUIP_SHIELD,250},{"Equip Sword",SFLAG_EQUIP_SWORD,400}}, // Knight
+	{{"Equip Spear",SFLAG_EQUIP_SPEAR,400}}, // Lancer
+	{{"Equip Gun",SFLAG_EQUIP_GUN,750},{"Train",SFLAG_TRAIN,450},{"Monster Talk",SFLAG_MONSTER_TALK,100}}, // Mediator
 	{}, // Mime
-	{{SFLAG_MARTIAL_ARTS,200}}, // Monk
-	{{SFLAG_TWO_SWORDS,900}}, // Ninja
-	{{SFLAG_DEFENSEUP,400}}, // Oracle
-	{{SFLAG_MAGIC_DEFENDUP,400}}, // Priest
-	{{SFLAG_EQUIP_KNIFE,400},{SFLAG_TWO_HANDS,900}}, // Samurai
-	{{SFLAG_EQUIP_AXE,170},{SFLAG_MONSTER_SKILL,200},{SFLAG_DEFEND,50},{SFLAG_JPUP,200}}, // Squire
-	{{SFLAG_HALFMP,900}}, // Summoner
-	{{SFLAG_SECRET_HUNT,200}}, // Thief
-	{{SFLAG_SHORTCHARGE,800}}, // Time Mage
-	{{SFLAG_MAGIC_ATTACKUP,400}}, // Wizard
+	{{"Martial Arts",SFLAG_MARTIAL_ARTS,200}}, // Monk
+	{{"Two Swords",SFLAG_TWO_SWORDS,900}}, // Ninja
+	{{"Defense Up",SFLAG_DEFENSEUP,400}}, // Oracle
+	{{"Magic Def. Up",SFLAG_MAGIC_DEFENDUP,400}}, // Priest
+	{{"Equip Knife",SFLAG_EQUIP_KNIFE,400},{"Two Hands",SFLAG_TWO_HANDS,900}}, // Samurai
+	{{"Equip Axe",SFLAG_EQUIP_AXE,170},{"Monster Talk",SFLAG_MONSTER_SKILL,200},{"Defend",SFLAG_DEFEND,50},{"JP Up",SFLAG_JPUP,200}}, // Squire
+	{{"Half MP",SFLAG_HALFMP,900}}, // Summoner
+	{{"Secret Hunt",SFLAG_SECRET_HUNT,200}}, // Thief
+	{{"Short Charge",SFLAG_SHORTCHARGE,800}}, // Time Mage
+	{{"Magic Attack Up",SFLAG_MAGIC_ATTACKUP,400}}, // Wizard
 };
 
 static reactret speed_save(struct battle_char *reacter, struct battle_char *attacker){
@@ -2135,73 +2135,73 @@ const uint8_t num_reaction[]={0,2,2,2,1,2,1,1,1,1,0,2,2,1,1,2,1,1,1,2,1};
 const struct reaction_ability clreaction[NUM_CLASS][NUM_REACTION_PER_ABILITY]={
 	{}, // Generic
 	{
-		{speed_save,800,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
-		{arrow_guard,450,RFLAG_TRIGGER_ALWAYS,RFLAG_BRAVE_PERCENT|RFLAG_HITMOD},
+		{"Speed Save",speed_save,800,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
+		{"Arrow Guard",arrow_guard,450,RFLAG_TRIGGER_ALWAYS,RFLAG_BRAVE_PERCENT|RFLAG_HITMOD},
 	}, // Archer
 	{
-		{ma_save,450,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
-		{face_up,500,RFLAG_TRIGGER_OTHER,RFLAG_BRAVE_PERCENT},
+		{"MA Save",ma_save,450,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
+		{"Face Up",face_up,500,RFLAG_TRIGGER_OTHER,RFLAG_BRAVE_PERCENT},
 	}, // Bard
 	{
-		{distribute,200,RFLAG_TRIGGER_OTHER,RFLAG_BRAVE_PERCENT},
-		{damage_split,300,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
+		{"Distribute",distribute,200,RFLAG_TRIGGER_OTHER,RFLAG_BRAVE_PERCENT},
+		{"Damage Split",damage_split,300,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
 	}, // Calculator
 	{
-		{auto_potion,400,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
+		{"Auto Potion",auto_potion,400,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
 	}, // Chemist
 	{
-		{a_save,550,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
-		{brave_up,500,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
+		{"A Save",a_save,550,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
+		{"Brave Up",brave_up,500,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
 	}, // Dancer
 	{
-		{counter_flood,300,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
+		{"Counter Flood",counter_flood,300,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
 	}, // Geomancer
 	{
-		{weapon_guard,200,RFLAG_TRIGGER_ALWAYS,RFLAG_WEAPONEVADE|RFLAG_BRAVE_PERCENT},
+		{"Weapon Guard",weapon_guard,200,RFLAG_TRIGGER_ALWAYS,RFLAG_WEAPONEVADE|RFLAG_BRAVE_PERCENT},
 	}, // Knight
 	{
-		{dragon_spirit,200,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
+		{"Dragon Spirit",dragon_spirit,200,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
 	}, // Lancer
 	{
-		{finger_guard,300,RFLAG_TRIGGER_ALWAYS,RFLAG_HITMOD},
+		{"Finger Guard",finger_guard,300,RFLAG_TRIGGER_ALWAYS,RFLAG_HITMOD},
 	}, // Mediator
 	{}, // Mime
 	{
-		{hp_restore,500,RFLAG_TRIGGER_CRITICAL,RFLAG_BRAVE_PERCENT},
-		{counter,300,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
+		{"HP Restore",hp_restore,500,RFLAG_TRIGGER_CRITICAL,RFLAG_BRAVE_PERCENT},
+		{"Counter",counter,300,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
 		//{hamedo,1200,RFLAG_TRIGGER_PRECOUNTER,RFLAG_BRAVE_PERCENT},
 	}, // Monk
 	{
-		{abandon,400,RFLAG_TRIGGER_ALWAYS,RFLAG_EVADEMOD},
-		{sunken_state,900,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
+		{"Abandon",abandon,400,RFLAG_TRIGGER_ALWAYS,RFLAG_EVADEMOD},
+		{"Sunken State",sunken_state,900,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
 	}, // Ninja
 	{
-		{absorb_used_mp,250,RFLAG_TRIGGER_ALWAYS,RFLAG_BRAVE_PERCENT},
+		{"Absorb MP",absorb_used_mp,250,RFLAG_TRIGGER_ALWAYS,RFLAG_BRAVE_PERCENT},
 	}, // Oracle
 	{
-		{regenerator,400,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
+		{"Regenerator",regenerator,400,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
 	}, // Priest
 	{
-		{blade_grasp,700,RFLAG_TRIGGER_COUNTER,RFLAG_HITMOD|RFLAG_BRAVE_PERCENT},
-		{meatbone_slash,200,RFLAG_TRIGGER_CRITICAL,RFLAG_BRAVE_PERCENT},
+		{"Blade Grasp",blade_grasp,700,RFLAG_TRIGGER_COUNTER,RFLAG_HITMOD|RFLAG_BRAVE_PERCENT},
+		{"Meatbone Slash",meatbone_slash,200,RFLAG_TRIGGER_CRITICAL,RFLAG_BRAVE_PERCENT},
 	}, // Priest
 	{
-		{counter_tackle,180,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
+		{"Counter Tackle",counter_tackle,180,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
 	}, // Squire
 	{
-		{mp_restore,400,RFLAG_TRIGGER_CRITICAL,RFLAG_BRAVE_PERCENT},
+		{"MP Restore",mp_restore,400,RFLAG_TRIGGER_CRITICAL,RFLAG_BRAVE_PERCENT},
 	}, // Summoner
 	{
-		{caution,200,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
+		{"Caution",caution,200,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
 		//{gilgame_heart,200,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
 		//{catch,200,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
 	}, // Thief
 	{
-		{critical_quick,700,RFLAG_TRIGGER_CRITICAL,RFLAG_BRAVE_PERCENT},
-		{mp_switch,400,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
+		{"Critical Quick",critical_quick,700,RFLAG_TRIGGER_CRITICAL,RFLAG_BRAVE_PERCENT},
+		{"MP Switch",mp_switch,400,RFLAG_TRIGGER_DAMAGE,RFLAG_BRAVE_PERCENT},
 	}, // Time Mage
 	{
-		{counter_magic,800,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
+		{"Counter Magic",counter_magic,800,RFLAG_TRIGGER_COUNTER,RFLAG_BRAVE_PERCENT},
 	}, // Time Mage
 };
 
@@ -2274,26 +2274,26 @@ static moveret mteleport(struct battle_char *bc, int dist){
 	return 0;
 }
 
-const uint8_t num_move[]={0,1,2,2,1,2,2,10,1,0,0,1,1,1,0,1,1,0,2,2,0};
+const uint8_t num_movement[]={0,1,2,2,1,2,2,10,1,0,0,1,1,1,0,1,1,0,2,2,0};
 const struct movement_ability clmovement[NUM_CLASS][NUM_MOVEMENT_PER_ABILITY]={
 	{}, // Generic
 	{
-		{mjump1,200,MFLAG_TRIGGER_START,0},
+		{"Jump+1",mjump1,200,MFLAG_TRIGGER_START,0},
 	}, // Archer
 	{
-		{NULL,1200,MFLAG_TRIGGER_SPECIAL,MFLAG_FLY},
-		{mmove3,1000,MFLAG_TRIGGER_START,0},
+		{"Fly",NULL,1200,MFLAG_TRIGGER_SPECIAL,MFLAG_FLY},
+		{"Move+3",mmove3,1000,MFLAG_TRIGGER_START,0},
 	}, // Bard
 	{
-		{mget_exp,400,MFLAG_TRIGGER_MOVE,0},
-		{mget_jp,400,MFLAG_TRIGGER_MOVE,0},
+		{"Get Exp",mget_exp,400,MFLAG_TRIGGER_MOVE,0},
+		{"Get JP",mget_jp,400,MFLAG_TRIGGER_MOVE,0},
 	}, // Calculator
 	{
-		{mfind_item,100,MFLAG_TRIGGER_MOVE,0},
+		{"Find Item",mfind_item,100,MFLAG_TRIGGER_MOVE,0},
 	}, // Chemist
 	{
-		{NULL,1200,MFLAG_TRIGGER_SPECIAL,MFLAG_FLY},
-		{mjump3,1000,MFLAG_TRIGGER_START,0},
+		{"Fly",NULL,1200,MFLAG_TRIGGER_SPECIAL,MFLAG_FLY},
+		{"Jump+3",mjump3,1000,MFLAG_TRIGGER_START,0},
 	}, // Dancer
 	{
 		{NULL,220,MFLAG_TRIGGER_SPECIAL,MFLAG_WATERWALK},
@@ -2302,37 +2302,37 @@ const struct movement_ability clmovement[NUM_CLASS][NUM_MOVEMENT_PER_ABILITY]={
 	{
 	}, // Knight
 	{
-		{NULL,700,MFLAG_TRIGGER_SPECIAL,MFLAG_IGNOREHEIGHT},
+		{"Ignore Height",NULL,700,MFLAG_TRIGGER_SPECIAL,MFLAG_IGNOREHEIGHT},
 	}, // Lancer
 	{
 	}, // Mediator
 	{}, // Mime
 	{
-		{mhp_up,300,MFLAG_TRIGGER_MOVE,0},
+		{"HP Up",mhp_up,300,MFLAG_TRIGGER_MOVE,0},
 	}, // Monk
 	{
-		{NULL,220,MFLAG_TRIGGER_SPECIAL,MFLAG_WATERWALK},
+		{"Waterwalk",NULL,220,MFLAG_TRIGGER_SPECIAL,MFLAG_WATERWALK},
 	}, // Ninja
 	{
-		{mmp_up,300,MFLAG_TRIGGER_MOVE,0},
+		{"MP Up",mmp_up,300,MFLAG_TRIGGER_MOVE,0},
 	}, // Oracle
 	{
 	}, // Priest
 	{
-		{NULL,300,MFLAG_TRIGGER_SPECIAL,MFLAG_WATERWALK},
+		{"Waterwalk",NULL,300,MFLAG_TRIGGER_SPECIAL,MFLAG_WATERWALK},
 	}, // Samurai
 	{
-		{mmove1,200,MFLAG_TRIGGER_START,0},
+		{"Move+1",mmove1,200,MFLAG_TRIGGER_START,0},
 	}, // Squire
 	{
 	}, // Summoner
 	{
-		{mjump2,480,MFLAG_TRIGGER_START,0},
-		{mmove2,520,MFLAG_TRIGGER_START,0},
+		{"Jump+2",mjump2,480,MFLAG_TRIGGER_START,0},
+		{"Move+2",mmove2,520,MFLAG_TRIGGER_START,0},
 	}, // Thief
 	{
-		{NULL,540,MFLAG_TRIGGER_SPECIAL,MFLAG_FLOAT},
-		{mteleport,600,MFLAG_TRIGGER_MOVE,MFLAG_FLY},
+		{"Float",NULL,540,MFLAG_TRIGGER_SPECIAL,MFLAG_FLOAT},
+		{"Teleport",mteleport,600,MFLAG_TRIGGER_MOVE,MFLAG_FLY},
 	}, // Time Mage
 	{
 	}, // Wizard

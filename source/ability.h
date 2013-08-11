@@ -6,8 +6,13 @@
 
 #define MASTERY_ACTION(x) (x&0xFFFF)
 #define MASTERY_REACTION(x) ((x>>16)&0x7)
-#define MASTERY_SUPPORT(x) ((x>>20)&0x7)
+#define MASTERY_SUPPORT(x) ((x>>20)&0xF)
 #define MASTERY_MOVEMENT(x) ((x>>24)&0x3)
+
+#define MASTERY_ACTION_BIT(x) (1<<x)
+#define MASTERY_REACTION_BIT(x) (1<<(16+x))
+#define MASTERY_SUPPORT_BIT(x) (1<<(20+x))
+#define MASTERY_MOVEMENT_BIT(x) (1<<(24+x))
 
 #define NUM_ACTION_PER_ABILITY 16
 #define NUM_REACTION_PER_ABILITY 3
@@ -129,6 +134,7 @@ struct ability{
 };
 
 struct reaction_ability{
+	char *name;
 	reactionf rf;
 	uint16_t jp;
 	uint8_t trigger;
@@ -136,6 +142,7 @@ struct reaction_ability{
 };
 
 struct movement_ability{
+	char *name;
 	movementf mf;
 	uint16_t jp;
 	uint8_t trigger;
@@ -143,8 +150,9 @@ struct movement_ability{
 };
 
 struct support_ability{
-	uint16_t jp;
+	char *name;
 	uint16_t flags;
+	uint16_t jp;
 };
 
 uint8_t mod1(struct battle_char *origin, struct battle_char *target, uint8_t var);

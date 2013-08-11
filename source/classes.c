@@ -1,7 +1,7 @@
 #include "player.h"
 #include "classes.h"
 
-const char class_unlocks[NUM_CLASS+1][NUM_CLASS+1]={
+const uint8_t class_unlocks[NUM_CLASS+1][NUM_CLASS+1]={
 	{},
 	{3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0}, /* Archer */
 	{1,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,4,0,0,0}, /* Bard */
@@ -78,3 +78,27 @@ const struct class_stat class_stats[]={
 	{3,3,5,{75,120,100,50,130},{12,10,100,65,50}}, // Time Mage
 	{3,3,5,{75,120,100,60,150},{12,9,100,60,50}}, // Wizard
 };
+
+const char *class_name[]={
+	"None",
+	"Arch",
+	"Bard",
+	"Calc",
+	"Chem",
+	"Danc",
+	"Geom",
+	"Knig",
+	"Lanc",
+	"Medi",
+	"Mime",
+	"Monk",
+	"Ninj",
+	"Orac",
+	"Prst",
+	"Samu",
+	"Sqre",
+	"Sumn",
+	"Time",
+	"Wizr"
+};
+

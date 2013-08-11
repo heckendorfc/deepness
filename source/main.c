@@ -13,6 +13,7 @@ static const char *names[]={
 	"merb",
 	"Bolo",
 	"x4nt",
+	"Bkt\0",
 };
 
 int main(void) {
@@ -34,7 +35,7 @@ int main(void) {
 
 	init_ui();
 
-	//edit_menu(pdata.chars,numchar);
+	edit_menu(pdata.chars,numchar);
 
 	while(1){
 		start_battle(pdata.chars,foe,2);
