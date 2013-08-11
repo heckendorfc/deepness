@@ -46,7 +46,8 @@ void gen_random_map(){
 	int start;
 
 	for(i=0;i<MAP_WIDTH*MAP_HEIGHT;i++){
-		height[i]=rand()%5;
+		//height[i]=rand()%5;
+		height[i]=0;
 		//terrain[i]=((rand()%12)+1)<<2;
 		terrain[i]=(themes[theme].base)<<2;
 	}

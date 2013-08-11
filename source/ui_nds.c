@@ -715,7 +715,7 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 					case 4:
 						if(!(*flags&MOVED_FLAG)){
 							run=0;
-							if(move(blist[bi],cursorx,cursory)==MOVE_INVALID){
+							if(move(blist,bi,num,cursorx,cursory)==MOVE_INVALID){
 								controlmode=CONTROL_MODE_ACTION;
 								update_cursor(num,blist[bi]->x,blist[bi]->y);
 								cursory=2;

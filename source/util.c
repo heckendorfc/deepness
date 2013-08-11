@@ -163,6 +163,7 @@ void create_character(struct character *ch){
 	}
 	//ch->primary=ch->secondary=CL_WIZARD;
 	ch->primary=ch->secondary=CL_SQUIRE;
+	ch->mastery[0]=~0; // Generic abilities
 	//for(i=0;i<NUM_ACTION_PER_ABILITY;i++)
 		//ch->mastery[ch->primary]|=BIT(i);
 	for(i=0;i<NUM_EQ_SLOTS;i++)

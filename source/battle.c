@@ -160,10 +160,10 @@ void add_status(struct battle_char *bc, int status){
 	}
 }
 
-int move(struct battle_char *bc, int x, int y){
-	if(!(bc->x==x && bc->y==y) && move_valid(x,y)){
-		bc->x=x;
-		bc->y=y;
+int move(struct battle_char **blist, int bi, int num, int x, int y){
+	if(!(blist[bi]->x==x && blist[bi]->y==y) && move_valid(x,y) && unit_at(blist,num,x,y)<0){
+		blist[bi]->x=x;
+		blist[bi]->y=y;
 		return MOVE_SUCCESS;
 	}
 
@@ -551,6 +551,7 @@ void ct_resolution(struct battle_char **blist, int *num){
 			if(STATUS_SET(blist[bi],STATUS_DEAD)){
 				blist[bi]->status[STATUS_DEAD]--;
 				if(blist[bi]->status[STATUS_DEAD]==0){
+					print_message("Dead...");
 					*num-=1;
 					blist[bi]=blist[*num];
 					bi--;

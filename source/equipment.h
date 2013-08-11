@@ -72,9 +72,11 @@
 
 #define EQFLAG_NOFOE BIT(7)
 
+int actual_weapon_range(struct battle_char *bc, int x, int y);
 int weapon_can_hit(struct battle_char *bc, int x, int y);
 
 extern const weapon_damagef weapon_damage[];
+extern const uint8_t weapon_range[];
 extern const struct eq_item weapons[NUM_EQW_TYPES][MAX_EQW_PER_TYPE];
 extern const struct eq_item offhand[MAX_EQO_PER_TYPE];
 extern const struct eq_item body_armor[NUM_EQB_TYPES][MAX_EQB_PER_TYPE];

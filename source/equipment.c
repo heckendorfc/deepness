@@ -481,6 +481,20 @@ static void remove_h_bag(struct battle_char *bc){
 
 const uint8_t weapon_range[]={1,1,1,5|WRANGE_HEIGHT,2,4,3,1,8,WRANGE_ALL,3,1,1,1,1,1,2,1,2,1};
 
+int actual_weapon_range(struct battle_char *bc, int x, int y){
+	int pdist,dist;
+	int type=EQ_TYPE(bc->ch->eq[EQ_WEAPON]);
+
+	if(weapon_range[type]&WRANGE_ALL)
+		return 0xFF;
+
+	dist=WEAP_RANGE(weapon_range[type]);
+	if(weapon_range[type]&WRANGE_HEIGHT)
+		dist+=(get_map_height(bc->x,bc->y)-get_map_height(x,y))/2;
+
+	return dist;
+}
+
 int weapon_can_hit(struct battle_char *bc, int x, int y){
 	int pdist,dist;
 	int type=EQ_TYPE(bc->ch->eq[EQ_WEAPON]);
@@ -488,10 +502,7 @@ int weapon_can_hit(struct battle_char *bc, int x, int y){
 	if(weapon_range[type]&WRANGE_ALL)
 		return 1;
 
-	dist=WEAP_RANGE(weapon_range[type]);
-	if(weapon_range[type]&WRANGE_HEIGHT)
-		dist+=(get_map_height(bc->x,bc->y)-get_map_height(x,y))/2;
-
+	dist=actual_weapon_range(bc,x,y);
 	pdist=get_dist(bc,x,y,0,0,0); // TODO: fix 0,0,0 if that function ever changes
 	
 	if(pdist<=dist)

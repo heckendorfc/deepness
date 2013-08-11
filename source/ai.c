@@ -109,6 +109,9 @@ uint16_t sum_ability_flags(struct battle_char *bc){
 		if(bc->ch->mastery[g]&BIT(i))
 			ability_flags|=claction[g][i].flags;
 		
+
+	ability_flags|=claction[0][0].flags;
+
 	return ability_flags;
 }
 
@@ -165,8 +168,10 @@ int e_gcd(int a, int b){
 	return b;
 }
 
-void set_move(struct battle_char *bc, int opti, int x, int y, int dist, int range){
-	int best=dist-range;
+
+void move_close(struct battle_char **blist, int bi, int num, int opti, int x, int y, int dist, int range){
+	struct battle_char *bc=blist[bi];
+	int best;
 	int temp;
 	int tx,ty;
 	int rise=y-bc->y;
@@ -174,6 +179,10 @@ void set_move(struct battle_char *bc, int opti, int x, int y, int dist, int rang
 	int md;
 	int ysign,xsign;
 	int i;
+
+	if(range==RANGE_WEAPON)
+		range=WEAP_RANGE(weapon_range[EQ_TYPE(bc->ch->eq[EQ_WEAPON])]);
+	best=dist-range;
 
 	if(rise==run)
 		rise=run=1;
@@ -201,7 +210,7 @@ void set_move(struct battle_char *bc, int opti, int x, int y, int dist, int rang
 			md++;
 		}
 		do{
-			if(move_valid(tx,ty)){
+			if(move_valid(tx,ty) && unit_at(blist,num,tx,ty)<0){
 				turn_opts[opti].move_opt.x=tx;
 				turn_opts[opti].move_opt.y=ty;
 				turn_opts[opti].score=1;
@@ -222,7 +231,7 @@ void set_move(struct battle_char *bc, int opti, int x, int y, int dist, int rang
 			md++;
 		}
 		do{
-			if(move_valid(tx,ty)){
+			if(move_valid(tx,ty) && unit_at(blist,num,tx,ty)<0){
 				turn_opts[opti].move_opt.x=tx;
 				turn_opts[opti].move_opt.y=ty;
 				turn_opts[opti].score=1;
@@ -235,18 +244,39 @@ void set_move(struct battle_char *bc, int opti, int x, int y, int dist, int rang
 
 }
 
-int add_action(struct battle_char *bc, int x, int y, int dist, int group, int acti, int flagscan){
+void set_move(struct battle_char **blist, int bi, int num, int opti, int x, int y, int dist, int range){
+	int i,j;
+
+	if(range==RANGE_WEAPON)
+		range=WEAP_RANGE(weapon_range[EQ_TYPE(blist[bi]->ch->eq[EQ_WEAPON])]);
+
+	for(j=0;j<MAP_HEIGHT;j++){
+		for(i=0;i<MAP_WIDTH;i++){
+			if(abs(j-y)+abs(i-x)<=range && move_valid(i,j) && unit_at(blist,num,i,j)<0){
+				turn_opts[opti].move_opt.x=i;
+				turn_opts[opti].move_opt.y=j;
+				turn_opts[opti].score=1;
+				return;
+			}
+		}
+	}
+
+	move_close(blist,bi,num,opti,x,y,dist,range);
+}
+
+int add_action(struct battle_char **blist, int bi, int num, int x, int y, int dist, int group, int acti, int flagscan){
+	struct battle_char *bc=blist[bi];
 	int i;
 
 	for(i=0;i<NUM_OPTIONS;i++){
 		if(turn_opts[i].score==0){
-			if(dist<=claction[group][acti].ra.range){
+			if((claction[group][acti].ra.range==RANGE_WEAPON && weapon_can_hit(bc,x,y)) || (claction[group][acti].ra.range!=RANGE_WEAPON && dist<=claction[group][acti].ra.range)){
 				turn_opts[i].move_opt.x=bc->x;
 				turn_opts[i].move_opt.y=bc->y;
 				turn_opts[i].score=1;
 			}
 			else
-				set_move(bc,i,x,y,dist,claction[group][acti].ra.range);
+				set_move(blist,bi,num,i,x,y,dist,claction[group][acti].ra.range);
 
 			turn_opts[i].act_opt.x=x;
 			turn_opts[i].act_opt.y=y;
@@ -278,17 +308,24 @@ int scan_action(struct battle_char **blist, int bc, int bi, int x, int y, int di
 	uint16_t max=0;
 	uint16_t avail_flag=0;
 	uint8_t role=0;
+	uint8_t range;
 	int temp,max_score=0,max_i=0;
 
 	// Select actions that won't automatically fail
-	for(i=0;i<num_action[group];i++)
+	for(i=0;i<num_action[group];i++){
+		range=claction[group][i].ra.range;
+		if(range==RANGE_WEAPON)
+			range=weapon_can_hit(blist[bc],x,y);
+		else
+			range=(dist<=(blist[bc]->move+range));
 		if(claction[group][i].flags&flagscan &&
 		  blist[bc]->ch->mastery[group]&BIT(i) &&
-		  dist<=blist[bc]->move+claction[group][i].ra.range && 
+		  range &&
 		  (blist[bc]->mp>=claction[group][i].mp || (blist[bc]->ch->support==SFLAG_HALFMP && blist[bc]->mp>=claction[group][i].mp/2))){
 			avail|=BIT(i);
 			avail_flag|=claction[group][i].flags;
 		}
+	}
 
 	role=get_roles(blist[bc]->ai_role,avail_flag);
 
@@ -395,14 +432,19 @@ void select_action_type(struct battle_char **blist, int bi, int num, uint16_t ab
 			score=4;
 		}
 
-		if(flagscan>0){
+		if(flagscan>0){ // Primary
 			act=scan_action(blist,bi,i,blist[i]->x,blist[i]->y,dist,blist[bi]->ch->primary,flagscan);
 			if(act>=0)
-				opi=add_action(blist[bi],blist[i]->x,blist[i]->y,dist,blist[bi]->ch->primary,act,flagscan);
-			else{
-				scan_action(blist,bi,i,blist[i]->x,blist[i]->y,dist,blist[bi]->ch->secondary,flagscan);
+				opi=add_action(blist,bi,num,blist[i]->x,blist[i]->y,dist,blist[bi]->ch->primary,act,flagscan);
+			else{ // Secondary
+				act=scan_action(blist,bi,i,blist[i]->x,blist[i]->y,dist,blist[bi]->ch->secondary,flagscan);
 				if(act>=0)
-					opi=add_action(blist[bi],blist[i]->x,blist[i]->y,dist,blist[bi]->ch->secondary,act,flagscan);
+					opi=add_action(blist,bi,num,blist[i]->x,blist[i]->y,dist,blist[bi]->ch->secondary,act,flagscan);
+				else{ // Attack
+					act=0;//scan_action(blist,bi,i,blist[i]->x,blist[i]->y,dist,0,AI_ROLE_DAMAGE);
+					//if(act>=0)
+						opi=add_action(blist,bi,num,blist[i]->x,blist[i]->y,dist,0,act,AI_ROLE_DAMAGE);
+				}
 			}
 		}
 
@@ -420,11 +462,17 @@ int ai_move(struct battle_char **blist, int bi, int num){
 			max_i=i;
 	}
 	if(turn_opts[max_i].score>0){
-		move(blist[bi],turn_opts[max_i].move_opt.x,turn_opts[max_i].move_opt.y);
+		move(blist,bi,num,turn_opts[max_i].move_opt.x,turn_opts[max_i].move_opt.y);
 		return 1;
 	}
 
-	if(class_role[blist[bi]->ch->primary]&(AI_ROLE_HEAL|AI_ROLE_BUFF)){
+	if(class_role[blist[bi]->ch->primary]&(AI_ROLE_MELEE)){
+		for(i=0;i<num;i++){
+			if(blist[i]->fof!=blist[bi]->fof)
+				break;
+		}
+	}
+	else if(class_role[blist[bi]->ch->primary]&(AI_ROLE_HEAL|AI_ROLE_BUFF)){
 		for(i=0;i<num;i++){
 			if(blist[i]->fof==blist[bi]->fof && class_role[blist[i]->ch->primary]&(AI_ROLE_MELEE))
 				break;
@@ -437,10 +485,10 @@ int ai_move(struct battle_char **blist, int bi, int num){
 		}
 	}
 
-	set_move(blist[bi],0,blist[i]->x,blist[i]->y,blist[bi]->move,0);
+	set_move(blist,bi,num,0,blist[i]->x,blist[i]->y,blist[bi]->move,0);
 	turn_opts[0].act_opt.group=NO_ACT_GROUP;
 	if(turn_opts[0].score){
-		move(blist[bi],turn_opts[0].move_opt.x,turn_opts[0].move_opt.y);
+		move(blist,bi,num,turn_opts[0].move_opt.x,turn_opts[0].move_opt.y);
 		return 1;
 	}
 
@@ -460,10 +508,12 @@ int ai_act(struct battle_char **blist, int bi, int num){
 		g=turn_opts[max_i].act_opt.group;
 		cmd=turn_opts[max_i].act_opt.cmd;
 		if(claction[g][cmd].ctr==0){
-			tl=get_targets(blist,bi,num,turn_opts[max_i].act_opt.x,turn_opts[max_i].act_opt.y,claction[g][cmd].ra.aoe,claction[g][cmd].ra.aoe_vertical,AOE_DIR(claction[g][cmd].ra.dir));
-			for(i=0;i<num && tl[i];i++)
-				fast_action(blist[bi],tl[i],g,cmd);
-			free(tl);
+			if((claction[g][cmd].ra.range!=RANGE_WEAPON && claction[g][cmd].ra.range<=get_dist(blist[bi],turn_opts[max_i].act_opt.x,turn_opts[max_i].act_opt.y,0,0,0)) || (claction[g][cmd].ra.range==RANGE_WEAPON && weapon_can_hit(blist[bi],turn_opts[max_i].act_opt.x,turn_opts[max_i].act_opt.y))){
+				tl=get_targets(blist,bi,num,turn_opts[max_i].act_opt.x,turn_opts[max_i].act_opt.y,claction[g][cmd].ra.aoe,claction[g][cmd].ra.aoe_vertical,AOE_DIR(claction[g][cmd].ra.dir));
+				for(i=0;i<num && tl[i];i++)
+					fast_action(blist[bi],tl[i],g,cmd);
+				free(tl);
+			}
 		}
 		else{
 			slow_action(blist[bi],turn_opts[max_i].act_opt.x,turn_opts[max_i].act_opt.y,g,cmd);
