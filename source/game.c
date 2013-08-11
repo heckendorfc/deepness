@@ -52,8 +52,17 @@ static void encounter(){
 }
 
 void run_game(){
+	int x,y;
+	int flags;
+	gen_areamap(&x,&y);
 	while(1){
-		edit_menu(pdata.chars,numchar);
-		encounter();
+		area_menu(&x,&y);
+		flags=get_area_map(x,y);
+		if(flags&AMAP_ENCOUNTER_BIT)
+			encounter();
+		if(flags&AMAP_EXIT_BIT)
+			break;
+
+		explore_areamap(x,y);
 	}
 }

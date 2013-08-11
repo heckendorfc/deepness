@@ -32,13 +32,25 @@
 #define MAP_THEME_RUINS 3
 #define MAP_THEME_TOWN 4
 
+#define AMAP_EXPLORED_BIT BIT(0)
+#define AMAP_ENCOUNTER_BIT BIT(1)
+#define AMAP_TREASURE_BIT BIT(2)
+#define AMAP_EXIT_BIT BIT(3)
+#define AMAP_NORTH_BIT BIT(4)
+#define AMAP_SOUTH_BIT BIT(5)
+#define AMAP_EAST_BIT BIT(6)
+#define AMAP_WEST_BIT BIT(7)
+
 #define MAP_INDEX(x,y) (x+(y*MAP_WIDTH))
 
 uint8_t get_map_height(int x,int y);
 uint8_t get_map_terrain(int x,int y);
+uint8_t get_area_map(int x, int y);
 uint8_t get_map_start(int x,int y);
 void gen_random_map();
 void set_map_moves(int x, int y, int moves, int jump, int flags);
 uint8_t move_valid(int x, int y);
+void explore_areamap(int x, int y);
+void gen_areamap();
 
 #endif

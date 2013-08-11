@@ -6,6 +6,7 @@
 static uint8_t height[MAP_WIDTH*MAP_HEIGHT];
 static uint8_t terrain[MAP_WIDTH*MAP_HEIGHT];
 static uint8_t validmove[MAP_WIDTH*MAP_HEIGHT];
+static uint8_t areamap[MAP_WIDTH*MAP_HEIGHT];
 
 const struct map_theme{
 	uint8_t base;
@@ -28,6 +29,10 @@ uint8_t get_map_start(int x,int y){
 
 uint8_t get_map_terrain(int x,int y){
 	return terrain[MAP_INDEX(x,y)]>>2;
+}
+
+uint8_t get_area_map(int x, int y){
+	return areamap[MAP_INDEX(x,y)];
 }
 
 void gen_random_map(){
@@ -126,9 +131,9 @@ nextsquare:
 		recursive_move_chart(x-1,y,thisheight,moves-movemod,jump,flags);
 	if(y>0)
 		recursive_move_chart(x,y-1,thisheight,moves-movemod,jump,flags);
-	if(y<MAP_HEIGHT)
+	if(y<MAP_HEIGHT-1)
 		recursive_move_chart(x,y+1,thisheight,moves-movemod,jump,flags);
-	if(x<MAP_WIDTH)
+	if(x<MAP_WIDTH-1)
 		recursive_move_chart(x+1,y,thisheight,moves-movemod,jump,flags);
 }
 
@@ -149,4 +154,108 @@ uint8_t move_valid(int x, int y){
 	if(validmove[MAP_INDEX(x,y)]==MAP_M_VALID)
 		return 1;
 	return 0;
+}
+
+uint8_t get_map_random(int min, int max){
+	return (rand()%(max-min))+min;
+}
+
+void recursive_maze(uint8_t ax, uint8_t ay, uint8_t bx, uint8_t by){
+	uint8_t i;
+	uint8_t rx,ry,rsafe,rh;
+
+	if(ax>=bx || ay>=by)
+		return;
+	
+	rx=get_map_random(ax,bx);
+	for(i=ay;i<=by;i++){
+		areamap[MAP_INDEX(rx,i)]&=~AMAP_EAST_BIT;
+		areamap[MAP_INDEX((rx+1),i)]&=~AMAP_WEST_BIT;
+	}
+
+	ry=get_map_random(ay,by);
+	for(i=ax;i<=bx;i++){
+		areamap[MAP_INDEX(i,ry)]&=~AMAP_SOUTH_BIT;
+		areamap[MAP_INDEX(i,(ry+1))]&=~AMAP_NORTH_BIT;
+	}
+	
+
+	rsafe=get_map_random(0,4);
+
+	if(rsafe!=0){
+		rh=get_map_random(ay,ry+1);
+		areamap[MAP_INDEX(rx,rh)]|=AMAP_EAST_BIT;
+		areamap[MAP_INDEX((rx+1),rh)]|=AMAP_WEST_BIT;
+	}
+	if(rsafe!=1){
+		rh=get_map_random(rx+1,bx);
+		areamap[MAP_INDEX(rh,ry)]|=AMAP_SOUTH_BIT;
+		areamap[MAP_INDEX(rh,(ry+1))]|=AMAP_NORTH_BIT;
+	}
+	if(rsafe!=2){
+		rh=get_map_random(ry+1,by);
+		areamap[MAP_INDEX(rx,rh)]|=AMAP_EAST_BIT;
+		areamap[MAP_INDEX((rx+1),rh)]|=AMAP_WEST_BIT;
+	}
+	if(rsafe!=3){
+		rh=get_map_random(ax,rx+1);
+		areamap[MAP_INDEX(rh,ry)]|=AMAP_SOUTH_BIT;
+		areamap[MAP_INDEX(rh,(ry+1))]|=AMAP_NORTH_BIT;
+	}
+
+	recursive_maze(ax,ay,rx,ry);
+	recursive_maze(rx+1,ay,bx,ry);
+	recursive_maze(rx+1,ry+1,bx,by);
+	recursive_maze(ax,ry+1,rx,by);
+}
+
+void explore_areamap(int x, int y){
+	areamap[MAP_INDEX(x,y)]|=AMAP_EXPLORED_BIT;
+	if((areamap[MAP_INDEX(x,y)]&AMAP_NORTH_BIT) && y>0)
+		areamap[MAP_INDEX(x,(y-1))]|=AMAP_EXPLORED_BIT;
+	if((areamap[MAP_INDEX(x,y)]&AMAP_SOUTH_BIT) && y<MAP_HEIGHT-1)
+		areamap[MAP_INDEX(x,(y+1))]|=AMAP_EXPLORED_BIT;
+	if((areamap[MAP_INDEX(x,y)]&AMAP_EAST_BIT) && x<MAP_WIDTH-1)
+		areamap[MAP_INDEX((x+1),y)]|=AMAP_EXPLORED_BIT;
+	if((areamap[MAP_INDEX(x,y)]&AMAP_WEST_BIT) && x>0)
+		areamap[MAP_INDEX((x-1),y)]|=AMAP_EXPLORED_BIT;
+}
+
+void gen_areamap(int *x, int *y){
+	int i;
+	int numencounter;
+	int coord;
+	const uint8_t default_flags=AMAP_NORTH_BIT|AMAP_EAST_BIT|AMAP_SOUTH_BIT|AMAP_WEST_BIT;
+
+	for(i=0;i<MAP_WIDTH*MAP_HEIGHT;i++)
+		areamap[i]=default_flags;
+
+	for(i=0;i<MAP_WIDTH;i++){
+		areamap[MAP_INDEX(i,0)]&=~AMAP_NORTH_BIT;
+		areamap[MAP_INDEX(i,(MAP_HEIGHT-1))]&=~AMAP_SOUTH_BIT;
+	}
+	for(i=0;i<=MAP_HEIGHT;i++){
+		areamap[MAP_INDEX(0,i)]&=~AMAP_WEST_BIT;
+		areamap[MAP_INDEX((MAP_WIDTH-1),i)]&=~AMAP_EAST_BIT;
+	}
+
+	recursive_maze(0,0,MAP_WIDTH-1,MAP_HEIGHT-1);
+
+	numencounter=15;
+	while(numencounter){
+		coord=get_map_random(0,MAP_WIDTH*MAP_HEIGHT);
+		if(!(areamap[coord]&AMAP_ENCOUNTER_BIT)){
+			areamap[coord]|=AMAP_ENCOUNTER_BIT;
+			numencounter--;
+		}
+	}
+
+	// TODO: Add treasure.
+
+	areamap[MAP_WIDTH*MAP_HEIGHT-1]|=AMAP_EXIT_BIT;
+	areamap[0]|=AMAP_EXIT_BIT;
+	explore_areamap(MAP_WIDTH-1,MAP_HEIGHT-1);
+
+	*x=MAP_WIDTH-1;
+	*y=MAP_HEIGHT-1;
 }

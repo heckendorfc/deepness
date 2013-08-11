@@ -17,6 +17,7 @@
 #include "maptiles.h"
 #include "heighttiles.h"
 #include "sprites.h"
+#include "mazetiles.h"
 
 #define MAP_MODE_HEIGHT 0
 #define MAP_MODE_TERRAIN 1
@@ -26,7 +27,7 @@
 #define CONTROL_MODE_MSG 2
 
 #define GROUP_SIZE 2
-#define NUM_SPRITES 3
+#define NUM_SPRITES 6
 
 #define MENU_MAIN 0
 #define MENU_JOB 1
@@ -52,6 +53,9 @@ PrintConsole bottomScreen;
 u16 *spider_gfx;
 u16 *cursor_gfx;
 u16 *hilight_gfx;
+u16 *acursor_gfx;
+u16 *aunknown_gfx;
+u16 *aexit_gfx;
 char *last_msg[NUM_MSG];
 uint8_t msg_i;
 
@@ -87,6 +91,66 @@ void set_tiles(int x, int y, int index){
 					0:
 					tileindex+j*GROUP_SIZE+i;
 		}
+	}
+}
+
+void set_area_tiles(int x, int y, int flags){
+	int i,j;
+
+	if(flags==0){
+		for(j=0;j<GROUP_SIZE;j++)
+			for(i=0;i<GROUP_SIZE;i++)
+				mapMemory[(GROUP_SIZE*y+j)*32+(GROUP_SIZE*x+i)]=0;
+		return;
+	}
+
+	if(!(flags&AMAP_EXPLORED_BIT)){
+		for(j=0;j<GROUP_SIZE;j++)
+			for(i=0;i<GROUP_SIZE;i++)
+				mapMemory[(GROUP_SIZE*y+j)*32+(GROUP_SIZE*x+i)]=5;
+		return;
+	}
+
+	if(flags&AMAP_NORTH_BIT){
+		if(flags&AMAP_WEST_BIT)
+			mapMemory[(GROUP_SIZE*y+0)*32+(GROUP_SIZE*x+0)]=1;
+		else
+			mapMemory[(GROUP_SIZE*y+0)*32+(GROUP_SIZE*x+0)]=4|TILE_FLIP_H|TILE_FLIP_V;
+
+		if(flags&AMAP_EAST_BIT)
+			mapMemory[(GROUP_SIZE*y+0)*32+(GROUP_SIZE*x+1)]=1|TILE_FLIP_H;
+		else
+			mapMemory[(GROUP_SIZE*y+0)*32+(GROUP_SIZE*x+1)]=4|TILE_FLIP_V;
+	}
+	else{
+		if(flags&AMAP_WEST_BIT)
+			mapMemory[(GROUP_SIZE*y+0)*32+(GROUP_SIZE*x+0)]=3|TILE_FLIP_V;
+		else
+			mapMemory[(GROUP_SIZE*y+0)*32+(GROUP_SIZE*x+0)]=2|TILE_FLIP_H;
+		if(flags&AMAP_EAST_BIT)
+			mapMemory[(GROUP_SIZE*y+0)*32+(GROUP_SIZE*x+1)]=3|TILE_FLIP_V|TILE_FLIP_H;
+		else
+			mapMemory[(GROUP_SIZE*y+0)*32+(GROUP_SIZE*x+1)]=2;
+	}
+	if(flags&AMAP_SOUTH_BIT){
+		if(flags&AMAP_WEST_BIT)
+			mapMemory[(GROUP_SIZE*y+1)*32+(GROUP_SIZE*x+0)]=1|TILE_FLIP_V;
+		else
+			mapMemory[(GROUP_SIZE*y+1)*32+(GROUP_SIZE*x+0)]=4|TILE_FLIP_H;
+		if(flags&AMAP_EAST_BIT)
+			mapMemory[(GROUP_SIZE*y+1)*32+(GROUP_SIZE*x+1)]=1|TILE_FLIP_V|TILE_FLIP_H;
+		else
+			mapMemory[(GROUP_SIZE*y+1)*32+(GROUP_SIZE*x+1)]=4;
+	}
+	else{
+		if(flags&AMAP_WEST_BIT)
+			mapMemory[(GROUP_SIZE*y+1)*32+(GROUP_SIZE*x+0)]=3;
+		else
+			mapMemory[(GROUP_SIZE*y+1)*32+(GROUP_SIZE*x+0)]=2|TILE_FLIP_H|TILE_FLIP_V;
+		if(flags&AMAP_EAST_BIT)
+			mapMemory[(GROUP_SIZE*y+1)*32+(GROUP_SIZE*x+1)]=3|TILE_FLIP_H;
+		else
+			mapMemory[(GROUP_SIZE*y+1)*32+(GROUP_SIZE*x+1)]=2|TILE_FLIP_V;
 	}
 }
 
@@ -131,6 +195,24 @@ void display_height(){
 	}
 }
 
+void display_area(){
+	int i,j;
+
+	for(i=0;i<mazetilesPalLen/2;i++)
+		BG_PALETTE[i]=mazetilesPal[i];
+
+	swiCopy(mazetilesTiles,tileMemory,mazetilesTilesLen);
+
+	for(j=0;j<32/GROUP_SIZE;j++){
+		for(i=0;i<32/GROUP_SIZE;i++){
+			if(i<MAP_WIDTH && j<MAP_HEIGHT)
+				set_area_tiles(i,j,get_area_map(i,j));
+			else
+				set_area_tiles(i,j,0);
+		}
+	}
+}
+
 void init_ui(){
 	int i;
 	videoSetMode(MODE_0_2D | DISPLAY_BG0_ACTIVE);
@@ -143,6 +225,9 @@ void init_ui(){
 	spider_gfx=oamAllocateGfx(&oamMain,SpriteSize_16x16,SpriteColorFormat_16Color);
 	cursor_gfx=oamAllocateGfx(&oamMain,SpriteSize_16x16,SpriteColorFormat_16Color);
 	hilight_gfx=oamAllocateGfx(&oamMain,SpriteSize_16x16,SpriteColorFormat_16Color);
+	acursor_gfx=oamAllocateGfx(&oamMain,SpriteSize_16x16,SpriteColorFormat_16Color);
+	aunknown_gfx=oamAllocateGfx(&oamMain,SpriteSize_16x16,SpriteColorFormat_16Color);
+	aexit_gfx=oamAllocateGfx(&oamMain,SpriteSize_16x16,SpriteColorFormat_16Color);
 
 	consoleInit(&bottomScreen, 3, BgType_Text4bpp, BgSize_T_256x256, 31, 0, false, true);
 
@@ -158,6 +243,9 @@ void init_ui(){
 	dmaCopy(&spritesTiles[spritesTilesLen/4/NUM_SPRITES*0],spider_gfx,spritesTilesLen/NUM_SPRITES);
 	dmaCopy(&spritesTiles[spritesTilesLen/4/NUM_SPRITES*1],cursor_gfx,spritesTilesLen/NUM_SPRITES);
 	dmaCopy(&spritesTiles[spritesTilesLen/4/NUM_SPRITES*2],hilight_gfx,spritesTilesLen/NUM_SPRITES);
+	dmaCopy(&spritesTiles[spritesTilesLen/4/NUM_SPRITES*3],acursor_gfx,spritesTilesLen/NUM_SPRITES);
+	dmaCopy(&spritesTiles[spritesTilesLen/4/NUM_SPRITES*4],aunknown_gfx,spritesTilesLen/NUM_SPRITES);
+	dmaCopy(&spritesTiles[spritesTilesLen/4/NUM_SPRITES*5],aexit_gfx,spritesTilesLen/NUM_SPRITES);
 	dmaCopy(spritesPal,SPRITE_PALETTE,spritesPalLen);
 
 	mapmode=MAP_MODE_TERRAIN;
@@ -651,6 +739,8 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 		
 		swiWaitForVBlank();
 	}
+	hide_moves(num,moves);
+	hide_cursor(num);
 }
 
 void print_message(char *msg){
@@ -946,6 +1036,95 @@ void edit_menu(struct character **clist, int num){
 		
 		swiWaitForVBlank();
 	}
+}
+
+void update_area_cursor(int x, int y){
+	oamSet(&oamMain,0,16*x,16*y,0,0,SpriteSize_16x16,SpriteColorFormat_16Color,acursor_gfx,-1,false,false,false,false,false);
+	oamUpdate(&oamMain);
+}
+
+int update_area_unknown(int num){
+	int flags;
+	int i,j;
+	for(j=0;j<MAP_HEIGHT;j++)
+		for(i=0;i<MAP_WIDTH;i++){
+			flags=get_area_map(i,j);
+			if((flags&AMAP_EXPLORED_BIT) && (flags&(AMAP_ENCOUNTER_BIT|AMAP_TREASURE_BIT))){
+				oamSet(&oamMain,num++,16*i,16*j,1,0,SpriteSize_16x16,SpriteColorFormat_16Color,aunknown_gfx,-1,false,false,false,false,false);
+			}
+		}
+	oamUpdate(&oamMain);
+	return num;
+}
+
+int update_area_exits(int num){
+	int flags;
+	int i,j;
+	for(j=0;j<MAP_HEIGHT;j++)
+		for(i=0;i<MAP_WIDTH;i++){
+			flags=get_area_map(i,j);
+			if((flags&AMAP_EXPLORED_BIT) && (flags&(AMAP_EXIT_BIT))){
+				oamSet(&oamMain,num++,16*i,16*j,1,0,SpriteSize_16x16,SpriteColorFormat_16Color,aexit_gfx,-1,false,false,false,false,false);
+			}
+		}
+	oamUpdate(&oamMain);
+	return num;
+}
+
+void area_menu(int *x, int *y){
+	int run=1;
+	int press;
+	int num;
+	int numsprites=1;
+	
+	scanKeys();
+	press=keysDown();
+	display_area();
+	update_area_cursor(*x,*y);
+	numsprites=update_area_unknown(numsprites);
+	numsprites=update_area_exits(numsprites);
+
+	while(run){
+		iprintf("\x1b[2J\x1b[1;1HArea Map");
+		iprintf("\x1b[2J\x1b[3;1HY: Edit units");
+
+		scanKeys();
+		press=keysDown();
+
+		if(press&KEY_UP){
+			if(get_area_map(*x,*y)&AMAP_NORTH_BIT){
+				(*y)-=1;
+				run=0;
+			}
+		}
+		if(press&KEY_DOWN){
+			if(get_area_map(*x,*y)&AMAP_SOUTH_BIT){
+				(*y)+=1;
+				run=0;
+			}
+		}
+		if(press&KEY_LEFT){
+			if(get_area_map(*x,*y)&AMAP_WEST_BIT){
+				(*x)-=1;
+				run=0;
+			}
+		}
+		if(press&KEY_RIGHT){
+			if(get_area_map(*x,*y)&AMAP_EAST_BIT){
+				(*x)+=1;;
+				run=0;
+			}
+		}
+		if(press&KEY_Y){
+			for(num=0;pdata.chars[num];num++);
+			edit_menu(pdata.chars,num);
+		}
+
+		swiWaitForVBlank();
+	}
+
+	oamClear(&oamMain,0,numsprites+1);
+	oamUpdate(&oamMain);
 }
 
 int print_main_menu(int line, int offset){
