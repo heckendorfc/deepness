@@ -11,6 +11,8 @@
 #include "map.h"
 #include "ability.h"
 #include "equipment.h"
+#include "save.h"
+#include "game.h"
 
 #include "maptiles.h"
 #include "heighttiles.h"
@@ -167,6 +169,8 @@ void init_ui(){
 		*last_msg[i]=0;
 	}
 	msg_i=0;
+
+	save_init();
 }
 
 /*
@@ -402,10 +406,9 @@ void print_message_list(){
 void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 	struct action_data ad;
 	struct battle_char **tl;
-	int cmd=5,x,y;
+	int cmd=5;
 	int i;
 	int run=1;
-	int uid;
 	int press;
 	int cursorx=1;
 	int cursory=1;
@@ -433,6 +436,11 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 	swiWaitForVBlank();
 
 	print_map(blist,bi,num);
+
+	scanKeys();
+	press=keysDown();
+
+	swiWaitForVBlank();
 
 	while(run){
 		iprintf("\x1b[2J");
@@ -654,24 +662,25 @@ void print_message(char *msg){
 	//swiWaitForVBlank();
 }
 
-int print_main_menu(int line,int offset){
+int print_edit_main_menu(int line,int offset){
 	int i=line;
 
-	iprintf("\x1b[%d;1H%cChange Job (will reset JP)",i,offset==i?'*':' '); i++;
-	iprintf("\x1b[%d;1H%cSet Secondary",i,offset==i?'*':' '); i++;
-	iprintf("\x1b[%d;1H%cChange Equipment",i,offset==i?'*':' '); i++;
-	iprintf("\x1b[%d;1H%cSpend JP",i,offset==i?'*':' '); i++;
+	iprintf("\x1b[%d;1H%cChange Job (will reset JP)",i,(line+offset)==i?'*':' '); i++;
+	iprintf("\x1b[%d;1H%cSet Secondary",i,(line+offset)==i?'*':' '); i++;
+	iprintf("\x1b[%d;1H%cChange Equipment",i,(line+offset)==i?'*':' '); i++;
+	iprintf("\x1b[%d;1H%cSpend JP",i,(line+offset)==i?'*':' '); i++;
+	iprintf("\x1b[%d;1H%cDone",i,(line+offset)==i?'*':' '); i++;
 
 	return i;
 }
 
-int print_jp_menu(int line,int offset){
+int print_edit_jp_menu(int line,int offset){
 	int i=line;
 
-	iprintf("\x1b[%d;1H%cAction",i,offset==i?'*':' '); i++;
-	iprintf("\x1b[%d;1H%cReaction",i,offset==i?'*':' '); i++;
-	iprintf("\x1b[%d;1H%cSupport",i,offset==i?'*':' '); i++;
-	iprintf("\x1b[%d;1H%cMovement",i,offset==i?'*':' '); i++;
+	iprintf("\x1b[%d;1H%cAction",i,(line+offset)==i?'*':' '); i++;
+	iprintf("\x1b[%d;1H%cReaction",i,(line+offset)==i?'*':' '); i++;
+	iprintf("\x1b[%d;1H%cSupport",i,(line+offset)==i?'*':' '); i++;
+	iprintf("\x1b[%d;1H%cMovement",i,(line+offset)==i?'*':' '); i++;
 
 	return i;
 }
@@ -754,7 +763,7 @@ static char* ability_movement_cb(int *avail, int *side, int i, void *arg){
 void edit_menu(struct character **clist, int num){
 	struct edit_data ed;
 	int i;
-	int menu=0;
+	int menu=MENU_MAIN;
 	int menu_items;
 	int offset=0;
 	int run=1;
@@ -765,12 +774,17 @@ void edit_menu(struct character **clist, int num){
 
 	swiWaitForVBlank();
 
+	while(clist[ci]->battleready==BATTLE_UNAVAILABLE){
+		ci++;
+		if(ci>=num)ci=0;
+	}
+
 	while(run){
 		ed.ch=clist[ci];
 		iprintf("\x1b[2J");
 		if(menu==MENU_MAIN){
-			menu_items=4;
-			line=print_main_menu(0,offset);
+			menu_items=5;
+			line=print_edit_main_menu(0,offset);
 			line+=2;
 			print_char_info(clist[ci],line);
 		}
@@ -784,7 +798,7 @@ void edit_menu(struct character **clist, int num){
 		else if(menu==MENU_EQ){
 		}
 		else if(menu==MENU_JP){
-			line=print_jp_menu(0,offset);
+			line=print_edit_jp_menu(0,offset);
 			line+=2;
 			print_char_info(clist[ci],line);
 		}
@@ -821,12 +835,16 @@ void edit_menu(struct character **clist, int num){
 		press=keysDown();
 
 		if(press&KEY_R){
-			ci++;
-			if(ci>=num)ci=0;
+			do{
+				ci++;
+				if(ci>=num)ci=0;
+			}while(clist[ci]->battleready==BATTLE_UNAVAILABLE);
 		}
 		if(press&KEY_L){
-			ci--;
-			if(ci<0)ci=num-1;
+			do{
+				ci--;
+				if(ci<0)ci=num-1;
+			}while(clist[ci]->battleready==BATTLE_UNAVAILABLE);
 		}
 		if(press&KEY_UP){
 			offset--;
@@ -850,6 +868,9 @@ void edit_menu(struct character **clist, int num){
 						break;
 					case 3:
 						menu=MENU_JP;
+						break;
+					case 4:
+						run=0;
 						break;
 				}
 				offset=0;
@@ -922,6 +943,58 @@ void edit_menu(struct character **clist, int num){
 			offset=0;
 		}
 		
+		
+		swiWaitForVBlank();
+	}
+}
+
+int print_main_menu(int line, int offset){
+	int i=line;
+
+	iprintf("\x1b[%d;1H%cNew Game",i,(line+offset)==i?'*':' '); i++;
+	iprintf("\x1b[%d;1H%cLoad Game",i,(line+offset)==i?'*':' '); i++;
+
+	return i;
+}
+
+void main_menu(){
+	int menu_items=2;
+	int offset=0;
+	int run=1;
+	int press;
+
+	swiWaitForVBlank();
+
+	while(run){
+		iprintf("\x1b[2J");
+			
+		iprintf("\x1b[0;0H~DEEPNESS~");
+
+		print_main_menu(5,offset);
+
+		scanKeys();
+		press=keysDown();
+
+		if(press&KEY_UP){
+			offset--;
+			if(offset<0)offset=menu_items-1;
+		}
+		if(press&KEY_DOWN){
+			offset++;
+			if(offset>=menu_items)offset=0;
+		}
+		if(press&KEY_Y){
+			switch(offset){
+				case 0:
+					create_game();
+					break;
+				case 1:
+					load();
+					break;
+			}
+			offset=0;
+			run=0;
+		}
 		
 		swiWaitForVBlank();
 	}

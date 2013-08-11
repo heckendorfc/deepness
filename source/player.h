@@ -23,6 +23,10 @@
 #define FOF_FRIEND 0
 #define FOF_FOE 1
 
+#define BATTLE_NOTREADY 0
+#define BATTLE_READY 1
+#define BATTLE_UNAVAILABLE 2
+
 struct character;
 
 struct aoe{

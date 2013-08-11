@@ -155,7 +155,7 @@ void create_character(struct character *ch){
 	int i;
 
 	ch->gender=GENDER_MALE;
-	ch->battleready=1;
+	ch->battleready=BATTLE_READY;
 	ch->jp=0;
 	for(i=0;i<NUM_CLASS;i++){
 		ch->mastery[i]=0;

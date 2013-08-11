@@ -689,14 +689,14 @@ void start_battle(struct character **friends, struct character *foes, int numfoe
 	int friend_placed,foe_placed;
 
 	for(i=bi=0;i<NUM_CHAR_SLOTS;i++)
-		if(friends[i] && friends[i]->battleready)
+		if(friends[i] && friends[i]->battleready==BATTLE_READY)
 			bi++;
 
 	blist=malloc(sizeof(*blist)*(bi+numfoe));
 	pblist=malloc(sizeof(*pblist)*(bi+numfoe));
 
 	for(i=bi=0;i<NUM_CHAR_SLOTS;i++)
-		if(friends[i] && friends[i]->battleready){
+		if(friends[i] && friends[i]->battleready==BATTLE_READY){
 			blist[bi].ch=friends[i];
 			blist[bi].index=bi;
 			blist[bi].fof=FOF_FRIEND;
@@ -736,4 +736,7 @@ void start_battle(struct character **friends, struct character *foes, int numfoe
 			break;
 		}
 	}
+
+	free(blist);
+	free(pblist);
 }
