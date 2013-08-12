@@ -3,6 +3,7 @@
 #include "player.h"
 #include "equipment.h"
 #include "battle.h"
+#include "ability.h"
 
 int get_random(int min, int max){
 	return (rand()%(max-min))+min;
@@ -130,6 +131,73 @@ void level_up(struct character *ch){
 
 	for(i=0;i<NUM_STATS;i++)
 		ch->raw[i]+=ch->raw[i]/(class_stats[(int)ch->primary].gainmod[i]+level);
+}
+
+int job_level(struct character *ch){
+	int jp=ch->jp;
+	int mastery;
+	int i;
+
+	mastery=MASTERY_ACTION(ch->mastery[ch->primary]);
+	for(i=0;i<num_action[ch->primary];i++)
+		if(mastery&BIT(i))
+			jp+=claction[ch->primary][i].jp;
+	mastery=MASTERY_REACTION(ch->mastery[ch->primary]);
+	for(i=0;i<num_reaction[ch->primary];i++)
+		if(mastery&BIT(i))
+			jp+=clreaction[ch->primary][i].jp;
+	mastery=MASTERY_SUPPORT(ch->mastery[ch->primary]);
+	for(i=0;i<num_support[ch->primary];i++)
+		if(mastery&BIT(i))
+			jp+=clsupport[ch->primary][i].jp;
+	mastery=MASTERY_MOVEMENT(ch->mastery[ch->primary]);
+	for(i=0;i<num_movement[ch->primary];i++)
+		if(mastery&BIT(i))
+			jp+=clmovement[ch->primary][i].jp;
+
+	if(jp<100)
+		return 0;
+	if(jp<200)
+		return 1;
+	if(jp<350)
+		return 2;	
+	if(jp<550)
+		return 3;
+	if(jp<800)
+		return 4;
+	if(jp<1150)
+		return 5;
+	if(jp<1550)
+		return 6;
+	if(jp<2100)
+		return 7;
+	return 8;
+}
+
+void switch_jobs(struct character *ch, int index){
+	// Should we check availability here or assume it's done front-side?
+	ch->primary=index;
+	ch->jp=0;
+
+	if(job_level(ch)==0)
+		ch->jp=100;
+}
+
+void jp_reward(struct character *ch){
+	int jp;
+	int jlvl=job_level(ch);
+	int tlvl=0;
+	int i;
+
+	for(i=tlvl=0;i<NUM_CLASS;i++)
+		tlvl+=ch->exp[i]/100;
+	
+	jp=8+(jlvl*2)+(tlvl/4);
+
+	if(ch->support==SFLAG_JPUP)
+		jp*=2;
+
+	ch->jp+=jp;
 }
 
 void set_battle_stats(struct battle_char *bc){

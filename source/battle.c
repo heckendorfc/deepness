@@ -295,12 +295,39 @@ void restore_mp(struct battle_char *bc, int16_t var){
 	}
 }
 
+void exp_reward(struct battle_char *winner, struct battle_char *loser){
+	int exp;
+	int nlvl,wlvl,llvl;
+	int i;
+
+	for(i=0;i<NUM_CLASS;i++){
+		wlvl+=winner->ch->exp[i]/100;
+		llvl+=loser->ch->exp[i]/100;
+	}
+
+	exp=10+(llvl-wlvl);
+	if(exp<0)
+		return;
+
+	if(winner->ch->support==SFLAG_EXPUP)
+		exp*=2;
+
+	wlvl=winner->ch->exp[winner->ch->primary]/100;
+	winner->ch->exp[winner->ch->primary]+=exp;
+	nlvl=winner->ch->exp[winner->ch->primary]/100;
+
+	if(wlvl<nlvl)
+		level_up(winner->ch);
+}
+
 void deal_damage(struct battle_char *bc, int16_t dmg){
 	char msg[40];
 
 	if(dmg>0 && bc->hp<dmg){
 		bc->hp=0;
 		add_status(bc,STATUS_DEAD);
+		if(last_action.preresolve->origin->fof==FOF_FRIEND && last_action.preresolve->origin->fof!=bc->fof)
+			exp_reward(last_action.preresolve->origin,bc);
 	}
 	else
 		bc->hp-=dmg;
@@ -682,12 +709,13 @@ int battle_ended(struct battle_char **blist, int num){
 }
 
 
-void start_battle(struct character **friends, struct character *foes, int numfoe){
+int start_battle(struct character **friends, struct character *foes, int numfoe){
 	struct battle_char *blist,**pblist;
 	int bi;
 	int pi;
 	int i;
 	int friend_placed,foe_placed;
+	int ret=0;
 
 	for(i=bi=0;i<NUM_CHAR_SLOTS;i++)
 		if(friends[i] && friends[i]->battleready==BATTLE_READY)
@@ -730,14 +758,20 @@ void start_battle(struct character **friends, struct character *foes, int numfoe
 		ct_charge(pblist,pi);
 		ct_resolution(pblist,&pi);
 		if((i=battle_ended(pblist,pi))>=0){
-			if(i==FOF_FRIEND)
+			if(i==FOF_FRIEND){
 				print_message("Victory!");
-			else
+				ret=1;
+			}
+			else{
 				print_message("You have been defeated.");
+				ret=0;
+			}
 			break;
 		}
 	}
 
 	free(blist);
 	free(pblist);
+	
+	return ret;
 }

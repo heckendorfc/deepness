@@ -968,8 +968,7 @@ void edit_menu(struct character **clist, int num){
 			else if(menu==MENU_JOB){
 				class_name_cb(&avail,&side,offset,&ed);
 				if(avail){
-					clist[ci]->primary=offset;
-					clist[ci]->jp=0;
+					switch_jobs(offset);
 					offset=0;
 					menu=MENU_MAIN;
 				}
@@ -1076,6 +1075,7 @@ void area_menu(int *x, int *y){
 	int press;
 	int num;
 	int numsprites=1;
+	int saved=0;
 	
 	scanKeys();
 	press=keysDown();
@@ -1087,6 +1087,11 @@ void area_menu(int *x, int *y){
 	while(run){
 		iprintf("\x1b[2J\x1b[1;1HArea Map");
 		iprintf("\x1b[2J\x1b[3;1HY: Edit units");
+		if(saved)
+			ipintf("\x1b[2J\x1b[5;1H   Saved!");
+		else
+			iprintf("\x1b[2J\x1b[4;1HX: Save");
+		
 
 		scanKeys();
 		press=keysDown();
@@ -1118,6 +1123,11 @@ void area_menu(int *x, int *y){
 		if(press&KEY_Y){
 			for(num=0;pdata.chars[num];num++);
 			edit_menu(pdata.chars,num);
+			saved=0;
+		}
+		if(press&KEY_X){
+			save();
+			saved=1;
 		}
 
 		swiWaitForVBlank();
@@ -1132,6 +1142,7 @@ int print_main_menu(int line, int offset){
 
 	iprintf("\x1b[%d;1H%cNew Game",i,(line+offset)==i?'*':' '); i++;
 	iprintf("\x1b[%d;1H%cLoad Game",i,(line+offset)==i?'*':' '); i++;
+	// TODO: Builder/skirmish mode
 
 	return i;
 }

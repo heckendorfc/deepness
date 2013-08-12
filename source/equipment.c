@@ -482,7 +482,7 @@ static void remove_h_bag(struct battle_char *bc){
 const uint8_t weapon_range[]={1,1,1,5|WRANGE_HEIGHT,2,4,3,1,8,WRANGE_ALL,3,1,1,1,1,1,2,1,2,1};
 
 int actual_weapon_range(struct battle_char *bc, int x, int y){
-	int pdist,dist;
+	int dist;
 	int type=EQ_TYPE(bc->ch->eq[EQ_WEAPON]);
 
 	if(weapon_range[type]&WRANGE_ALL)
@@ -512,164 +512,164 @@ int weapon_can_hit(struct battle_char *bc, int x, int y){
 }
 
 const struct eq_item weapons[NUM_EQW_TYPES][MAX_EQW_PER_TYPE]={
-	{{0,{5},{0},1,0,0,0,NULL,NULL}}, // Hands
+	{{"None",0,{5},{0},1,0,0,0,NULL,NULL}}, // Hands
 	{
-		{9,{0},{0},4,0,0,1500,NULL,NULL},
-		{12,{0},{0},12,0,0,4000,NULL,NULL},
-		{16,{0},{0},31,0,0,12000,wear_slasher,remove_slasher},
+		{"Battle Axe",9,{0},{0},4,0,0,1500,NULL,NULL},
+		{"Giant Axe",12,{0},{0},12,0,0,4000,NULL,NULL},
+		{"Slasher",16,{0},{0},31,0,0,12000,wear_slasher,remove_slasher},
 	}, //Axes
 	{
-		{10,{0},{0},80,EQFLAG_NOFOE,0,53000,wear_c_bag,remove_c_bag},
-		{20,{0},{0},81,EQFLAG_NOFOE,0,60000,NULL,NULL},
-		{12,{0},{0},82,EQFLAG_NOFOE,0,52000,wear_p_bag,remove_p_bag},
-		{14,{0},{0},83,EQFLAG_NOFOE,0,58000,wear_h_bag,remove_h_bag},
+		{"",10,{0},{0},80,EQFLAG_NOFOE,0,53000,wear_c_bag,remove_c_bag},
+		{"",20,{0},{0},81,EQFLAG_NOFOE,0,60000,NULL,NULL},
+		{"",12,{0},{0},82,EQFLAG_NOFOE,0,52000,wear_p_bag,remove_p_bag},
+		{"",14,{0},{0},83,EQFLAG_NOFOE,0,58000,wear_h_bag,remove_h_bag},
 	}, //Bags
 	{
-		{4,{0},{0},2,0,0,800,NULL,NULL},
-		{5,{0},{0},6,0,0,1500,NULL,NULL},
-		{5,{0},{0},11,0,ELEM_ICE,2000,NULL,NULL},
-		{6,{0},{0},15,0,ELEM_LIGHTNING,3000,NULL,NULL},
-		{8,{0},{0},27,0,ELEM_WIND,8000,NULL,NULL},
-		{7,{0},{0},20,0,0,5000,NULL,NULL},
-		{10,{0},{0},37,0,0,22000,NULL,NULL},
-		{12,{0},{0},52,EQFLAG_NOFOE,0,10,NULL,NULL},
-		{16,{0},{0},53,EQFLAG_NOFOE,0,10,NULL,NULL},
+		{"Long Bow",4,{0},{0},2,0,0,800,NULL,NULL},
+		{"Silver Bow",5,{0},{0},6,0,0,1500,NULL,NULL},
+		{"Ice Bow",5,{0},{0},11,0,ELEM_ICE,2000,NULL,NULL},
+		{"Lightning Bow",6,{0},{0},15,0,ELEM_LIGHTNING,3000,NULL,NULL},
+		{"Windslash Bow",8,{0},{0},27,0,ELEM_WIND,8000,NULL,NULL},
+		{"Mythril Bow",7,{0},{0},20,0,0,5000,NULL,NULL},
+		{"Ultimus Bow",10,{0},{0},37,0,0,22000,NULL,NULL},
+		{"Yoichi Bow",12,{0},{0},52,EQFLAG_NOFOE,0,10,NULL,NULL},
+		{"Perseus Bow",16,{0},{0},53,EQFLAG_NOFOE,0,10,NULL,NULL},
 	}, //Longbows
 	{
-		{8,{50},{0},24,EQFLAG_NOFOE,0,7000,NULL,NULL},
-		{10,{50},{0},29,EQFLAG_NOFOE,0,15000,NULL,NULL},
-		{15,{50},{0},95,EQFLAG_NOFOE,0,40000,NULL,NULL},
+		{"Persia",8,{50},{0},24,EQFLAG_NOFOE,0,7000,NULL,NULL},
+		{"Cashmere",10,{50},{0},29,EQFLAG_NOFOE,0,15000,NULL,NULL},
+		{"Ryozan Silk",15,{50},{0},95,EQFLAG_NOFOE,0,40000,NULL,NULL},
 	}, //Cloths
 	{
-		{3,{5},{0},1,0,0,400,NULL,NULL},
-		{3,{5},{0},5,0,0,1500,wear_night_killer,remove_night_killer},
-		{4,{5},{0},11,0,0,2000,NULL,NULL},
-		{4,{5},{0},14,0,0,4000,wear_poison_bow,remove_poison_bow},
-		{6,{5},{0},24,0,0,8000,NULL,NULL},
-		{10,{5},{0},33,EQFLAG_NOFOE,0,20000,NULL,NULL},
+		{"Bow Gun",3,{5},{0},1,0,0,400,NULL,NULL},
+		{"Night Killer",3,{5},{0},5,0,0,1500,wear_night_killer,remove_night_killer},
+		{"Cross Bow",4,{5},{0},11,0,0,2000,NULL,NULL},
+		{"Poison Bow",4,{5},{0},14,0,0,4000,wear_poison_bow,remove_poison_bow},
+		{"Hunting Bow",6,{5},{0},24,0,0,8000,NULL,NULL},
+		{"Gastrafitis",10,{5},{0},33,EQFLAG_NOFOE,0,20000,NULL,NULL},
 	}, //Crossbows
 	{
-		{7,{15},{0},13,0,0,3000,NULL,NULL},
-		{8,{15},{0},23,0,0,6000,NULL,NULL},
-		{9,{15},{0},34,0,0,10000,NULL,NULL},
-		{11,{15},{0},95,EQFLAG_NOFOE,0,30000,NULL,NULL},
+		{"Battle Dict",7,{15},{0},13,0,0,3000,NULL,NULL},
+		{"Monster Dict",8,{15},{0},23,0,0,6000,NULL,NULL},
+		{"Papyrus Plate",9,{15},{0},34,0,0,10000,NULL,NULL},
+		{"Madlemgen",11,{15},{0},95,EQFLAG_NOFOE,0,30000,NULL,NULL},
 	}, //Dictionaries
 	{
-		{9,{0},{0},10,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,1200,NULL,NULL},
-		{11,{0},{0},20,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,ELEM_FIRE,4000,NULL,NULL},
-		{16,{0},{0},32,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,9000,NULL,NULL},
-		{23,{0},{0},90,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,40000,NULL,NULL},
+		{"Flail",9,{0},{0},10,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,1200,NULL,NULL},
+		{"Flame Whip",11,{0},{0},20,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,ELEM_FIRE,4000,NULL,NULL},
+		{"Morning Star",16,{0},{0},32,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,9000,NULL,NULL},
+		{"Scorpion Tail",23,{0},{0},90,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,40000,NULL,NULL},
 	}, //Hammers (flails)
 	{
-		{6,{5},{0},11,EQFLAG_NOFOE,0,5000,NULL,NULL},
-		{8,{5},{0},15,EQFLAG_NOFOE,0,15000,NULL,NULL},
-		{16,{5},{0},95,EQFLAG_NOFOE,0,10,wear_stone_gun,remove_stone_gun},
+		{"Romanda Gun",6,{5},{0},11,EQFLAG_NOFOE,0,5000,NULL,NULL},
+		{"Mythril Gun",8,{5},{0},15,EQFLAG_NOFOE,0,15000,NULL,NULL},
+		{"Stone Gun",16,{5},{0},95,EQFLAG_NOFOE,0,10,wear_stone_gun,remove_stone_gun},
 	}, //guns
 	{
-		{20,{5},{0},91,EQFLAG_NOFOE,ELEM_FIRE,10,NULL,NULL},
-		{21,{5},{0},92,EQFLAG_NOFOE,ELEM_ICE,10,NULL,NULL},
-		{22,{5},{0},93,EQFLAG_NOFOE,ELEM_LIGHTNING,10,NULL,NULL},
+		{"Blaze Gun",20,{5},{0},91,EQFLAG_NOFOE,ELEM_FIRE,10,NULL,NULL},
+		{"Glacier Gun",21,{5},{0},92,EQFLAG_NOFOE,ELEM_ICE,10,NULL,NULL},
+		{"Blast Gun",22,{5},{0},93,EQFLAG_NOFOE,ELEM_LIGHTNING,10,NULL,NULL},
 	}, //Spell Guns
 	{
-		{10,{10},{0},13,0,0,5000,wear_ramia_harp,remove_ramia_harp},
-		{13,{10},{0},25,0,0,10000,wear_bloody_strings,remove_bloody_strings},
-		{15,{10},{0},36,EQFLAG_NOFOE,0,10,wear_fairy_harp,remove_fairy_harp},
+		{"Ramia Harp",10,{10},{0},13,0,0,5000,wear_ramia_harp,remove_ramia_harp},
+		{"Bloody Strings",13,{10},{0},25,0,0,10000,wear_bloody_strings,remove_bloody_strings},
+		{"Fairy Harp",15,{10},{0},36,EQFLAG_NOFOE,0,10,wear_fairy_harp,remove_fairy_harp},
 	}, //Instruments
 	{
-		{7,{15},{0},9,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,1600,NULL,NULL},
-		{8,{15},{0},12,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,3000,NULL,NULL},
-		{9,{15},{0},15,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,5000,NULL,NULL},
-		{10,{15},{0},21,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,7000,NULL,NULL},
-		{11,{15},{0},24,EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,8000,NULL,NULL},
-		{12,{15},{0},27,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10000,NULL,NULL},
-		{14,{15},{0},30,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,15000,NULL,NULL},
-		{15,{15},{0},33,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,22000,NULL,NULL},
-		{18,{15},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,NULL,NULL},
-		{25,{15},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,NULL,NULL},
+		{"Asura Knife",7,{15},{0},9,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,1600,NULL,NULL},
+		{"Koutetsu Knife",8,{15},{0},12,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,3000,NULL,NULL},
+		{"Bizen Boat",9,{15},{0},15,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,5000,NULL,NULL},
+		{"Murasame",10,{15},{0},21,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,7000,NULL,NULL},
+		{"Heaven's Cloud",11,{15},{0},24,EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,8000,NULL,NULL},
+		{"Kiyomori",12,{15},{0},27,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10000,NULL,NULL},
+		{"Muramasa",14,{15},{0},30,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,15000,NULL,NULL},
+		{"Kikuichiomoji",15,{15},{0},33,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,22000,NULL,NULL},
+		{"Masamune",18,{15},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,NULL,NULL},
+		{"Chirijiraden",25,{15},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,NULL,NULL},
 	}, //Katana
 	{
-		{16,{60},{0},92,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,40000,NULL,NULL},
-		{18,{30},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_save_the_queen,remove_save_the_queen},
-		{21,{35},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_excalibur,remove_excalibur},
-		{24,{20},{0},97,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_ragnarok,remove_ragnarok},
-		{40,{20},{0},98,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_chaos_blade,remove_chaos_blade},
+		{"Defender",16,{60},{0},92,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,40000,NULL,NULL},
+		{"Save the Queen",18,{30},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_save_the_queen,remove_save_the_queen},
+		{"Excalibur",21,{35},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_excalibur,remove_excalibur},
+		{"Ragnarok",24,{20},{0},97,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_ragnarok,remove_ragnarok},
+		{"Chaos Blade",40,{20},{0},98,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_chaos_blade,remove_chaos_blade},
 	}, //Knight Swords
 	{
-		{3,{0},{0},1,0|EQWFLAG_TWO_SWORDS,0,100,NULL,NULL},
-		{4,{5},{0},3,0|EQWFLAG_TWO_SWORDS,0,500,NULL,NULL},
-		{4,{5},{0},7,0|EQWFLAG_TWO_SWORDS,0,800,wear_blind_knife,remove_blind_knife},
-		{4,{5},{0},11,0|EQWFLAG_TWO_SWORDS,0,1500,wear_mage_masher,remove_mage_masher},
-		{5,{10},{0},14,0|EQWFLAG_TWO_SWORDS,0,1800,NULL,NULL},
-		{6,{40},{0},21,0|EQWFLAG_TWO_SWORDS,0,3000,NULL,NULL},
-		{7,{5},{0},25,0|EQWFLAG_TWO_SWORDS,0,4000,NULL,NULL},
-		{7,{5},{0},29,0|EQWFLAG_TWO_SWORDS,0,5000,wear_assassin_dagger,remove_assassin_dagger},
-		{10,{5},{0},33,0|EQWFLAG_TWO_SWORDS,ELEM_WIND,8000,NULL,NULL},
-		{12,{10},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_SWORDS,0,12000,wear_zorlin_shape,remove_zorlin_shape},
+		{"Dagger",3,{0},{0},1,0|EQWFLAG_TWO_SWORDS,0,100,NULL,NULL},
+		{"Mythril Knife",4,{5},{0},3,0|EQWFLAG_TWO_SWORDS,0,500,NULL,NULL},
+		{"Blind Knife",4,{5},{0},7,0|EQWFLAG_TWO_SWORDS,0,800,wear_blind_knife,remove_blind_knife},
+		{"Mage Masher",4,{5},{0},11,0|EQWFLAG_TWO_SWORDS,0,1500,wear_mage_masher,remove_mage_masher},
+		{"Platina Dagger",5,{10},{0},14,0|EQWFLAG_TWO_SWORDS,0,1800,NULL,NULL},
+		{"Main Gauche",6,{40},{0},21,0|EQWFLAG_TWO_SWORDS,0,3000,NULL,NULL},
+		{"Orichalcum",7,{5},{0},25,0|EQWFLAG_TWO_SWORDS,0,4000,NULL,NULL},
+		{"Assassin Dagger",7,{5},{0},29,0|EQWFLAG_TWO_SWORDS,0,5000,wear_assassin_dagger,remove_assassin_dagger},
+		{"Air Knife",10,{5},{0},33,0|EQWFLAG_TWO_SWORDS,ELEM_WIND,8000,NULL,NULL},
+		{"Zorlin Shape",12,{10},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_SWORDS,0,12000,wear_zorlin_shape,remove_zorlin_shape},
 	}, //Knifes
 	{
-		{8,{5},{0},10,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,3000,NULL,NULL},
-		{9,{5},{0},13,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,5000,NULL,NULL},
-		{10,{5},{0},15,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,7000,NULL,NULL},
-		{12,{5},{0},22,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10000,NULL,NULL},
-		{13,{5},{0},27,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,16000,wear_spell_edge,remove_spell_edge},
-		{14,{15},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,NULL,NULL},
-		{15,{10},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,NULL,NULL},
-		{15,{5},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,NULL,NULL},
+		{"Hidden Knife",8,{5},{0},10,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,3000,NULL,NULL},
+		{"Ninja Knife",9,{5},{0},13,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,5000,NULL,NULL},
+		{"Short Edge",10,{5},{0},15,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,7000,NULL,NULL},
+		{"Ninja Edge",12,{5},{0},22,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10000,NULL,NULL},
+		{"Spell Edge",13,{5},{0},27,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,16000,wear_spell_edge,remove_spell_edge},
+		{"Sasuke Knife",14,{15},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,NULL,NULL},
+		{"Iga Knife",15,{10},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,NULL,NULL},
+		{"Koga Knife",15,{5},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,NULL,NULL},
 	}, //Ninja Swords
 	{
-		{3,{20},{0},1,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,200,NULL,NULL},
-		{3,{20},{0},5,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,ELEM_LIGHTNING,400,wear_thunder_rod,remove_thunder_rod},
-		{3,{20},{0},5,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,ELEM_FIRE,400,wear_flame_rod,remove_flame_rod},
-		{3,{20},{0},5,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,ELEM_ICE,400,wear_ice_rod,remove_ice_rod},
-		{3,{20},{0},12,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,500,wear_poison_rod,remove_poison_rod},
-		{4,{20},{0},23,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,8000,wear_wizard_rod,remove_wizard_rod},
-		{5,{20},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,12000,NULL,NULL},
-		{5,{20},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_faith_rod,remove_faith_rod},
+		{"Rod",3,{20},{0},1,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,200,NULL,NULL},
+		{"Thunder Rod",3,{20},{0},5,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,ELEM_LIGHTNING,400,wear_thunder_rod,remove_thunder_rod},
+		{"Flame Rod",3,{20},{0},5,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,ELEM_FIRE,400,wear_flame_rod,remove_flame_rod},
+		{"Ice Rod",3,{20},{0},5,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,ELEM_ICE,400,wear_ice_rod,remove_ice_rod},
+		{"Poison Rod",3,{20},{0},12,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,500,wear_poison_rod,remove_poison_rod},
+		{"Wizard Rod",4,{20},{0},23,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,8000,wear_wizard_rod,remove_wizard_rod},
+		{"Dragon Rod",5,{20},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,12000,NULL,NULL},
+		{"Faith Rod",5,{20},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_faith_rod,remove_faith_rod},
 	}, //Rods
 	{
-		{8,{10},{0},12,0|EQWFLAG_TWO_HAND,0,1000,NULL,NULL},
-		{9,{10},{0},16,0|EQWFLAG_TWO_HAND,0,2000,NULL,NULL},
-		{10,{10},{0},21,0|EQWFLAG_TWO_HAND,0,4500,NULL,NULL},
-		{11,{10},{0},25,0|EQWFLAG_TWO_HAND,0,7000,NULL,NULL},
-		{12,{10},{0},29,0|EQWFLAG_TWO_HAND,0,10000,NULL,NULL},
-		{14,{10},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND,ELEM_HOLY,36000,NULL,NULL},
-		{17,{10},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND,0,44000,NULL,NULL},
-		{30,{10},{0},97,EQFLAG_NOFOE|EQWFLAG_TWO_HAND,0,10,NULL,NULL},
+		{"Javelin",8,{10},{0},12,0|EQWFLAG_TWO_HAND,0,1000,NULL,NULL},
+		{"Spear",9,{10},{0},16,0|EQWFLAG_TWO_HAND,0,2000,NULL,NULL},
+		{"Mythril Spear",10,{10},{0},21,0|EQWFLAG_TWO_HAND,0,4500,NULL,NULL},
+		{"Partisan",11,{10},{0},25,0|EQWFLAG_TWO_HAND,0,7000,NULL,NULL},
+		{"Oberisk",12,{10},{0},29,0|EQWFLAG_TWO_HAND,0,10000,NULL,NULL},
+		{"Holy Lance",14,{10},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND,ELEM_HOLY,36000,NULL,NULL},
+		{"Dragon Whisker",17,{10},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND,0,44000,NULL,NULL},
+		{"Javelin",30,{10},{0},97,EQFLAG_NOFOE|EQWFLAG_TWO_HAND,0,10,NULL,NULL},
 	}, //Spears
 	{
-		{3,{15},{0},1,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,120,NULL,NULL},
-		{3,{15},{0},5,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,800,wear_white_staff,remove_white_staff},
-		{4,{15},{0},9,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,4000,wear_healing_staff,remove_healing_staff},
-		{5,{15},{0},12,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,4000,NULL,NULL},
-		{4,{15},{0},15,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,2200,wear_wizard_staff,remove_wizard_staff},
-		{6,{15},{0},24,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,7000,NULL,NULL},
-		{6,{15},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_mace_of_zeus,remove_mace_of_zeus},
-		{7,{15},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,NULL,NULL},
+		{"Oak Staff",3,{15},{0},1,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,120,NULL,NULL},
+		{"White Staff",3,{15},{0},5,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,800,wear_white_staff,remove_white_staff},
+		{"Healing Staff",4,{15},{0},9,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,4000,wear_healing_staff,remove_healing_staff},
+		{"Rainbow Staff",5,{15},{0},12,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,4000,NULL,NULL},
+		{"Wizard Staff",4,{15},{0},15,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,2200,wear_wizard_staff,remove_wizard_staff},
+		{"Gold Staff",6,{15},{0},24,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,7000,NULL,NULL},
+		{"Mace of Zeus",6,{15},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_mace_of_zeus,remove_mace_of_zeus},
+		{"Sage Staff",7,{15},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,NULL,NULL},
 	}, //Staves
 	{
-		{6,{20},{0},9,0|EQWFLAG_TWO_HAND,0,1000,NULL,NULL},
-		{7,{20},{0},13,0|EQWFLAG_TWO_HAND,0,1400,NULL,NULL},
-		{8,{20},{0},21,0|EQWFLAG_TWO_HAND,0,2400,NULL,NULL},
-		{9,{20},{0},24,0|EQWFLAG_TWO_HAND,0,4000,NULL,NULL},
-		{10,{20},{0},27,0|EQWFLAG_TWO_HAND,0,7500,wear_gokuu_rod,remove_gokuu_rod},
-		{11,{20},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND,0,10000,NULL,NULL},
-		{12,{20},{0},40,0|EQWFLAG_TWO_HAND,0,20000,wear_octagon_rod,remove_octagon_rod},
-		{16,{20},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND,0,37000,NULL,NULL},
+		{"Cypress Rod",6,{20},{0},9,0|EQWFLAG_TWO_HAND,0,1000,NULL,NULL},
+		{"Battle Bamboo",7,{20},{0},13,0|EQWFLAG_TWO_HAND,0,1400,NULL,NULL},
+		{"Musk Rod",8,{20},{0},21,0|EQWFLAG_TWO_HAND,0,2400,NULL,NULL},
+		{"Iron Fan",9,{20},{0},24,0|EQWFLAG_TWO_HAND,0,4000,NULL,NULL},
+		{"Gokuu Rod",10,{20},{0},27,0|EQWFLAG_TWO_HAND,0,7500,wear_gokuu_rod,remove_gokuu_rod},
+		{"Ivory Rod",11,{20},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND,0,10000,NULL,NULL},
+		{"Octagon Rod",12,{20},{0},40,0|EQWFLAG_TWO_HAND,0,20000,wear_octagon_rod,remove_octagon_rod},
+		{"Whale Whisker",16,{20},{0},96,EQFLAG_NOFOE|EQWFLAG_TWO_HAND,0,37000,NULL,NULL},
 	}, //Sticks
 	{
-		{4,{5},{0},1,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,200,NULL,NULL},
-		{5,{10},{0},4,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,500,NULL,NULL},
-		{6,{5},{0},7,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,900,NULL,NULL},
-		{7,{8},{0},9,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,1600,NULL,NULL},
-		{8,{5},{0},12,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,2500,wear_blood_sword,remove_blood_sword},
-		{8,{5},{0},15,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,ELEM_LIGHTNING,3300,NULL,NULL},
-		{9,{5},{0},21,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,5000,wear_ancient_sword,remove_ancient_sword},
-		{9,{5},{0},23,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,5000,wear_sleep_sword,remove_sleep_sword},
-		{12,{10},{0},28,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,11000,NULL,NULL},
-		{10,{10},{0},26,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,8000,NULL,NULL},
-		{13,{10},{0},34,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,ELEM_ICE,14000,NULL,NULL},
-		{14,{15},{0},37,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,20000,wear_rune_blade,remove_rune_blade},
-		{1,{50},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_nagrarock,remove_nagrarock},
+		{"Broad Sword",4,{5},{0},1,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,200,NULL,NULL},
+		{"Long Sword",5,{10},{0},4,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,500,NULL,NULL},
+		{"Iron Sword",6,{5},{0},7,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,900,NULL,NULL},
+		{"Mythril Sword",7,{8},{0},9,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,1600,NULL,NULL},
+		{"Blood Sword",8,{5},{0},12,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,2500,wear_blood_sword,remove_blood_sword},
+		{"Coral Sword",8,{5},{0},15,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,ELEM_LIGHTNING,3300,NULL,NULL},
+		{"Ancient Sword",9,{5},{0},21,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,5000,wear_ancient_sword,remove_ancient_sword},
+		{"Sleep Sword",9,{5},{0},23,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,5000,wear_sleep_sword,remove_sleep_sword},
+		{"Platinum Sword",12,{10},{0},28,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,11000,NULL,NULL},
+		{"Diamond Sword",10,{10},{0},26,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,8000,NULL,NULL},
+		{"Ice Brand",13,{10},{0},34,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,ELEM_ICE,14000,NULL,NULL},
+		{"Rune Blade",14,{15},{0},37,0|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,20000,wear_rune_blade,remove_rune_blade},
+		{"Nagrarock",1,{50},{0},95,EQFLAG_NOFOE|EQWFLAG_TWO_HAND|EQWFLAG_TWO_SWORDS,0,10,wear_nagrarock,remove_nagrarock},
 	}, //Swords
 };
 
@@ -727,23 +727,23 @@ static void remove_venetian_shield(struct battle_char *bc){
 }
 
 const struct eq_item offhand[MAX_EQO_PER_TYPE]={
-	{0,{0},{0},1,0,0,0,NULL,NULL}, // Naked
-	{0,{10},{3},1,0,0,400,NULL,NULL}, // Escutcheon
-	{0,{13},{3},3,0,0,700,NULL,NULL}, // Buckler
-	{0,{16},{0},6,0,0,1200,NULL,NULL}, // Bronze Shield
-	{0,{19},{0},9,0,0,1600,NULL,NULL}, // Round Shield
-	{0,{22},{5},12,0,0,2500,NULL,NULL}, // Mythril Shield
-	{0,{25},{0},15,0,0,3500,NULL,NULL}, // Gold Shield
-	{0,{28},{0},22,0,0,6000,wear_ice_shield,remove_ice_shield}, // Ice Shield
-	{0,{31},{0},22,0,0,6500,wear_flame_shield,remove_flame_shield}, // Flame Shield
-	{0,{10},{50},22,0,0,10000,wear_aegis_shield,remove_aegis_shield}, // Aegis Shield
-	{0,{34},{15},25,0,0,12000,NULL,NULL}, // Diamond Shield
-	{0,{37},{10},29,0,0,16000,NULL,NULL}, // Platina Shield
-	{0,{40},{15},36,0,0,21000,NULL,NULL}, // Crystal Shield
-	{0,{43},{0},36,EQFLAG_NOFOE,0,10,NULL,NULL}, // Genji Shield
-	{0,{46},{20},39,EQFLAG_NOFOE,0,10,wear_kaiser_shield,remove_kaiser_shield}, // Kaiser Plate
-	{0,{50},{25},40,EQFLAG_NOFOE,0,10,wear_venetian_shield,remove_venetian_shield}, // Venetian Shield
-	{0,{75},{50},50,EQFLAG_NOFOE,0,10,NULL,NULL}, // Escutcheon
+	{"None",0,{0},{0},1,0,0,0,NULL,NULL}, // Naked
+	{"Escutcheon",0,{10},{3},1,0,0,400,NULL,NULL}, // Escutcheon
+	{"Buckler",0,{13},{3},3,0,0,700,NULL,NULL}, // Buckler
+	{"Bronze Shield",0,{16},{0},6,0,0,1200,NULL,NULL}, // Bronze Shield
+	{"Round Shield",0,{19},{0},9,0,0,1600,NULL,NULL}, // Round Shield
+	{"Mythril Shield",0,{22},{5},12,0,0,2500,NULL,NULL}, // Mythril Shield
+	{"Gold Shield",0,{25},{0},15,0,0,3500,NULL,NULL}, // Gold Shield
+	{"Ice Shield",0,{28},{0},22,0,0,6000,wear_ice_shield,remove_ice_shield}, // Ice Shield
+	{"Flame Shield",0,{31},{0},22,0,0,6500,wear_flame_shield,remove_flame_shield}, // Flame Shield
+	{"Aegis Shield",0,{10},{50},22,0,0,10000,wear_aegis_shield,remove_aegis_shield}, // Aegis Shield
+	{"Diamond Shield",0,{34},{15},25,0,0,12000,NULL,NULL}, // Diamond Shield
+	{"Platina Shield",0,{37},{10},29,0,0,16000,NULL,NULL}, // Platina Shield
+	{"Crystal Shield",0,{40},{15},36,0,0,21000,NULL,NULL}, // Crystal Shield
+	{"Genji Shield",0,{43},{0},36,EQFLAG_NOFOE,0,10,NULL,NULL}, // Genji Shield
+	{"Kaiser Plate",0,{46},{20},39,EQFLAG_NOFOE,0,10,wear_kaiser_shield,remove_kaiser_shield}, // Kaiser Plate
+	{"Venetian Shield",0,{50},{25},40,EQFLAG_NOFOE,0,10,wear_venetian_shield,remove_venetian_shield}, // Venetian Shield
+	{"Escutcheon",0,{75},{50},50,EQFLAG_NOFOE,0,10,NULL,NULL}, // Escutcheon
 };
 
 static void wear_reflect_mail(struct battle_char *bc){
@@ -855,48 +855,48 @@ static void remove_robe_of_lords(struct battle_char *bc){
 }
 
 const struct eq_item body_armor[NUM_EQB_TYPES][MAX_EQB_PER_TYPE]={
-	{{0,{0},{0},1,0,0,0,NULL,NULL}}, // Naked
+	{{"None",0,{0},{0},1,0,0,0,NULL,NULL}}, // Naked
 	{
-		{0,{10},{0},1,0,0,200,NULL,NULL},
-		{0,{20},{0},4,0,0,600,NULL,NULL},
-		{0,{30},{0},6,0,0,800,NULL,NULL},
-		{0,{40},{0},8,0,0,1300,NULL,NULL},
-		{0,{50},{0},11,0,0,2000,NULL,NULL},
-		{0,{60},{0},14,0,0,3000,NULL,NULL},
-		{0,{70},{0},17,0,0,3600,NULL,NULL},
-		{0,{80},{0},22,0,0,6000,NULL,NULL},
-		{0,{90},{0},26,0,0,9000,NULL,NULL},
-		{0,{100},{0},30,0,0,13000,NULL,NULL},
-		{0,{110},{0},37,0,0,19000,NULL,NULL},
-		{0,{150},{0},37,EQFLAG_NOFOE,0,10,NULL,NULL},
-		{0,{130},{0},39,EQFLAG_NOFOE,0,18000,wear_reflect_mail,remove_reflect_mail},
-		{0,{200},{0},45,EQFLAG_NOFOE,0,10,NULL,NULL},
+		{"Leather Armor",0,{10},{0},1,0,0,200,NULL,NULL},
+		{"Linen Cuirass",0,{20},{0},4,0,0,600,NULL,NULL},
+		{"Bronze Armor",0,{30},{0},6,0,0,800,NULL,NULL},
+		{"Chain Mail",0,{40},{0},8,0,0,1300,NULL,NULL},
+		{"Mythril Armor",0,{50},{0},11,0,0,2000,NULL,NULL},
+		{"Plate Mail",0,{60},{0},14,0,0,3000,NULL,NULL},
+		{"Gold Armor",0,{70},{0},17,0,0,3600,NULL,NULL},
+		{"Diamond Armor",0,{80},{0},22,0,0,6000,NULL,NULL},
+		{"Platina Armor",0,{90},{0},26,0,0,9000,NULL,NULL},
+		{"Carabini Mail",0,{100},{0},30,0,0,13000,NULL,NULL},
+		{"Crystal Mail",0,{110},{0},37,0,0,19000,NULL,NULL},
+		{"Genji Armor",0,{150},{0},37,EQFLAG_NOFOE,0,10,NULL,NULL},
+		{"Reflect Mail",0,{130},{0},39,EQFLAG_NOFOE,0,18000,wear_reflect_mail,remove_reflect_mail},
+		{"Maximillian",0,{200},{0},45,EQFLAG_NOFOE,0,10,NULL,NULL},
 	}, // Armor
 	{
-		{0,{5},{0},1,0,0,150,NULL,NULL},
-		{0,{10},{0},3,0,0,300,NULL,NULL},
-		{0,{18},{0},5,0,0,500,NULL,NULL},
-		{0,{24},{0},7,0,0,900,NULL,NULL},
-		{0,{30},{0},10,0,0,1500,NULL,NULL},
-		{0,{36},{0},12,0,0,1600,NULL,NULL},
-		{0,{42},{15},14,0,0,1900,NULL,NULL},
-		{0,{50},{0},17,0,0,2500,NULL,NULL},
-		{0,{60},{0},21,0,0,4000,wear_judo_outfit,remove_judo_outfit},
-		{0,{70},{0},25,0,0,7000,wear_power_sleeve,remove_power_sleeve},
-		{0,{85},{10},29,0,0,10000,wear_earth_clothes,remove_earth_clothes},
-		{0,{20},{0},35,EQFLAG_NOFOE,0,10,wear_secret_clothes,remove_secret_clothes},
-		{0,{100},{0},37,0,0,12000,wear_black_costume,remove_black_costume},
-		{0,{150},{50},50,EQFLAG_NOFOE,0,48000,wear_rubber_costume,remove_rubber_costume},
+		{"Clothes",0,{5},{0},1,0,0,150,NULL,NULL},
+		{"Leather Outfit",0,{10},{0},3,0,0,300,NULL,NULL},
+		{"Leather Vest",0,{18},{0},5,0,0,500,NULL,NULL},
+		{"Chain Vest",0,{24},{0},7,0,0,900,NULL,NULL},
+		{"Mythril Vest",0,{30},{0},10,0,0,1500,NULL,NULL},
+		{"Adaman Vest",0,{36},{0},12,0,0,1600,NULL,NULL},
+		{"Wizard Outfit",0,{42},{15},14,0,0,1900,NULL,NULL},
+		{"Brigandine",0,{50},{0},17,0,0,2500,NULL,NULL},
+		{"Judo Outfit",0,{60},{0},21,0,0,4000,wear_judo_outfit,remove_judo_outfit},
+		{"Power Sleeve",0,{70},{0},25,0,0,7000,wear_power_sleeve,remove_power_sleeve},
+		{"Earth Clothes",0,{85},{10},29,0,0,10000,wear_earth_clothes,remove_earth_clothes},
+		{"Secret Clothes",0,{20},{0},35,EQFLAG_NOFOE,0,10,wear_secret_clothes,remove_secret_clothes},
+		{"Black Costume",0,{100},{0},37,0,0,12000,wear_black_costume,remove_black_costume},
+		{"Rubber Costume",0,{150},{50},50,EQFLAG_NOFOE,0,48000,wear_rubber_costume,remove_rubber_costume},
 	}, // Clothes
 	{
-		{0,{10},{10},3,0,0,1200,NULL,NULL},
-		{0,{20},{16},5,0,0,2400,NULL,NULL},
-		{0,{30},{22},11,0,0,4000,wear_wizard_robe,remove_wizard_robe},
-		{0,{40},{28},16,EQFLAG_NOFOE,0,5000,wear_chameleon_robe,remove_chameleon_robe},
-		{0,{50},{34},26,0,0,9000,wear_white_robe,remove_white_robe},
-		{0,{60},{30},31,0,0,13000,wear_black_robe,remove_black_robe},
-		{0,{75},{50},38,0,0,30000,NULL,NULL},
-		{0,{100},{80},45,EQFLAG_NOFOE,0,10,wear_robe_of_lords,remove_robe_of_lords},
+		{"Linen Robe",0,{10},{10},3,0,0,1200,NULL,NULL},
+		{"Silk Robe",0,{20},{16},5,0,0,2400,NULL,NULL},
+		{"Wizard Robe",0,{30},{22},11,0,0,4000,wear_wizard_robe,remove_wizard_robe},
+		{"Chameleon Robe",0,{40},{28},16,EQFLAG_NOFOE,0,5000,wear_chameleon_robe,remove_chameleon_robe},
+		{"White Robe",0,{50},{34},26,0,0,9000,wear_white_robe,remove_white_robe},
+		{"Black Robe",0,{60},{30},31,0,0,13000,wear_black_robe,remove_black_robe},
+		{"Light Robe",0,{75},{50},38,0,0,30000,NULL,NULL},
+		{"Robe of Lords",0,{100},{80},45,EQFLAG_NOFOE,0,10,wear_robe_of_lords,remove_robe_of_lords},
 	}, // Robes
 };
 
@@ -1001,40 +1001,40 @@ static void remove_ribbon(struct battle_char *bc){
 }
 
 const struct eq_item head_armor[NUM_EQH_TYPES][MAX_EQH_PER_TYPE]={
-	{{0,{0},{0},1,0,0,0,NULL,NULL}}, // Naked
+	{{"None",0,{0},{0},1,0,0,0,NULL,NULL}}, // Naked
 	{
-		{0,{10},{0},1,0,0,200,NULL,NULL},
-		{0,{20},{0},4,0,0,500,NULL,NULL},
-		{0,{30},{0},7,0,0,1000,NULL,NULL},
-		{0,{40},{0},9,0,0,1500,NULL,NULL},
-		{0,{50},{0},12,0,0,2100,NULL,NULL},
-		{0,{60},{0},15,0,0,2800,NULL,NULL},
-		{0,{70},{0},17,0,0,4000,NULL,NULL},
-		{0,{80},{0},22,0,0,6000,NULL,NULL},
-		{0,{90},{0},25,0,0,8000,NULL,NULL},
-		{0,{100},{0},29,0,0,10000,NULL,NULL},
-		{0,{120},{0},27,0,0,14000,NULL,NULL},
-		{0,{130},{0},36,EQFLAG_NOFOE,0,10,NULL,NULL},
-		{0,{150},{0},40,EQFLAG_NOFOE,0,10,wear_grand_helm,remove_grand_helm},
+		{"Leather Helmet",0,{10},{0},1,0,0,200,NULL,NULL},
+		{"Bronze Helmet",0,{20},{0},4,0,0,500,NULL,NULL},
+		{"Iron Helmet",0,{30},{0},7,0,0,1000,NULL,NULL},
+		{"Barbuta",0,{40},{0},9,0,0,1500,NULL,NULL},
+		{"Mythril Helmet",0,{50},{0},12,0,0,2100,NULL,NULL},
+		{"Gold Helmet",0,{60},{0},15,0,0,2800,NULL,NULL},
+		{"Cross Helmet",0,{70},{0},17,0,0,4000,NULL,NULL},
+		{"Diamond Helmet",0,{80},{0},22,0,0,6000,NULL,NULL},
+		{"Platina Helmet",0,{90},{0},25,0,0,8000,NULL,NULL},
+		{"Circlet",0,{100},{0},29,0,0,10000,NULL,NULL},
+		{"Crystal Helmet",0,{120},{0},27,0,0,14000,NULL,NULL},
+		{"Genji Helmet",0,{130},{0},36,EQFLAG_NOFOE,0,10,NULL,NULL},
+		{"Grand Helmet",0,{150},{0},40,EQFLAG_NOFOE,0,10,wear_grand_helm,remove_grand_helm},
 	}, // Helm
 	{
-		{0,{8},{0},1,0,0,150,NULL,NULL},
-		{0,{16},{5},4,0,0,350,NULL,NULL},
-		{0,{14},{8},7,0,0,800,NULL,NULL},
-		{0,{32},{0},10,0,0,1200,wear_headgear,remove_headgear},
-		{0,{40},{12},13,0,0,1800,wear_triangle_hat,remove_triangle_hat},
-		{0,{48},{0},16,0,0,3000,wear_green_beret,remove_green_beret},
-		{0,{56},{0},21,0,0,5000,wear_twist_headband,remove_twist_headband},
-		{0,{64},{20},24,0,0,6000,wear_holy_miter,remove_holy_miter},
-		{0,{72},{0},27,0,0,7000,NULL,NULL},
-		{0,{80},{50},32,0,0,12000,wear_gold_hairpin,remove_gold_hairpin},
-		{0,{88},{15},38,0,0,16000,wear_flash_hat,remove_flash_hat},
-		{0,{100},{0},46,0,0,35000,wear_thief_hat,remove_thief_hat}
+		{"Leather Hat",0,{8},{0},1,0,0,150,NULL,NULL},
+		{"Feather Hat",0,{16},{5},4,0,0,350,NULL,NULL},
+		{"Red Hood",0,{14},{8},7,0,0,800,NULL,NULL},
+		{"Headgear",0,{32},{0},10,0,0,1200,wear_headgear,remove_headgear},
+		{"Triangle Hat",0,{40},{12},13,0,0,1800,wear_triangle_hat,remove_triangle_hat},
+		{"Green Beret",0,{48},{0},16,0,0,3000,wear_green_beret,remove_green_beret},
+		{"Twist Headband",0,{56},{0},21,0,0,5000,wear_twist_headband,remove_twist_headband},
+		{"Holy Miter",0,{64},{20},24,0,0,6000,wear_holy_miter,remove_holy_miter},
+		{"Black Hood",0,{72},{0},27,0,0,7000,NULL,NULL},
+		{"Gold Hairpin",0,{80},{50},32,0,0,12000,wear_gold_hairpin,remove_gold_hairpin},
+		{"Flash Hat",0,{88},{15},38,0,0,16000,wear_flash_hat,remove_flash_hat},
+		{"Thief Hat",0,{100},{0},46,0,0,35000,wear_thief_hat,remove_thief_hat}
 	}, // Hat
 	{
-		{0,{20},{0},50,0,0,20000,wear_cachusha,remove_cachusha},
-		{0,{20},{0},51,0,0,20000,wear_barette,remove_barette},
-		{0,{10},{0},52,0,0,60000,wear_ribbon,remove_ribbon}
+		{"Cachusha",0,{20},{0},50,0,0,20000,wear_cachusha,remove_cachusha},
+		{"Barette",0,{20},{0},51,0,0,20000,wear_barette,remove_barette},
+		{"Ribbon",0,{10},{0},52,0,0,60000,wear_ribbon,remove_ribbon}
 	}, // Ribbon
 };
 
@@ -1246,41 +1246,41 @@ static void remove_vanish_mantle(struct battle_char *bc){
 }
 
 const struct eq_item misc_armor[NUM_EQM_TYPES][MAX_EQM_PER_TYPE]={
-	{{0,{0},{0},1,0,0,0,NULL,NULL}}, // Naked
+	{{"None",0,{0},{0},1,0,0,0,NULL,NULL}}, // Naked
 	{
-		{0,{10},{10},10,0,0,300,NULL,NULL},
-		{0,{15},{15},20,0,0,800,NULL,NULL},
-		{0,{18},{18},30,0,0,2000,wear_wizard_mantle,remove_wizard_mantle},
-		{0,{25},{25},40,0,0,8000,NULL,NULL},
-		{0,{28},{28},49,0,0,15000,NULL,NULL},
-		{0,{40},{30},50,0,0,20000,NULL,NULL},
-		{0,{35},{0},5,EQFLAG_NOFOE,0,10,wear_vanish_mantle,remove_vanish_mantle},
+		{"Small Mantle",0,{10},{10},10,0,0,300,NULL,NULL},
+		{"Leather Mantle",0,{15},{15},20,0,0,800,NULL,NULL},
+		{"Wizard Mantle",0,{18},{18},30,0,0,2000,wear_wizard_mantle,remove_wizard_mantle},
+		{"Elf Mantle",0,{25},{25},40,0,0,8000,NULL,NULL},
+		{"Dracula Mantle",0,{28},{28},49,0,0,15000,NULL,NULL},
+		{"Feather Mantle",0,{40},{30},50,0,0,20000,NULL,NULL},
+		{"Vanish Mantle",0,{35},{0},5,EQFLAG_NOFOE,0,10,wear_vanish_mantle,remove_vanish_mantle},
 	}, // Mantle
 	{
-		{0,{0},{0},20,0,0,5000,wear_power_wrist,remove_power_wrist},
-		{0,{0},{0},50,EQFLAG_NOFOE,0,10,wear_genji_gauntlet,remove_genji_gauntlet},
-		{0,{0},{0},35,0,0,20000,wear_magic_gauntlet,remove_magic_gauntlet},
-		{0,{0},{0},60,0,0,50000,wear_bracer,remove_bracer},
+		{"Power Wrist",0,{0},{0},20,0,0,5000,wear_power_wrist,remove_power_wrist},
+		{"Genji Gauntlet",0,{0},{0},50,EQFLAG_NOFOE,0,10,wear_genji_gauntlet,remove_genji_gauntlet},
+		{"Magic Gauntlet",0,{0},{0},35,0,0,20000,wear_magic_gauntlet,remove_magic_gauntlet},
+		{"Bracer",0,{0},{0},60,0,0,50000,wear_bracer,remove_bracer},
 
-		{0,{0},{0},50,EQFLAG_NOFOE,0,10000,wear_reflect_ring,remove_reflect_ring},
-		{0,{0},{0},25,0,0,5000,wear_defense_ring,remove_defense_ring},
-		{0,{0},{0},25,0,0,10000,wear_magic_ring,remove_magic_ring},
-		{0,{0},{0},5,EQFLAG_NOFOE,0,10,wear_cursed_ring,remove_cursed_ring},
-		{0,{0},{0},25,EQFLAG_NOFOE,0,20000,wear_angel_ring,remove_angel_ring},
+		{"Reflect Ring",0,{0},{0},50,EQFLAG_NOFOE,0,10000,wear_reflect_ring,remove_reflect_ring},
+		{"Defense Ring",0,{0},{0},25,0,0,5000,wear_defense_ring,remove_defense_ring},
+		{"Magic Ring",0,{0},{0},25,0,0,10000,wear_magic_ring,remove_magic_ring},
+		{"Cursed Ring",0,{0},{0},5,EQFLAG_NOFOE,0,10,wear_cursed_ring,remove_cursed_ring},
+		{"Angel Ring",0,{0},{0},25,EQFLAG_NOFOE,0,20000,wear_angel_ring,remove_angel_ring},
 
-		{0,{0},{0},26,0,0,5000,wear_diamond_armlet,remove_diamond_armlet},
-		{0,{0},{0},25,0,0,10000,wear_jade_armlet,remove_jade_armlet},
-		{0,{0},{0},25,0,0,15000,wear_108_gems,remove_108_gems},
-		{0,{0},{0},25,0,0,10000,wear_nkai_armlet,remove_nkai_armlet},
-		{0,{0},{0},25,0,0,7000,wear_defense_armlet,remove_defense_armlet},
+		{"Diamond Armlet",0,{0},{0},26,0,0,5000,wear_diamond_armlet,remove_diamond_armlet},
+		{"Jade Armlet",0,{0},{0},25,0,0,10000,wear_jade_armlet,remove_jade_armlet},
+		{"108 Gems",0,{0},{0},25,0,0,15000,wear_108_gems,remove_108_gems},
+		{"Nkai Armlet",0,{0},{0},25,0,0,10000,wear_nkai_armlet,remove_nkai_armlet},
+		{"Defense Armlet",0,{0},{0},25,0,0,7000,wear_defense_armlet,remove_defense_armlet},
 	}, // Armwear
 	{
-		{0,{0},{0},10,0,0,1000,wear_battle_boots,remove_battle_boots},
-		{0,{0},{0},20,0,0,1200,wear_spike_boots,remove_spike_boots},
-		{0,{0},{0},30,0,0,5000,wear_germinas_boots,remove_germinas_boots},
-		{0,{0},{0},5,EQFLAG_NOFOE,0,1500,wear_rubber_shoes,remove_rubber_shoes},
-		{0,{0},{0},50,EQFLAG_NOFOE,0,2500,wear_feather_boots,remove_feather_boots},
-		{0,{0},{0},30,EQFLAG_NOFOE,0,7000,wear_sprint_shoes,remove_sprint_shoes},
-		{0,{0},{0},40,EQFLAG_NOFOE,0,10000,wear_red_shoes,remove_red_shoes},
+		{"Battle Boots",0,{0},{0},10,0,0,1000,wear_battle_boots,remove_battle_boots},
+		{"Spike Boots",0,{0},{0},20,0,0,1200,wear_spike_boots,remove_spike_boots},
+		{"Germinas Boots",0,{0},{0},30,0,0,5000,wear_germinas_boots,remove_germinas_boots},
+		{"Rubber Shoes",0,{0},{0},5,EQFLAG_NOFOE,0,1500,wear_rubber_shoes,remove_rubber_shoes},
+		{"Feather Boots",0,{0},{0},50,EQFLAG_NOFOE,0,2500,wear_feather_boots,remove_feather_boots},
+		{"Sprint Shoes",0,{0},{0},30,EQFLAG_NOFOE,0,7000,wear_sprint_shoes,remove_sprint_shoes},
+		{"Red Shoes",0,{0},{0},40,EQFLAG_NOFOE,0,10000,wear_red_shoes,remove_red_shoes},
 	}, // Foot
 };

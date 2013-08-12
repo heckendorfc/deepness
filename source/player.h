@@ -89,6 +89,7 @@ typedef void (*eqwearf)(struct battle_char*);
 typedef void (*eqremovef)(struct battle_char*);
 
 struct eq_item{
+	char *name;
 	uint8_t wp;
 	union{
 		uint8_t evade;
@@ -149,9 +150,14 @@ struct stored_action{
 	//uint8_t num_target;
 };
 
+struct inv_item{
+	uint16_t index;
+	uint8_t count;
+};
+
 struct player{
 	struct character *chars[NUM_CHAR_SLOTS];
-	char inventory[NUM_ITEMS];
+	struct inv_item inventory[NUM_ITEMS];
 }pdata;
 
 #endif

@@ -9,6 +9,8 @@
 #include "map.h"
 #include "ability.h"
 #include "equipment.h"
+#include "save.h"
+#include "game.h"
 
 const char terrain_char[]={
 	' ',
@@ -139,7 +141,6 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 	int cmd,x,y;
 	int run;
 	int uid;
-	int i;
 	
 	do{
 		run=0;
@@ -162,7 +163,7 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 				break;
 			case 2:
 				if(!(*flags&MOVED_FLAG)){
-					if(move(blist[bi],x,y)==MOVE_INVALID)
+					if(move(blist,bi,num,x,y)==MOVE_INVALID)
 						run=1;
 					else
 						*flags|=MOVED_FLAG;
@@ -192,6 +193,88 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 		}
 	}while(run==1);
 }
+
+void edit_menu(struct character **clist, int num){
+}
+
+void area_menu(int *x, int *y){
+	int i,j;
+	char cmd;
+	int numchars;
+	char buf[100];
+	int run;
+
+	for(i=0;pdata.chars[i] && i<NUM_CHAR_SLOTS;i++);
+	numchars=i;
+
+	do{
+		run=0;
+		printf("[N]ext | [E]dit | [S]ave");
+		fgets(buf,100,stdin);
+
+		sscanf(buf,"%c",&cmd);
+
+		switch(cmd){
+			case 'n':
+			case 'N':
+				break;
+			case 'e':
+			case 'E':
+				edit_menu(pdata.chars,numchars);
+				run=1;
+				break;
+			case 's':
+			case 'S':
+				save();
+				run=1;
+				break;
+			default:
+				run=1;
+				break;
+		}
+	}while(run);
+
+	if(*x==MAP_HEIGHT-1 && *y==MAP_WIDTH-1)
+		*x=*y=0;
+
+	for(j=*y;j<MAP_HEIGHT;j++)
+		for(i=*x+1;i<MAP_WIDTH;i++)
+			if(get_area_map(i,j)&(AMAP_ENCOUNTER_BIT|AMAP_TREASURE_BIT)){
+				*x=i;
+				*y=j;
+			}
+
+
+}
+
+void main_menu(){
+	char cmd;
+	char buf[100];
+	int run;
+
+	do{
+		run=0;
+		printf("[N]ew Game | [L]oad game");
+		fgets(buf,100,stdin);
+
+		sscanf(buf,"%c",&cmd);
+
+		switch(cmd){
+			case 'n':
+			case 'N':
+				create_game();
+				break;
+			case 'l':
+			case 'L':
+				load();
+				break;
+			default:
+				run=1;
+				break;
+		}
+	}while(run);
+}
+
 
 void print_message(char *msg){
 	printf("%s\n",msg);

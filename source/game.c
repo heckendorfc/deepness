@@ -11,9 +11,20 @@ static const char *names[]={
 	"Bolo",
 	"x4nt",
 	"Bkt\0",
+	"tofu",
 };
 
 const int numchar=4;
+
+static void destroy_game(){
+	int i;
+	for(i=0;i<NUM_CHAR_SLOTS;i++){
+		if(pdata.chars[i]){
+			free(pdata.chars[i]);
+			pdata.chars[i]=NULL;
+		}
+	}
+}
 
 void create_game(){
 	int i,j;
@@ -31,9 +42,9 @@ void create_game(){
 	}
 }
 
-static void encounter(){
+static int encounter(){
 	struct character *foe;
-	int i,num=NUM_CHAR_SLOTS;
+	int ret,i,num=NUM_CHAR_SLOTS;
 
 	for(i=0;i<NUM_CHAR_SLOTS;i++){
 		if(pdata.chars[i]==NULL || pdata.chars[i]->battleready==BATTLE_UNAVAILABLE)
@@ -46,23 +57,40 @@ static void encounter(){
 	for(i=0;i<num;i++)
 		create_character(foe+i);
 
-	start_battle(pdata.chars,foe,num);
+	ret=start_battle(pdata.chars,foe,num);
+
+	if(ret){
+		for(i=0;i<NUM_CHAR_SLOTS;i++)
+			if(pdata.chars[i]->battleready==BATTLE_READY)
+				jp_reward(pdata.chars[i]);
+	}
 
 	free(foe);
+
+	return ret;
 }
 
 void run_game(){
 	int x,y;
 	int flags;
+	int result=1;
 	gen_areamap(&x,&y);
-	while(1){
+	while(result){
 		area_menu(&x,&y);
 		flags=get_area_map(x,y);
-		if(flags&AMAP_ENCOUNTER_BIT)
-			encounter();
+		if(flags&AMAP_ENCOUNTER_BIT){
+			result=encounter();
+			if(!result){
+				destroy_game();
+				return;
+			}
+		}
+
 		if(flags&AMAP_EXIT_BIT)
 			break;
 
 		explore_areamap(x,y);
 	}
+
+
 }

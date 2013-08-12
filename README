@@ -1,0 +1,22 @@
+Building/Running for NDS:
+	Install/configure devkitPro: http://devkitpro.org/wiki/Getting_Started/devkitARM
+	Run 'make' in the deepness directory
+	Load deepness.nds in your NDS or NDS emulator.
+
+Battle controls:
+	Left/Right/Up/Down: Move the cursor
+	X: Show/hide the message log
+	Y: Make your selection
+	B: Switch the cursor between map and action select mode
+	L/R (shoulder):  switch between terrain and height maps
+
+Unit editor controls:
+	Up/Down: Move the cursor
+	Y: Make your selection
+	B: Return to previous submenu
+	L/R (shoulder):  switch between units
+
+Other controls:
+	Left/Right/Up/Down: Move the cursor
+	Y: Make your selection
+	Others: Follow on-screen instructions

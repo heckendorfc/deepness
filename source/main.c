@@ -15,9 +15,10 @@ int main(void) {
 
 	init_ui();
 
-	main_menu();
-
-	run_game();
+	while(1){
+		main_menu();
+		run_game();
+	}
 
 	return 0;
 }

@@ -9,11 +9,15 @@
 #define WRANGE_HEIGHT 0x80
 #define WRANGE_ALL 0x40
 
+// oooooootttttllll
+#define EQ_INDEX(l,t,o) ((o<<9)|(t<<4)|(l&0x4))
+
 #define EQ_WEAPON 0
 #define EQ_OFFHAND 1
 #define EQ_HEAD 2
 #define EQ_BODY 3
 #define EQ_MISC 4
+#define EQ_ITEM 5
 
 #define NUM_EQW_TYPES 20
 #define MAX_EQW_PER_TYPE 16
