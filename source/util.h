@@ -14,5 +14,8 @@ void jp_reward(struct character *ch);
 void switch_jobs(struct character *ch, int index);
 void set_battle_stats(struct battle_char *bc);
 void create_character(struct character *ch);
+void add_item(uint16_t index);
+void remove_eq(struct character *ch, int loc);
+void wear_eq(struct character *ch, int offset);
 
 #endif

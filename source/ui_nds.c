@@ -38,6 +38,11 @@
 #define MENU_JP_REACTION 6
 #define MENU_JP_SUPPORT 7
 #define MENU_JP_MOVEMENT 8
+#define MENU_EQ_WEAPON 9
+#define MENU_EQ_OFFHAND 10
+#define MENU_EQ_HEAD 11
+#define MENU_EQ_BODY 12
+#define MENU_EQ_MISC 13
 
 #define MENU_ITEMS_PER_PAGE 5
 
@@ -775,6 +780,18 @@ int print_edit_jp_menu(int line,int offset){
 	return i;
 }
 
+int print_edit_eq_menu(int line,int offset){
+	int i=line;
+
+	iprintf("\x1b[%d;1H%cWeapon",i,(line+offset)==i?'*':' '); i++;
+	iprintf("\x1b[%d;1H%cOffhand",i,(line+offset)==i?'*':' '); i++;
+	iprintf("\x1b[%d;1H%cHead",i,(line+offset)==i?'*':' '); i++;
+	iprintf("\x1b[%d;1H%cBody",i,(line+offset)==i?'*':' '); i++;
+	iprintf("\x1b[%d;1H%cMisc",i,(line+offset)==i?'*':' '); i++;
+
+	return i;
+}
+
 int print_char_info(struct character *ch, int line){
 	int i=line;
 	int level;
@@ -850,6 +867,47 @@ static char* ability_movement_cb(int *avail, int *side, int i, void *arg){
 	return clmovement[ed->group][i].name;
 }
 
+int get_wearable_inv_index(struct edit_data *ed, int i){
+	int reali;
+	for(reali=0;reali<NUM_ITEMS;reali++){
+		if(EQ_INDEX_L(pdata.inventory[reali].index)==ed->group && char_can_wear(ed->ch,ed->group)){
+			i--;
+			if(i<0)
+				return reali;
+		}
+	}
+	return -1;
+}
+
+static char* eq_item_cb(int *avail, int *side, int i, void *arg){
+	struct edit_data *ed=(struct edit_data*)arg;
+	int reali;
+
+	*avail=1;
+	*side=0;
+	
+	reali=get_wearable_inv_index(ed,i);
+	if(reali<0)
+		return weapons[0][0].name;
+
+	*side=pdata.inventory[reali].count;
+
+	return eq_name(pdata.inventory[reali].index);
+}
+
+int count_inventory_location(struct character *ch, int location){
+	int i;
+	int ret=0;
+
+	for(i=0;i<NUM_ITEMS;i++){
+		if(EQ_INDEX_L(pdata.inventory[i].index)==location && char_can_wear(ch,location))
+			ret++;
+	}
+
+	return ret;
+}
+
+
 void edit_menu(struct character **clist, int num){
 	struct edit_data ed;
 	int i;
@@ -861,6 +919,7 @@ void edit_menu(struct character **clist, int num){
 	int line=0;
 	int press;
 	int avail,side;
+	int numeq=0;
 
 	swiWaitForVBlank();
 
@@ -886,11 +945,51 @@ void edit_menu(struct character **clist, int num){
 			print_char_info(clist[ci],line);
 		}
 		else if(menu==MENU_EQ){
+			menu_items=5;
+			line=print_edit_eq_menu(0,offset);
+			line+=2;
+			print_char_info(clist[ci],line);
+		}
+		else if(menu==MENU_EQ_WEAPON){
+			ed.group=EQ_WEAPON;
+			line=MENU_ITEMS_PER_PAGE+2;
+			menu_items=numeq+1;
+			scroll_menu(offset,menu_items,eq_item_cb,&ed);
+			print_char_info(clist[ci],line);
+		}
+		else if(menu==MENU_EQ_OFFHAND){
+			ed.group=EQ_OFFHAND;
+			line=MENU_ITEMS_PER_PAGE+2;
+			menu_items=numeq+1;
+			scroll_menu(offset,menu_items,eq_item_cb,&ed);
+			print_char_info(clist[ci],line);
+		}
+		else if(menu==MENU_EQ_HEAD){
+			ed.group=EQ_HEAD;
+			line=MENU_ITEMS_PER_PAGE+2;
+			menu_items=numeq+1;
+			scroll_menu(offset,menu_items,eq_item_cb,&ed);
+			print_char_info(clist[ci],line);
+		}
+		else if(menu==MENU_EQ_BODY){
+			ed.group=EQ_BODY;
+			line=MENU_ITEMS_PER_PAGE+2;
+			menu_items=numeq+1;
+			scroll_menu(offset,menu_items,eq_item_cb,&ed);
+			print_char_info(clist[ci],line);
+		}
+		else if(menu==MENU_EQ_MISC){
+			ed.group=EQ_MISC;
+			line=MENU_ITEMS_PER_PAGE+2;
+			menu_items=numeq+1;
+			scroll_menu(offset,menu_items,eq_item_cb,&ed);
+			print_char_info(clist[ci],line);
 		}
 		else if(menu==MENU_JP){
 			line=print_edit_jp_menu(0,offset);
 			line+=2;
 			print_char_info(clist[ci],line);
+			menu_items=4;
 		}
 		else if(menu==MENU_JP_ACTION){
 			ed.group=clist[ci]->primary;
@@ -968,7 +1067,7 @@ void edit_menu(struct character **clist, int num){
 			else if(menu==MENU_JOB){
 				class_name_cb(&avail,&side,offset,&ed);
 				if(avail){
-					switch_jobs(offset);
+					switch_jobs(clist[ci],offset);
 					offset=0;
 					menu=MENU_MAIN;
 				}
@@ -1002,6 +1101,66 @@ void edit_menu(struct character **clist, int num){
 				}
 				offset=0;
 			}
+			else if(menu==MENU_EQ){
+				switch(offset){
+					case 0:
+						if((numeq=count_inventory_location(clist[ci],EQ_WEAPON)))
+							menu=MENU_EQ_WEAPON;
+						break;
+					case 1:
+						if((numeq=count_inventory_location(clist[ci],EQ_OFFHAND)))
+							menu=MENU_EQ_OFFHAND;
+						break;
+					case 2:
+						if((numeq=count_inventory_location(clist[ci],EQ_HEAD)))
+							menu=MENU_EQ_HEAD;
+						break;
+					case 3:
+						if((numeq=count_inventory_location(clist[ci],EQ_BODY)))
+							menu=MENU_EQ_BODY;
+						break;
+					case 4:
+						if((numeq=count_inventory_location(clist[ci],EQ_MISC)))
+							menu=MENU_EQ_MISC;
+						break;
+				}
+				offset=0;
+			}
+			else if(menu==MENU_EQ_WEAPON){
+				offset=get_wearable_inv_index(&ed,offset);
+				remove_eq(clist[ci],EQ_WEAPON);
+				if(offset>=0)
+					wear_eq(clist[ci],offset);
+				menu=MENU_EQ;
+			}	
+			else if(menu==MENU_EQ_OFFHAND){
+				offset=get_wearable_inv_index(&ed,offset);
+				remove_eq(clist[ci],EQ_OFFHAND);
+				if(offset>=0)
+					wear_eq(clist[ci],offset);
+				menu=MENU_EQ;
+			}	
+			else if(menu==MENU_EQ_HEAD){
+				offset=get_wearable_inv_index(&ed,offset);
+				remove_eq(clist[ci],EQ_HEAD);
+				if(offset>=0)
+					wear_eq(clist[ci],offset);
+				menu=MENU_EQ;
+			}	
+			else if(menu==MENU_EQ_BODY){
+				offset=get_wearable_inv_index(&ed,offset);
+				remove_eq(clist[ci],EQ_BODY);
+				if(offset>=0)
+					wear_eq(clist[ci],offset);
+				menu=MENU_EQ;
+			}	
+			else if(menu==MENU_EQ_MISC){
+				offset=get_wearable_inv_index(&ed,offset);
+				remove_eq(clist[ci],EQ_MISC);
+				if(offset>=0)
+					wear_eq(clist[ci],offset);
+				menu=MENU_EQ;
+			}	
 			else if(menu==MENU_JP_ACTION){
 				if(!(MASTERY_ACTION(ed.ch->mastery[ed.ch->primary])&BIT(offset)) && ed.ch->jp>=claction[ed.ch->primary][offset].jp){
 					ed.ch->jp-=claction[ed.ch->primary][offset].jp;
@@ -1086,12 +1245,14 @@ void area_menu(int *x, int *y){
 
 	while(run){
 		iprintf("\x1b[2J\x1b[1;1HArea Map");
-		iprintf("\x1b[2J\x1b[3;1HY: Edit units");
+		iprintf("\x1b[3;1HY: Edit units");
 		if(saved)
-			ipintf("\x1b[2J\x1b[5;1H   Saved!");
+			iprintf("\x1b[5;1H   Saved!");
 		else
-			iprintf("\x1b[2J\x1b[4;1HX: Save");
+			iprintf("\x1b[4;1HX: Save");
 		
+		if(last_msg[msg_i][0])
+			iprintf("\x1b[10;0HLast: %s",last_msg[msg_i]);
 
 		scanKeys();
 		press=keysDown();

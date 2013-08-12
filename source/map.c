@@ -226,7 +226,7 @@ void explore_areamap(int x, int y){
 void gen_areamap(int *x, int *y){
 	int i;
 	int numencounter=15;
-	int numtreasure=3;
+	int numtreasure=5;
 	int coord;
 	const uint8_t default_flags=AMAP_NORTH_BIT|AMAP_EAST_BIT|AMAP_SOUTH_BIT|AMAP_WEST_BIT;
 

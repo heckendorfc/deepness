@@ -42,6 +42,10 @@ void create_game(){
 		else
 			pdata.chars[i]->battleready=BATTLE_UNAVAILABLE;
 	}
+	for(i=0;i<NUM_ITEMS;i++){
+		pdata.inventory[i].count=0;
+		pdata.inventory[i].index=EQ_INDEX(9,0,0);
+	}
 }
 
 static int encounter(){
@@ -93,15 +97,9 @@ void run_game(){
 
 		if(flags&AMAP_TREASURE_BIT){
 			index=spawn_item_by_price(50,500);
+			add_item(index);
 			sprintf(buf,"Obtained %s!",eq_name(index));
 			print_message(buf);
-			for(i=0;i<NUM_ITEMS;i++){
-				if(pdata.inventory[i].count<=0){
-					pdata.inventory[i].count=1;
-					pdata.inventory[i].index=index;
-					break;
-				}
-			}
 		}
 
 		if(flags&AMAP_EXIT_BIT)

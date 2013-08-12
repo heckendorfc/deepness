@@ -11,9 +11,9 @@
 
 // oooooootttttllll
 #define EQ_INDEX(l,t,o) ((o<<9)|((t&0x1F)<<4)|(l&0xF))
-#define EQ_INDEX_L(x) (x&0xF);
-#define EQ_INDEX_T(x) ((x>>4)&0x1F);
-#define EQ_INDEX_O(x) (x>>9);
+#define EQ_INDEX_L(x) (x&0xF)
+#define EQ_INDEX_T(x) ((x>>4)&0x1F)
+#define EQ_INDEX_O(x) (x>>9)
 
 #define EQ_WEAPON 0
 #define EQ_OFFHAND 1
@@ -62,8 +62,8 @@
 #define NUM_EQB_TYPES 4
 #define MAX_EQB_PER_TYPE 14
 /* Body */
-#define EQB_CLOTHES 1
-#define EQB_ARMOR 2
+#define EQB_ARMOR 1
+#define EQB_CLOTHES 2
 #define EQB_ROBE 3
 
 #define NUM_EQM_TYPES 4
@@ -79,6 +79,7 @@
 
 #define EQFLAG_NOFOE BIT(7)
 
+int char_can_wear(struct character *ch, uint16_t index);
 int actual_weapon_range(struct battle_char *bc, int x, int y);
 int weapon_can_hit(struct battle_char *bc, int x, int y);
 char* eq_name(uint16_t index);

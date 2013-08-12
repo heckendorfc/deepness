@@ -219,6 +219,44 @@ void set_battle_stats(struct battle_char *bc){
 	if(bc->pa<1)bc->pa=1;
 }
 
+void add_item(uint16_t index){
+	int i;
+	if(EQ_INDEX_T(index)==0)
+		return;
+	for(i=0;i<NUM_ITEMS;i++){
+		if(pdata.inventory[i].index==index){
+			pdata.inventory[i].count++;
+			return;
+		}
+	}
+	for(i=0;i<NUM_ITEMS;i++){
+		if(pdata.inventory[i].count<=0){
+			pdata.inventory[i].count=1;
+			pdata.inventory[i].index=index;
+			break;
+		}
+	}
+}
+
+void remove_eq(struct character *ch, int loc){
+	int o,t;
+	o=ch->eq[loc]>>6;
+	t=EQ_TYPE(ch->eq[loc]);
+	
+	add_item(EQ_INDEX(loc,t,o));
+	ch->eq[loc]=0;
+}
+
+void wear_eq(struct character *ch, int offset){
+	uint16_t index;
+
+	pdata.inventory[offset].count--;
+
+	index=pdata.inventory[offset].index;
+	ch->eq[EQ_INDEX_L(index)]=(EQ_INDEX_O(index)<<6)|EQ_INDEX_T(index);
+	
+}
+
 void create_character(struct character *ch){
 	int i;
 

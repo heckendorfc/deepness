@@ -8,7 +8,8 @@
 #include "map.h"
 
 /* Classes that can equip */
-const int cleqw[] = {
+const uint32_t cleqw[] = {
+	~0,
 	CLBIT(CL_SQUIRE) | CLBIT(CL_GEOMANCER),
 	~0,
 	CLBIT(CL_ARCHER),
@@ -31,11 +32,12 @@ const int cleqw[] = {
 };
 
 /* Armor */
-const int cleqo[] = {
+const uint32_t cleqo[] = {
 	CLBIT(CL_ARCHER) | CLBIT(CL_GEOMANCER) | CLBIT(CL_KNIGHT) | CLBIT(CL_LANCER)
 };
 
-const int cleqh[] = {
+const uint32_t cleqh[] = {
+	~0,
 	CLBIT(CL_ARCHER) | CLBIT(CL_BARD) | CLBIT(CL_CALCULATOR) | CLBIT(CL_CHEMIST) | CLBIT(CL_DANCER) | CLBIT(CL_GEOMANCER) | 
 		CLBIT(CL_MEDIATOR) | CLBIT(CL_NINJA) | CLBIT(CL_ORACLE) | CLBIT(CL_PRIEST) | CLBIT(CL_SQUIRE) | CLBIT(CL_THIEF) | 
 		CLBIT(CL_TIME_MAGE) | CLBIT(CL_WIZARD),
@@ -43,7 +45,8 @@ const int cleqh[] = {
 	CLBIT(CL_KNIGHT) | CLBIT(CL_LANCER) | CLBIT(CL_SAMURAI) | CLBIT(CL_KNIGHT),
 };
 
-const int cleqb[] = {
+const uint32_t cleqb[] = {
+	~0,
 	CLBIT(CL_ARCHER) | CLBIT(CL_BARD) | CLBIT(CL_CALCULATOR) | CLBIT(CL_CHEMIST) | CLBIT(CL_DANCER) | CLBIT(CL_GEOMANCER) | 
 		CLBIT(CL_MEDIATOR) | CLBIT(CL_MONK) | CLBIT(CL_NINJA) | CLBIT(CL_ORACLE) | CLBIT(CL_PRIEST) | CLBIT(CL_SQUIRE) | 
 		CLBIT(CL_SUMMONER) | CLBIT(CL_THIEF) | CLBIT(CL_TIME_MAGE) | CLBIT(CL_WIZARD),
@@ -53,7 +56,8 @@ const int cleqb[] = {
 };
 
 /* Misc */
-const int cleqm []={
+const uint32_t cleqm []={
+	~0,
 	CLBIT(CL_ARCHER) | CLBIT(CL_BARD) | CLBIT(CL_CALCULATOR) | CLBIT(CL_CHEMIST) | CLBIT(CL_DANCER) | CLBIT(CL_GEOMANCER) | 
 		CLBIT(CL_KNIGHT) | CLBIT(CL_LANCER) | CLBIT(CL_MEDIATOR) | CLBIT(CL_MONK) | CLBIT(CL_NINJA) | CLBIT(CL_ORACLE) | 
 		CLBIT(CL_PRIEST) | CLBIT(CL_SAMURAI) | CLBIT(CL_SQUIRE) | CLBIT(CL_SUMMONER) | CLBIT(CL_THIEF) | CLBIT(CL_TIME_MAGE) |
@@ -67,6 +71,24 @@ const int cleqm []={
 		CLBIT(CL_PRIEST) | CLBIT(CL_SAMURAI) | CLBIT(CL_SQUIRE) | CLBIT(CL_SUMMONER) | CLBIT(CL_THIEF) | CLBIT(CL_TIME_MAGE) |
 		CLBIT(CL_WIZARD),
 };
+
+int char_can_wear(struct character *ch, uint16_t index){
+	int l=EQ_INDEX_L(index);
+	int t=EQ_INDEX_T(index);
+
+	if(l==EQ_WEAPON && cleqw[t]&CLBIT(ch->primary))
+		return 1;
+	if(l==EQ_OFFHAND && cleqo[t]&CLBIT(ch->primary))
+		return 1;
+	if(l==EQ_HEAD && cleqh[t]&CLBIT(ch->primary))
+		return 1;
+	if(l==EQ_BODY && cleqb[t]&CLBIT(ch->primary))
+		return 1;
+	if(l==EQ_MISC && cleqm[t]&CLBIT(ch->primary))
+		return 1;
+
+	return 0;
+}
 
 static int hands_dmg(const struct eq_item *item, struct battle_char *attacker, struct battle_char *defender){
 	return attacker->pa*mod2(attacker,defender,attacker->pa*attacker->brave/100);
@@ -1324,7 +1346,7 @@ static void items_in_price_range(const struct eq_item *list, int min, int max, i
 		if(list[i].price>min)
 			break;
 
-	if(i<*end && list[i].price>min)
+	if(i<*end && list[i].price<=max)
 		*start=i;
 	else{
 		*start=-1;
