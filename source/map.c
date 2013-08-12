@@ -211,6 +211,7 @@ void recursive_maze(uint8_t ax, uint8_t ay, uint8_t bx, uint8_t by){
 }
 
 void explore_areamap(int x, int y){
+	areamap[MAP_INDEX(x,y)]&=~(AMAP_ENCOUNTER_BIT|AMAP_TREASURE_BIT);
 	areamap[MAP_INDEX(x,y)]|=AMAP_EXPLORED_BIT;
 	if((areamap[MAP_INDEX(x,y)]&AMAP_NORTH_BIT) && y>0)
 		areamap[MAP_INDEX(x,(y-1))]|=AMAP_EXPLORED_BIT;
@@ -224,7 +225,8 @@ void explore_areamap(int x, int y){
 
 void gen_areamap(int *x, int *y){
 	int i;
-	int numencounter;
+	int numencounter=15;
+	int numtreasure=3;
 	int coord;
 	const uint8_t default_flags=AMAP_NORTH_BIT|AMAP_EAST_BIT|AMAP_SOUTH_BIT|AMAP_WEST_BIT;
 
@@ -242,12 +244,18 @@ void gen_areamap(int *x, int *y){
 
 	recursive_maze(0,0,MAP_WIDTH-1,MAP_HEIGHT-1);
 
-	numencounter=15;
 	while(numencounter){
 		coord=get_map_random(0,MAP_WIDTH*MAP_HEIGHT);
 		if(!(areamap[coord]&AMAP_ENCOUNTER_BIT)){
 			areamap[coord]|=AMAP_ENCOUNTER_BIT;
 			numencounter--;
+		}
+	}
+	while(numtreasure){
+		coord=get_map_random(0,MAP_WIDTH*MAP_HEIGHT);
+		if(!(areamap[coord]&AMAP_TREASURE_BIT)){
+			areamap[coord]|=AMAP_TREASURE_BIT;
+			numtreasure--;
 		}
 	}
 

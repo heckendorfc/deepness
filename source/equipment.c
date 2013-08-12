@@ -511,6 +511,7 @@ int weapon_can_hit(struct battle_char *bc, int x, int y){
 	return 0;
 }
 
+const uint8_t num_weapons[]={1,3,4,9,3,6,4,4,3,3,3,10,5,10,8,8,8,8,8,13};
 const struct eq_item weapons[NUM_EQW_TYPES][MAX_EQW_PER_TYPE]={
 	{{"None",0,{5},{0},1,0,0,0,NULL,NULL}}, // Hands
 	{
@@ -726,6 +727,7 @@ static void remove_venetian_shield(struct battle_char *bc){
 	bc->resist[ELEM_ICE]&=~RESIST_HALF;
 }
 
+const uint8_t num_offhand[]={17};
 const struct eq_item offhand[MAX_EQO_PER_TYPE]={
 	{"None",0,{0},{0},1,0,0,0,NULL,NULL}, // Naked
 	{"Escutcheon",0,{10},{3},1,0,0,400,NULL,NULL}, // Escutcheon
@@ -854,6 +856,7 @@ static void remove_robe_of_lords(struct battle_char *bc){
 	bc->ma-=1;
 }
 
+const uint8_t num_body_armor[]={1,14,14,8};
 const struct eq_item body_armor[NUM_EQB_TYPES][MAX_EQB_PER_TYPE]={
 	{{"None",0,{0},{0},1,0,0,0,NULL,NULL}}, // Naked
 	{
@@ -1000,6 +1003,7 @@ static void remove_ribbon(struct battle_char *bc){
 	bc->status[STATUS_UNDEAD]=bc->status[STATUS_PETRIFY]=bc->status[STATUS_DARKNESS]=bc->status[STATUS_CONFUSION]=bc->status[STATUS_SILENCE]=bc->status[STATUS_BERSERK]=bc->status[STATUS_POLYMORPH]=bc->status[STATUS_POISON]=bc->status[STATUS_SLOW]=bc->status[STATUS_STOP]=bc->status[STATUS_CHARM]=bc->status[STATUS_SLEEP]=bc->status[STATUS_NOMOVE]=bc->status[STATUS_NOACT]=bc->status[STATUS_DEATHSENTENCE]=0;
 }
 
+const uint8_t num_head_armor[]={1,13,12,3};
 const struct eq_item head_armor[NUM_EQH_TYPES][MAX_EQH_PER_TYPE]={
 	{{"None",0,{0},{0},1,0,0,0,NULL,NULL}}, // Naked
 	{
@@ -1245,6 +1249,7 @@ static void remove_vanish_mantle(struct battle_char *bc){
 	bc->status[STATUS_TRANSPARENT]=0;
 }
 
+const uint8_t num_misc_armor[]={1,7,14,7};
 const struct eq_item misc_armor[NUM_EQM_TYPES][MAX_EQM_PER_TYPE]={
 	{{"None",0,{0},{0},1,0,0,0,NULL,NULL}}, // Naked
 	{
@@ -1284,3 +1289,103 @@ const struct eq_item misc_armor[NUM_EQM_TYPES][MAX_EQM_PER_TYPE]={
 		{"Red Shoes",0,{0},{0},40,EQFLAG_NOFOE,0,10000,wear_red_shoes,remove_red_shoes},
 	}, // Foot
 };
+
+char* eq_name(uint16_t index){
+	int l,t,o;
+	const struct eq_item *list;
+
+	l=EQ_INDEX_L(index);
+	t=EQ_INDEX_T(index);
+	o=EQ_INDEX_O(index);
+
+	if(l==EQ_WEAPON){
+		list=weapons[t];
+	}
+	else if(l==EQ_OFFHAND){
+		list=offhand;
+	}
+	else if(l==EQ_HEAD){
+		list=head_armor[t];
+	}
+	else if(l==EQ_BODY){
+		list=body_armor[t];
+	}
+	else if(l==EQ_MISC){
+		list=misc_armor[t];
+	}
+
+	return list[o].name;
+}
+
+static void items_in_price_range(const struct eq_item *list, int min, int max, int *start, int *end){
+	int i;
+
+	for(i=*start;i<*end;i++)
+		if(list[i].price>min)
+			break;
+
+	if(i<*end && list[i].price>min)
+		*start=i;
+	else{
+		*start=-1;
+		return;
+	}
+
+	for(;i<*end;i++)
+		if(list[i].price>max)
+			break;
+
+	if(i>=*end)
+		*end=i+1;
+	else if(list[i].price>max)
+		*end=i;
+	else{
+		*start=-1;
+		return;
+	}
+}
+
+uint16_t spawn_item_by_price(int min, int max){
+	int l,t,o;
+	const struct eq_item *list;
+	int start,end;
+
+	while(1){
+		l=get_random(0,5);
+		start=0;
+		if(l==EQ_WEAPON){
+			t=get_random(1,NUM_EQW_TYPES);
+			list=weapons[t];
+			end=num_weapons[t];
+		}
+		else if(l==EQ_OFFHAND){
+			t=0;
+			list=offhand;
+			start=1;
+			end=num_offhand[0];
+		}
+		else if(l==EQ_HEAD){
+			t=get_random(1,NUM_EQH_TYPES);
+			list=head_armor[t];
+			end=num_head_armor[t];
+		}
+		else if(l==EQ_BODY){
+			t=get_random(1,NUM_EQB_TYPES);
+			list=body_armor[t];
+			end=num_body_armor[t];
+		}
+		else if(l==EQ_MISC){
+			t=get_random(1,NUM_EQM_TYPES);
+			list=misc_armor[t];
+			end=num_misc_armor[t];
+		}
+		
+		items_in_price_range(list,min,max,&start,&end);
+		if(start>=0){
+			o=get_random(start,end);
+			break;
+		}
+	}
+
+	return EQ_INDEX(l,t,o);
+}

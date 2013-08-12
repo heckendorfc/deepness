@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include "game.h"
 #include "player.h"
@@ -5,6 +6,7 @@
 #include "map.h"
 #include "battle.h"
 #include "ui_common.h"
+#include "equipment.h"
 
 static const char *names[]={
 	"merb",
@@ -71,9 +73,12 @@ static int encounter(){
 }
 
 void run_game(){
+	int i;
+	char buf[40];
 	int x,y;
 	int flags;
 	int result=1;
+	int index;
 	gen_areamap(&x,&y);
 	while(result){
 		area_menu(&x,&y);
@@ -86,11 +91,22 @@ void run_game(){
 			}
 		}
 
+		if(flags&AMAP_TREASURE_BIT){
+			index=spawn_item_by_price(50,500);
+			sprintf(buf,"Obtained %s!",eq_name(index));
+			print_message(buf);
+			for(i=0;i<NUM_ITEMS;i++){
+				if(pdata.inventory[i].count<=0){
+					pdata.inventory[i].count=1;
+					pdata.inventory[i].index=index;
+					break;
+				}
+			}
+		}
+
 		if(flags&AMAP_EXIT_BIT)
 			break;
 
 		explore_areamap(x,y);
 	}
-
-
 }

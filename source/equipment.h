@@ -10,7 +10,10 @@
 #define WRANGE_ALL 0x40
 
 // oooooootttttllll
-#define EQ_INDEX(l,t,o) ((o<<9)|(t<<4)|(l&0x4))
+#define EQ_INDEX(l,t,o) ((o<<9)|((t&0x1F)<<4)|(l&0xF))
+#define EQ_INDEX_L(x) (x&0xF);
+#define EQ_INDEX_T(x) ((x>>4)&0x1F);
+#define EQ_INDEX_O(x) (x>>9);
 
 #define EQ_WEAPON 0
 #define EQ_OFFHAND 1
@@ -78,6 +81,8 @@
 
 int actual_weapon_range(struct battle_char *bc, int x, int y);
 int weapon_can_hit(struct battle_char *bc, int x, int y);
+char* eq_name(uint16_t index);
+uint16_t spawn_item_by_price(int min, int max);
 
 extern const weapon_damagef weapon_damage[];
 extern const uint8_t weapon_range[];
