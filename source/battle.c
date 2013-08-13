@@ -748,6 +748,18 @@ int battle_ended(struct battle_char **blist, int num){
 	return -1;
 }
 
+void shuffle_battle_order(struct battle_char **pblist, int num){
+	int i;
+	int r;
+	struct battle_char *tmp;
+	
+	for(i=0;i<num;i++){
+		r=get_random(0,num);
+		tmp=pblist[r];
+		pblist[r]=pblist[i];
+		pblist[i]=tmp;
+	}
+}
 
 int start_battle(struct character **friends, struct character *foes, int numfoe){
 	struct battle_char *blist,**pblist;
@@ -788,8 +800,10 @@ int start_battle(struct character **friends, struct character *foes, int numfoe)
 	foe_placed=place_units(blist+(bi-numfoe),numfoe,MAP_FOE_START);
 	for(i=0;i<foe_placed;pi++)
 		pblist[pi]=blist+(bi-numfoe)+(i++);
-
+	
 	ai_init(pblist+bi-numfoe,foe_placed);
+
+	shuffle_battle_order(pblist,pi);
 
 	while(1){
 		status_check(pblist,pi);
