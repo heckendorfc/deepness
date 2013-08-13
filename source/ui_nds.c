@@ -746,6 +746,8 @@ void battle_orders(struct battle_char **blist, int bi, int num, uint8_t *flags){
 	}
 	hide_moves(num,moves);
 	hide_cursor(num);
+	oamClear(&oamMain,0,num);
+	oamUpdate(&oamMain);
 }
 
 void print_message(char *msg){
@@ -1296,6 +1298,60 @@ void area_menu(int *x, int *y){
 
 	oamClear(&oamMain,0,numsprites+1);
 	oamUpdate(&oamMain);
+}
+
+int print_world_menu(int line, int offset){
+	int i=line;
+
+	iprintf("\x1b[%d;1H%cDig down",i,(line+offset)==i?'*':' '); i++;
+	if(pdata.d_level>1){
+		iprintf("\x1b[%d;1H%cDig up",i,(line+offset)==i?'*':' '); i++;
+	}
+
+	return i;
+}
+
+void world_menu(){
+	int menu_items=pdata.d_level>1?2:1;
+	int offset=0;
+	int run=1;
+	int press;
+
+	swiWaitForVBlank();
+
+	while(run){
+		iprintf("\x1b[2J");
+			
+		iprintf("\x1b[0;0HDeepness level %d",pdata.d_level);
+
+		print_world_menu(5,offset);
+
+		scanKeys();
+		press=keysDown();
+
+		if(press&KEY_UP){
+			offset--;
+			if(offset<0)offset=menu_items-1;
+		}
+		if(press&KEY_DOWN){
+			offset++;
+			if(offset>=menu_items)offset=0;
+		}
+		if(press&KEY_Y){
+			switch(offset){
+				case 0:
+					pdata.d_level++;
+					break;
+				case 1:
+					pdata.d_level--;
+					break;
+			}
+			offset=0;
+			run=0;
+		}
+		
+		swiWaitForVBlank();
+	}
 }
 
 int print_main_menu(int line, int offset){

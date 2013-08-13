@@ -47,7 +47,7 @@ uint8_t get_map_height(int x,int y);
 uint8_t get_map_terrain(int x,int y);
 uint8_t get_area_map(int x, int y);
 uint8_t get_map_start(int x,int y);
-void gen_random_map();
+void gen_random_map(int theme);
 void set_map_moves(int x, int y, int moves, int jump, int flags);
 uint8_t move_valid(int x, int y);
 void explore_areamap(int x, int y);

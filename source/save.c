@@ -35,6 +35,8 @@ void save(){
 	for(i=0;i<num_chars;i++)
 		fwrite(pdata.chars[i],1,sizeof(**pdata.chars),fd);
 	fwrite(pdata.inventory,NUM_ITEMS,sizeof(*pdata.inventory),fd);
+	fwrite(&pdata.d_level,1,sizeof(pdata.d_level),fd);
+	fwrite(&pdata.seed,1,sizeof(pdata.seed),fd);
 
 	fclose(fd);
 }
@@ -56,6 +58,8 @@ void load(){
 		fread(pdata.chars[i],1,sizeof(**pdata.chars),fd);
 	}
 	fread(pdata.inventory,NUM_ITEMS,sizeof(*pdata.inventory),fd);
+	fread(&pdata.d_level,1,sizeof(pdata.d_level),fd);
+	fread(&pdata.seed,1,sizeof(pdata.seed),fd);
 
 	fclose(fd);
 }

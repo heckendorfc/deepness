@@ -30,6 +30,7 @@ static void destroy_game(){
 
 void create_game(){
 	int i,j;
+	pdata.d_level=1;
 	for(i=0;i<NUM_CHAR_SLOTS;i++)pdata.chars[i]=NULL;
 	for(i=0;i<numchar;i++){
 		pdata.chars[i]=malloc(sizeof(**pdata.chars));
@@ -37,8 +38,10 @@ void create_game(){
 		for(j=0;names[i][j];j++)
 			pdata.chars[i]->name[j]=names[i][j];
 		pdata.chars[i]->name[4]=0;
-		if(i<2)
+		if(i<2){
 			pdata.chars[i]->battleready=BATTLE_READY;
+			set_level(pdata.chars[i],1);
+		}
 		else
 			pdata.chars[i]->battleready=BATTLE_UNAVAILABLE;
 	}
@@ -48,20 +51,27 @@ void create_game(){
 	}
 }
 
-static int encounter(){
+static int encounter(int theme){
 	struct character *foe;
 	int ret,i,num=NUM_CHAR_SLOTS;
+	int plvl=0;
 
 	for(i=0;i<NUM_CHAR_SLOTS;i++){
 		if(pdata.chars[i]==NULL || pdata.chars[i]->battleready==BATTLE_UNAVAILABLE)
 			num--;
+		else if(plvl<(ret=character_level(pdata.chars[i])))
+			plvl=ret;
 	}
 
-	gen_random_map();
+	gen_random_map(theme);
 
 	foe=malloc(num*sizeof(*foe));
-	for(i=0;i<num;i++)
+	for(i=0;i<num;i++){
 		create_character(foe+i);
+		set_level(foe+i,get_random(plvl-(plvl/8),plvl));
+		foe[i].jp=pdata.d_level*100;
+		spend_jp_random(foe+i);
+	}
 
 	ret=start_battle(pdata.chars,foe,num);
 
@@ -77,34 +87,38 @@ static int encounter(){
 }
 
 void run_game(){
-	int i;
 	char buf[40];
 	int x,y;
 	int flags;
 	int result=1;
 	int index;
-	gen_areamap(&x,&y);
-	while(result){
-		area_menu(&x,&y);
-		flags=get_area_map(x,y);
-		if(flags&AMAP_ENCOUNTER_BIT){
-			result=encounter();
-			if(!result){
-				destroy_game();
-				return;
+	int theme;
+	while(1){ // World map
+		gen_areamap(&x,&y);
+		theme=get_random(0,NUM_MAP_THEME);
+		while(1){ // Area map
+			area_menu(&x,&y);
+			flags=get_area_map(x,y);
+			if(flags&AMAP_ENCOUNTER_BIT){
+				result=encounter(theme);
+				if(!result){
+					destroy_game();
+					return;
+				}
 			}
+
+			if(flags&AMAP_TREASURE_BIT){
+				index=spawn_item_by_price(50,500);
+				add_item(index);
+				sprintf(buf,"Obtained %s!",eq_name(index));
+				print_message(buf);
+			}
+
+			if(flags&AMAP_EXIT_BIT)
+				break;
+
+			explore_areamap(x,y);
 		}
-
-		if(flags&AMAP_TREASURE_BIT){
-			index=spawn_item_by_price(50,500);
-			add_item(index);
-			sprintf(buf,"Obtained %s!",eq_name(index));
-			print_message(buf);
-		}
-
-		if(flags&AMAP_EXIT_BIT)
-			break;
-
-		explore_areamap(x,y);
+		world_menu();
 	}
 }

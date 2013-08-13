@@ -473,6 +473,7 @@ void fast_action(struct battle_char *source, struct battle_char *target, int job
 	thisact.target.width=a->ra.aoe;
 	thisact.target.vertical=a->ra.aoe_vertical;
 	thisact.target.dir=AOE_DIR(a->ra.dir);
+	thisact.move.target=NULL;
 	last_action.damage=NO_DAMAGE;
 
 	if(!(claction[jobindex][findex].flags&AFLAG_EVADE && evaded(target,type,get_attack_dir(source,target),get_base_hit(source,target,jobindex,findex))))
@@ -506,7 +507,7 @@ void slow_action(struct battle_char *source, int x, int y, int jobindex, int fin
 	else
 		type=AFLAG_MAGIC;
 
-	thisact->ctr=a->ctr;
+	thisact->ctr=(a->ctr==CTR_JUMP)?(50/source->speed):a->ctr;
 	thisact->jobindex=jobindex;
 	thisact->findex=findex;
 	thisact->f=a->f.af;
@@ -516,10 +517,34 @@ void slow_action(struct battle_char *source, int x, int y, int jobindex, int fin
 	thisact->target.width=a->ra.aoe;
 	thisact->target.vertical=a->ra.aoe_vertical;
 	thisact->target.dir=AOE_DIR(a->ra.dir);
+	thisact->move.target=NULL;
+
+	if(a->flags&AFLAG_REPEAT)
+		add_status(source,STATUS_PERFORMING);
+	else
+		add_status(source,STATUS_CHARGING);
+}
+
+void action_mover(struct battle_char **blist, int bi, int num, int x, int y){
+	int i,t,tx,ty;
+	for(i=0;i<9;i++){
+		tx=(x-1)+(i%3);
+		ty=(y-1)+(i/3);
+		if(tx<0 || ty<0 || tx>MAP_WIDTH-1 || ty>MAP_HEIGHT-1)
+			continue;
+
+		t=get_map_terrain(x,y);
+		if(t!=MAP_T_NOSTAND && t!=MAP_T_NOTARGET && unit_at(blist,num,tx,ty)<0){
+			blist[bi]->x=x;
+			blist[bi]->y=y;
+			if(i&1)
+				return;
+		}
+	}
 }
 
 void slow_action_resolution(struct battle_char **blist, int num){
-	int bi;
+	int i,bi;
 	struct stored_action *tmp;
 	struct battle_char **targets;
 	int num_t;
@@ -552,10 +577,25 @@ void slow_action_resolution(struct battle_char **blist, int num){
 				if(!(claction[tmp->jobindex][tmp->findex].flags&AFLAG_EVADE && evaded(targets[num_t],type,dir,base_hit)))
 					tmp->f(tmp->origin,targets[num_t]);
 				react(tmp->origin,targets,num_t);
+
+				if(last_action.preresolve->move.target) // jump and possibly knockback
+					for(i=0;i<num;i++)
+						if(last_action.preresolve->move.target->index==blist[i]->index){
+							action_mover(blist,i,num,last_action.preresolve->move.x,last_action.preresolve->move.y);
+							break;
+						}
 			}
 			free(targets);
-			free(tmp);
-			blist[bi]->slow_act=NULL;
+
+			if(!(claction[tmp->jobindex][tmp->findex].flags&AFLAG_REPEAT) || claction[tmp->jobindex][tmp->findex].ctr>=100-blist[bi]->ct){
+				free(tmp);
+				blist[bi]->slow_act=NULL;
+				remove_status(blist[bi],STATUS_CHARGING);
+				remove_status(blist[bi],STATUS_PERFORMING);
+			}
+			else{
+				tmp->ctr=claction[tmp->jobindex][tmp->findex].ctr;
+			}
 		}
 	}
 }

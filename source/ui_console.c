@@ -247,6 +247,33 @@ void area_menu(int *x, int *y){
 
 }
 
+void world_menu(){
+	char cmd;
+	char buf[100];
+	int run;
+
+	do{
+		run=0;
+		printf("[U]p | [D]own");
+		fgets(buf,100,stdin);
+
+		sscanf(buf,"%c",&cmd);
+
+		switch(cmd){
+			case 'u':
+			case 'U':
+				pdata.d_level--;
+				break;
+			case 'd':
+			case 'D':
+				pdata.d_level++;
+				break;
+			default:
+				run=1;
+				break;
+		}
+	}while(run);
+}
 void main_menu(){
 	char cmd;
 	char buf[100];

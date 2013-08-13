@@ -104,6 +104,8 @@
 #define RANGE_WEAPON 0xFE
 #define RANGE_ALL 0xFF
 
+#define CTR_JUMP 0xFF
+
 #define RANGE_DIR(x) (x>>4)
 #define AOE_DIR(x) (x&0x0F)
 

@@ -6,6 +6,10 @@
 #include "ability.h"
 
 int get_random(int min, int max){
+	if(max==0)
+		return 0;
+	if(max-min==0)
+		return min;
 	return (rand()%(max-min))+min;
 }
 
@@ -121,16 +125,60 @@ void set_base_stats(struct character *ch){
 	ch->raw[STAT_SP]=98304;
 }
 
+int character_level(struct character *ch){
+	int i,level;
+	for(i=level=0;i<NUM_CLASS;i++)
+		level+=ch->exp[i]/100;
+	return level;
+}
+
 void level_up(struct character *ch){
 	int level;
 	int i;
 
-	for(i=level=0;i<NUM_CLASS;i++)
-		level+=ch->exp[i]/100;
-
+	level=character_level(ch);
 
 	for(i=0;i<NUM_STATS;i++)
 		ch->raw[i]+=ch->raw[i]/(class_stats[(int)ch->primary].gainmod[i]+level);
+}
+
+void spend_jp_random(struct character *ch){
+	int i;
+	int num;
+	int found=0;
+	uint8_t bought[4]={0,0,0,0};
+
+	while(ch->jp && !found){
+		found=1;
+		i=0;
+		if(bought[i]<num_action[ch->primary] && claction[ch->primary][bought[i]].jp<ch->jp){
+			ch->mastery[ch->primary]|=MASTERY_ACTION_BIT(bought[i]);
+			ch->jp-=claction[ch->primary][bought[i]].jp;
+			bought[i]++;
+			found=0;
+		}
+		i++;
+		if(bought[i]<num_reaction[ch->primary] && clreaction[ch->primary][bought[i]].jp<ch->jp){
+			ch->mastery[ch->primary]|=MASTERY_REACTION_BIT(bought[i]);
+			ch->jp-=clreaction[ch->primary][bought[i]].jp;
+			bought[i]++;
+			found=0;
+		}
+		i++;
+		if(bought[i]<num_support[ch->primary] && clsupport[ch->primary][bought[i]].jp<ch->jp){
+			ch->mastery[ch->primary]|=MASTERY_SUPPORT_BIT(bought[i]);
+			ch->jp-=clsupport[ch->primary][bought[i]].jp;
+			bought[i]++;
+			found=0;
+		}
+		i++;
+		if(bought[i]<num_movement[ch->primary] && clmovement[ch->primary][bought[i]].jp<ch->jp){
+			ch->mastery[ch->primary]|=MASTERY_REACTION_BIT(bought[i]);
+			ch->jp-=clmovement[ch->primary][bought[i]].jp;
+			bought[i]++;
+			found=0;
+		}
+	}
 }
 
 int job_level(struct character *ch){
@@ -187,10 +235,8 @@ void jp_reward(struct character *ch){
 	int jp;
 	int jlvl=job_level(ch);
 	int tlvl=0;
-	int i;
 
-	for(i=tlvl=0;i<NUM_CLASS;i++)
-		tlvl+=ch->exp[i]/100;
+	tlvl=character_level(ch);
 	
 	jp=8+(jlvl*2)+(tlvl/4);
 
@@ -255,6 +301,14 @@ void wear_eq(struct character *ch, int offset){
 	index=pdata.inventory[offset].index;
 	ch->eq[EQ_INDEX_L(index)]=(EQ_INDEX_O(index)<<6)|EQ_INDEX_T(index);
 	
+}
+
+void set_level(struct character *ch, int lvl){
+	while(lvl>0){
+		ch->exp[ch->primary]+=100;
+		level_up(ch);
+		lvl--;
+	}
 }
 
 void create_character(struct character *ch){

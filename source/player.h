@@ -39,6 +39,7 @@ struct aoe{
 
 struct stored_action;
 
+
 struct action_result{
 	struct stored_action *preresolve;
 	int16_t damage;
@@ -139,6 +140,11 @@ struct character{
 	uint8_t brave;
 };
 
+struct move_action{
+	struct battle_char *target; // Who gets moved
+	uint8_t x;
+	uint8_t y;
+};
 struct stored_action{
 	uint8_t ctr;
 	uint8_t jobindex;
@@ -146,8 +152,7 @@ struct stored_action{
 	actionf f;
 	struct battle_char *origin;
 	struct aoe target;
-	//struct battle_char **target;
-	//uint8_t num_target;
+	struct move_action move;
 };
 
 struct inv_item{
@@ -158,6 +163,8 @@ struct inv_item{
 struct player{
 	struct character *chars[NUM_CHAR_SLOTS];
 	struct inv_item inventory[NUM_ITEMS];
+	uint8_t d_level;
+	uint8_t seed;
 }pdata;
 
 #endif

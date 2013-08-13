@@ -35,15 +35,16 @@ uint8_t get_area_map(int x, int y){
 	return areamap[MAP_INDEX(x,y)];
 }
 
-void gen_random_map(){
+void gen_random_map(int theme){
 	int i,index;
-	int theme=rand()%NUM_MAP_THEME;
 	int blobs=rand()%3+4;
 	int blobi;
 	int bwidth;
 	int bheight;
 	int offset;
 	int start;
+	if(theme>=NUM_MAP_THEME || theme<0)
+		theme=rand()%NUM_MAP_THEME;
 
 	for(i=0;i<MAP_WIDTH*MAP_HEIGHT;i++){
 		//height[i]=rand()%5;
@@ -259,9 +260,7 @@ void gen_areamap(int *x, int *y){
 		}
 	}
 
-	// TODO: Add treasure.
-
-	areamap[MAP_WIDTH*MAP_HEIGHT-1]|=AMAP_EXIT_BIT;
+	//areamap[MAP_WIDTH*MAP_HEIGHT-1]|=AMAP_EXIT_BIT;
 	areamap[0]|=AMAP_EXIT_BIT;
 	explore_areamap(MAP_WIDTH-1,MAP_HEIGHT-1);
 
