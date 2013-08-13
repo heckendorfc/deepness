@@ -262,13 +262,16 @@ void create_character(struct character *ch){
 
 	ch->gender=GENDER_MALE;
 	ch->battleready=BATTLE_READY;
-	ch->jp=0;
+	ch->jp=100;
 	for(i=0;i<NUM_CLASS;i++){
 		ch->mastery[i]=0;
 		ch->exp[i]=0;
 	}
 	//ch->primary=ch->secondary=CL_WIZARD;
 	ch->primary=ch->secondary=CL_SQUIRE;
+	ch->support=0;
+	ch->reaction_class=ch->reaction_index=ch->reaction_trigger=0;
+	ch->movement_class=ch->movement_index=0;
 	ch->mastery[0]=~0; // Generic abilities
 	//for(i=0;i<NUM_ACTION_PER_ABILITY;i++)
 		//ch->mastery[ch->primary]|=BIT(i);

@@ -768,34 +768,190 @@ static void zodiac(struct battle_char *origin, struct battle_char *target){
 	last_action.damage=dmg;
 }
 
+static int inv_item_index(uint16_t index){
+	int i;
+	for(i=0;i<NUM_ITEMS;i++)
+		if(pdata.inventory[i].index==index)
+			break;
+
+	if(i<NUM_ITEMS && pdata.inventory[i].count>0)
+		return i;
+
+	return -1;
+}
+
+
 static void asura_draw(struct battle_char *origin, struct battle_char *target){
+	uint16_t index=EQ_INDEX(EQ_WEAPON,EQW_KATANA,0);
+	int16_t dmg = mod5(origin,target,8,100);
+	int invi;
+
+	if(origin->fof==target->fof)
+		return;
+
+	invi=inv_item_index(index);
+	if(invi>=0){
+		if(get_random(0,8)==0)
+			pdata.inventory[invi].count--;
+		deal_damage(target,dmg);
+	}
 }
 
 static void koutetsu(struct battle_char *origin, struct battle_char *target){
+	uint16_t index=EQ_INDEX(EQ_WEAPON,EQW_KATANA,1);
+	int16_t dmg = mod5(origin,target,12,100);
+	int invi;
+
+	if(origin->fof==target->fof)
+		return;
+
+	invi=inv_item_index(index);
+	if(invi>=0){
+		if(get_random(0,8)==0)
+			pdata.inventory[invi].count--;
+		deal_damage(target,dmg);
+	}
 }
 
 static void bizen_boat(struct battle_char *origin, struct battle_char *target){
+	uint16_t index=EQ_INDEX(EQ_WEAPON,EQW_KATANA,2);
+	int16_t dmg = mod5(origin,target,4,100);
+	int invi;
+
+	if(origin->fof==target->fof)
+		return;
+
+	invi=inv_item_index(index);
+	if(invi>=0){
+		if(get_random(0,8)==0)
+			pdata.inventory[invi].count--;
+		if(target->mp<dmg)
+			target->mp=0;
+		else
+			target->mp-=dmg;
+	}
 }
 
 static void murasame(struct battle_char *origin, struct battle_char *target){
+	uint16_t index=EQ_INDEX(EQ_WEAPON,EQW_KATANA,3);
+	int16_t dmg = origin->ma*12;
+	int invi;
+
+	if(origin->fof!=target->fof)
+		return;
+
+	invi=inv_item_index(index);
+	if(invi>=0){
+		if(get_random(0,8)==0)
+			pdata.inventory[invi].count--;
+		if(!STATUS_SET(target,STATUS_UNDEAD))
+			restore_hp(target,dmg);
+		else
+			deal_damage(target,dmg);
+	}
 }
 
 static void heavens_cloud(struct battle_char *origin, struct battle_char *target){
+	uint16_t index=EQ_INDEX(EQ_WEAPON,EQW_KATANA,4);
+	int16_t dmg = mod5(origin,target,14,100);
+	int invi;
+
+	if(origin->fof==target->fof)
+		return;
+
+	invi=inv_item_index(index);
+	if(invi>=0){
+		if(get_random(0,7)==0)
+			pdata.inventory[invi].count--;
+		if(get_random(0,4)==0)
+			add_status(target,STATUS_SLOW);
+		deal_damage(target,dmg);
+	}
 }
 
 static void kiyomori(struct battle_char *origin, struct battle_char *target){
+	uint16_t index=EQ_INDEX(EQ_WEAPON,EQW_KATANA,5);
+	int invi;
+
+	if(origin->fof!=target->fof)
+		return;
+
+	invi=inv_item_index(index);
+	if(invi>=0){
+		if(get_random(0,7)==0)
+			pdata.inventory[invi].count--;
+		add_status(target,STATUS_PROTECT);
+		add_status(target,STATUS_SHELL);
+	}
 }
 
 static void muramasa(struct battle_char *origin, struct battle_char *target){
+	uint16_t index=EQ_INDEX(EQ_WEAPON,EQW_KATANA,6);
+	int16_t dmg = mod5(origin,target,18,100);
+	int invi;
+
+	if(origin->fof==target->fof)
+		return;
+
+	invi=inv_item_index(index);
+	if(invi>=0){
+		if(get_random(0,7)==0)
+			pdata.inventory[invi].count--;
+		if(get_random(0,4)==0){
+			add_status(target,STATUS_CONFUSION);
+			add_status(target,STATUS_DEATHSENTENCE);
+		}
+		deal_damage(target,dmg);
+	}
 }
 
 static void kikuichimoji(struct battle_char *origin, struct battle_char *target){
+	uint16_t index=EQ_INDEX(EQ_WEAPON,EQW_KATANA,7);
+	int16_t dmg = mod5(origin,target,16,100);
+	int invi;
+
+	if(origin->fof==target->fof)
+		return;
+
+	invi=inv_item_index(index);
+	if(invi>=0){
+		if(get_random(0,7)==0)
+			pdata.inventory[invi].count--;
+		deal_damage(target,dmg);
+	}
 }
 
 static void masamune(struct battle_char *origin, struct battle_char *target){
+	uint16_t index=EQ_INDEX(EQ_WEAPON,EQW_KATANA,8);
+	int invi;
+
+	if(origin->fof!=target->fof)
+		return;
+
+	invi=inv_item_index(index);
+	if(invi>=0){
+		if(get_random(0,7)==0)
+			pdata.inventory[invi].count--;
+		add_status(target,STATUS_REGEN);
+		add_status(target,STATUS_HASTE);
+	}
 }
 
 static void chirijiraden(struct battle_char *origin, struct battle_char *target){
+	uint16_t index=EQ_INDEX(EQ_WEAPON,EQW_KATANA,9);
+	int16_t dmg = mod5(origin,target,30,100);
+	int invi;
+
+	if(origin->fof==target->fof)
+		return;
+
+	invi=inv_item_index(index);
+
+	if(invi>=0){
+		if(get_random(0,7)==0)
+			pdata.inventory[invi].count--;
+		deal_damage(target,dmg);
+	}
 }
 
 static void angel_song(struct battle_char *origin, struct battle_char *target){
