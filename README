@@ -3,6 +3,7 @@ Building/Running for NDS:
 	Run 'make' in the deepness directory
 	Load deepness.nds in your NDS or NDS emulator.
 
+(Note: Below are NDS buttons. Emulator controls may be bound to different keys)
 Battle controls:
 	Left/Right/Up/Down: Move the cursor
 	X: Show/hide the message log
